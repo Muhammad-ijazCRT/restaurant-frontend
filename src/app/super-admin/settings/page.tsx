@@ -1,8 +1,8 @@
 "use client";
 
-import SettingsPage from "@/views/settings-page";
-import AdminAuthGuard from "@/components/admin-auth-guard";
-import AdminLayout from "@/components/admin-layout";
+import SettingsPage from "@/views/shared/settings-page";
+import AdminAuthGuard from "@/components/admin/auth-guard";
+import AdminLayout from "@/components/admin/layout";
 
 export default function Page() {
   return (

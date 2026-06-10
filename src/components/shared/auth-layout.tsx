@@ -1,4 +1,4 @@
-import { AuthFlashContainer } from "@/components/auth-flash";
+import { AuthFlashContainer } from "@/components/shared/auth-flash";
 import "@/styles/auth.css";
 
 interface AuthLayoutProps {

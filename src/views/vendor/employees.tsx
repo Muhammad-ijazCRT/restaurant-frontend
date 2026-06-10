@@ -18,8 +18,8 @@ import {
   X,
 } from "lucide-react";
 import type { Vendor, VendorEmployee } from "@shared/schema";
-import VendorEmployeeAssignmentsDialog from "@/components/vendor-employee-assignments-dialog";
-import VendorEmployeePermissionsDialog from "@/components/vendor-employee-permissions-dialog";
+import VendorEmployeeAssignmentsDialog from "@/components/vendor/employee-assignments-dialog";
+import VendorEmployeePermissionsDialog from "@/components/vendor/employee-permissions-dialog";
 import { useVendorAuth } from "@/contexts/vendor-auth-context";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import {

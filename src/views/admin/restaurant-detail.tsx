@@ -18,8 +18,8 @@ import {
   ArrowLeft, Building2, Mail, Phone, UserCircle, Link2, UtensilsCrossed, AlertCircle, Calendar, Package,
   CheckCircle2, XCircle, Plus, Eye, ToggleLeft, ToggleRight, Trash2,
 } from "lucide-react";
-import { AttachmentsSection } from "@/components/attachments-section";
-import { InternalNotesSection } from "@/components/internal-notes-section";
+import { AttachmentsSection } from "@/components/shared/attachments-section";
+import { InternalNotesSection } from "@/components/shared/internal-notes-section";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 

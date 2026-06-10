@@ -34,8 +34,8 @@ import {
   Eye, EyeOff,
 } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
-import { AttachmentsSection } from "@/components/attachments-section";
-import { InternalNotesSection } from "@/components/internal-notes-section";
+import { AttachmentsSection } from "@/components/shared/attachments-section";
+import { InternalNotesSection } from "@/components/shared/internal-notes-section";
 import Papa from "papaparse";
 
 // ─── Constants ────────────────────────────────────────────────────────────────

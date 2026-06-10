@@ -1,8 +1,8 @@
 "use client";
 
-import ShippingDashboard from "@/views/shipping-dashboard";
-import PortalAuthGuard from "@/components/portal-auth-guard";
-import ShippingLayout from "@/components/shipping-layout";
+import ShippingDashboard from "@/views/shipping/dashboard";
+import PortalAuthGuard from "@/components/shared/portal-auth-guard";
+import ShippingLayout from "@/components/shipping/layout";
 
 const ROLES = ["vendor_admin", "manager", "driver"];
 

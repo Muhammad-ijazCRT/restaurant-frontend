@@ -17,7 +17,7 @@ import {
   X,
 } from "lucide-react";
 import type { RestaurantEmployee, RestaurantOrg } from "@shared/schema";
-import RestaurantEmployeePermissionsDialog from "@/components/restaurant-employee-permissions-dialog";
+import RestaurantEmployeePermissionsDialog from "@/components/restaurant/employee-permissions-dialog";
 import { useRestaurantAuth } from "@/contexts/restaurant-auth-context";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import {

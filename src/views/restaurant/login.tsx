@@ -1,4 +1,4 @@
-import PortalLoginForm from "@/components/portal-login-form";
+import PortalLoginForm from "@/components/shared/portal-login-form";
 import { useRestaurantAuth } from "@/contexts/restaurant-auth-context";
 
 export default function RestaurantLogin() {

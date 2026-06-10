@@ -15,7 +15,7 @@ import {
 } from "lucide-react";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
-import { InternalNotesSection } from "@/components/internal-notes-section";
+import { InternalNotesSection } from "@/components/shared/internal-notes-section";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 

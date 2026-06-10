@@ -1,4 +1,4 @@
-import { CutoffSettingsPanel } from "@/components/cutoff-settings-panel";
+import { CutoffSettingsPanel } from "@/components/vendor/cutoff-settings-panel";
 import { useVendorAuth } from "@/contexts/vendor-auth-context";
 
 export default function VendorSettings() {

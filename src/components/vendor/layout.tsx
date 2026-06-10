@@ -6,9 +6,9 @@ import { VENDOR_SECTION_IDS, type VendorSectionId } from "@/lib/vendor-portal-se
 import type { Vendor } from "@shared/schema";
 import { useEffect, useMemo } from "react";
 import { Building2 } from "lucide-react";
-import { NotificationBell } from "@/components/notification-bell";
-import { PortalRoleSwitcher } from "@/components/portal-role-switcher";
-import { ProfileMenu } from "@/components/profile-menu";
+import { NotificationBell } from "@/components/shared/notification-bell";
+import { PortalRoleSwitcher } from "@/components/shared/portal-role-switcher";
+import { ProfileMenu } from "@/components/shared/profile-menu";
 import { getUserData, getUserRole, resolveRoleHomePath } from "@/lib/portal-auth";
 import {
   canAccessVendorSettings,

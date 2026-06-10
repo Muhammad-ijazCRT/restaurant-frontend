@@ -1,8 +1,8 @@
 "use client";
 
-import RestaurantCatalog from "@/views/restaurant-catalog";
-import AdminAuthGuard from "@/components/admin-auth-guard";
-import AdminLayout from "@/components/admin-layout";
+import RestaurantCatalog from "@/views/admin/restaurant-catalog";
+import AdminAuthGuard from "@/components/admin/auth-guard";
+import AdminLayout from "@/components/admin/layout";
 
 export default function Page() {
   return (

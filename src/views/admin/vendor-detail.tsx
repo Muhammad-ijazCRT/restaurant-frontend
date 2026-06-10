@@ -44,9 +44,9 @@ import {
   Eye, ToggleLeft, ToggleRight, Trash2, GripVertical, Search, X,
 } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
-import { AttachmentsSection } from "@/components/attachments-section";
-import { InternalNotesSection } from "@/components/internal-notes-section";
-import { CutoffSettingsPanel } from "@/components/cutoff-settings-panel";
+import { AttachmentsSection } from "@/components/shared/attachments-section";
+import { InternalNotesSection } from "@/components/shared/internal-notes-section";
+import { CutoffSettingsPanel } from "@/components/vendor/cutoff-settings-panel";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";

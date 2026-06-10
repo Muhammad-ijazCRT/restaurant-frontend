@@ -2,8 +2,8 @@ import { useState, useEffect } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { queryClient, apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
-import type { RestaurantOrg, InsertRestaurantOrg } from "@shared/schema";
-import { insertRestaurantOrgSchema, formatPhone } from "@shared/schema";
+import type { Vendor, InsertVendor } from "@shared/schema";
+import { insertVendorSchema, formatPhone } from "@shared/schema";
 import { z } from "zod";
 import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
@@ -23,12 +23,12 @@ import {
 } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
-  ListChecks, Pencil, Archive, UtensilsCrossed, Search, Mail, Phone,
-  UserCircle, AlertCircle, RefreshCw, Eye, RotateCcw, Trash2, Download,
+  Pencil, Archive, Building2, Search, Users, Mail, Phone,
+  UserCircle, AlertCircle, RefreshCw, Eye, RotateCcw, Trash2, Download, ListChecks,
   CheckCircle2, XCircle,
 } from "lucide-react";
 import { exportToCsv, csvFilename } from "@/lib/csv";
-import { TypedDeleteDialog } from "@/components/typed-delete-dialog";
+import { TypedDeleteDialog } from "@/components/shared/typed-delete-dialog";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Link } from "@/lib/wouter-compat";
 import { useForm } from "react-hook-form";
@@ -40,11 +40,11 @@ import {
 type ViewMode = "active" | "archived" | "all";
 type SortOrder = "az" | "newest" | "oldest";
 
-const restaurantCreateSchema = insertRestaurantOrgSchema.extend({
+const vendorCreateSchema = insertVendorSchema.extend({
   loginPassword: z.string().min(8, "Password must be at least 8 characters"),
 });
 
-type RestaurantFormValues = InsertRestaurantOrg & { loginPassword?: string };
+type VendorFormValues = InsertVendor & { loginPassword?: string };
 
 function StatusBadge({ status }: { status: string }) {
   const variants: Record<string, string> = {
@@ -86,18 +86,18 @@ function OnboardingBadge({ info }: { info?: { complete: boolean; missing: string
   );
 }
 
-function RestaurantFormDialog({ open, onOpenChange, org }: { open: boolean; onOpenChange: (open: boolean) => void; org?: RestaurantOrg }) {
+function VendorFormDialog({ open, onOpenChange, vendor }: { open: boolean; onOpenChange: (open: boolean) => void; vendor?: Vendor }) {
   const { toast } = useToast();
-  const isEditing = !!org;
+  const isEditing = !!vendor;
 
-  const form = useForm<RestaurantFormValues>({
-    resolver: zodResolver(isEditing ? insertRestaurantOrgSchema : restaurantCreateSchema),
+  const form = useForm<VendorFormValues>({
+    resolver: zodResolver(isEditing ? insertVendorSchema : vendorCreateSchema),
     defaultValues: {
-      name: org?.name ?? "",
-      contactName: org?.contactName ?? "",
-      email: org?.email ?? "",
-      phone: org?.phone ?? "",
-      status: (org?.status as "active" | "inactive" | "archived") ?? "active",
+      name: vendor?.name ?? "",
+      contactName: vendor?.contactName ?? "",
+      email: vendor?.email ?? "",
+      phone: vendor?.phone ?? "",
+      status: (vendor?.status as "active" | "inactive" | "archived") ?? "active",
       loginPassword: "",
     },
   });
@@ -117,28 +117,28 @@ function RestaurantFormDialog({ open, onOpenChange, org }: { open: boolean; onOp
   }
 
   const createMutation = useMutation({
-    mutationFn: (data: InsertRestaurantOrg) => apiRequest("POST", "/api/restaurant-orgs", data),
+    mutationFn: (data: InsertVendor) => apiRequest("POST", "/api/vendors", data),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/restaurant-orgs?includeArchived=true"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/vendors?includeArchived=true"] });
       queryClient.invalidateQueries({ queryKey: ["/api/admin/stats"] });
-      toast({ title: "Restaurant created", description: "The restaurant was added and a welcome email with login details was sent." });
+      toast({ title: "Vendor created", description: "The vendor has been added and a welcome email with login details was sent." });
       onOpenChange(false);
     },
     onError: handleServerError,
   });
 
   const updateMutation = useMutation({
-    mutationFn: (data: Partial<InsertRestaurantOrg>) => apiRequest("PATCH", `/api/restaurant-orgs/${org!.id}`, data),
+    mutationFn: (data: Partial<InsertVendor>) => apiRequest("PATCH", `/api/vendors/${vendor!.id}`, data),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/restaurant-orgs?includeArchived=true"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/vendors?includeArchived=true"] });
       queryClient.invalidateQueries({ queryKey: ["/api/admin/stats"] });
-      toast({ title: "Restaurant updated", description: "The restaurant organization has been updated." });
+      toast({ title: "Vendor updated", description: "The vendor has been updated successfully." });
       onOpenChange(false);
     },
     onError: handleServerError,
   });
 
-  const onSubmit = (data: RestaurantFormValues) => {
+  const onSubmit = (data: VendorFormValues) => {
     if (isEditing) {
       const { loginPassword, ...rest } = data;
       updateMutation.mutate(loginPassword ? data : rest);
@@ -151,29 +151,29 @@ function RestaurantFormDialog({ open, onOpenChange, org }: { open: boolean; onOp
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[500px]" data-testid="dialog-restaurant-form">
+      <DialogContent className="sm:max-w-[500px]" data-testid="dialog-vendor-form">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2 text-lg">
-            <UtensilsCrossed className="h-5 w-5 text-primary" />
-            {isEditing ? "Edit Restaurant Organization" : "Add Restaurant Organization"}
+            <Building2 className="h-5 w-5 text-primary" />
+            {isEditing ? "Edit Vendor" : "Add New Vendor"}
           </DialogTitle>
           <DialogDescription>
-            {isEditing ? "Update the organization's information below." : "Fill in the details to create a new restaurant organization."}
+            {isEditing ? "Update the vendor's information below." : "Fill in the details to create a new vendor."}
           </DialogDescription>
         </DialogHeader>
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-5 pt-2">
             <FormField control={form.control} name="name" render={({ field }) => (
               <FormItem>
-                <FormLabel className="flex items-center gap-1.5"><UtensilsCrossed className="h-3.5 w-3.5 text-muted-foreground" />Organization Name</FormLabel>
-                <FormControl><Input placeholder="Downtown Dining Group" {...field} data-testid="input-restaurant-name" /></FormControl>
+                <FormLabel className="flex items-center gap-1.5"><Building2 className="h-3.5 w-3.5 text-muted-foreground" />Company Name</FormLabel>
+                <FormControl><Input placeholder="Acme Foods Inc." {...field} data-testid="input-vendor-name" /></FormControl>
                 <FormMessage />
               </FormItem>
             )} />
             <FormField control={form.control} name="contactName" render={({ field }) => (
               <FormItem>
                 <FormLabel className="flex items-center gap-1.5"><UserCircle className="h-3.5 w-3.5 text-muted-foreground" />Contact Name</FormLabel>
-                <FormControl><Input placeholder="Alex Rivera" {...field} data-testid="input-restaurant-contact" /></FormControl>
+                <FormControl><Input placeholder="Jane Smith" {...field} data-testid="input-vendor-contact" /></FormControl>
                 <FormMessage />
               </FormItem>
             )} />
@@ -181,14 +181,14 @@ function RestaurantFormDialog({ open, onOpenChange, org }: { open: boolean; onOp
               <FormField control={form.control} name="email" render={({ field }) => (
                 <FormItem>
                   <FormLabel className="flex items-center gap-1.5"><Mail className="h-3.5 w-3.5 text-muted-foreground" />Email</FormLabel>
-                  <FormControl><Input type="email" placeholder="alex@dining.com" {...field} data-testid="input-restaurant-email" /></FormControl>
+                  <FormControl><Input type="email" placeholder="jane@acme.com" {...field} data-testid="input-vendor-email" /></FormControl>
                   <FormMessage />
                 </FormItem>
               )} />
               <FormField control={form.control} name="phone" render={({ field }) => (
                 <FormItem>
                   <FormLabel className="flex items-center gap-1.5"><Phone className="h-3.5 w-3.5 text-muted-foreground" />Phone</FormLabel>
-                  <FormControl><Input type="tel" placeholder="(555) 234-5678" {...field} onChange={e => field.onChange(e.target.value.replace(/\D/g, "").slice(0, 10))} value={formatPhone(field.value)} data-testid="input-restaurant-phone" /></FormControl>
+                  <FormControl><Input type="tel" placeholder="(555) 123-4567" {...field} onChange={e => field.onChange(e.target.value.replace(/\D/g, "").slice(0, 10))} value={formatPhone(field.value)} data-testid="input-vendor-phone" /></FormControl>
                   <FormMessage />
                 </FormItem>
               )} />
@@ -198,9 +198,9 @@ function RestaurantFormDialog({ open, onOpenChange, org }: { open: boolean; onOp
                 <FormItem>
                   <FormLabel>Portal Password</FormLabel>
                   <FormControl>
-                    <Input type="password" placeholder="Minimum 8 characters" autoComplete="new-password" {...field} data-testid="input-restaurant-password" />
+                    <Input type="password" placeholder="Minimum 8 characters" autoComplete="new-password" {...field} data-testid="input-vendor-password" />
                   </FormControl>
-                  <p className="text-xs text-muted-foreground">Sent to the restaurant by email so they can sign in at /restaurant/login.</p>
+                  <p className="text-xs text-muted-foreground">Sent to the vendor by email so they can sign in at /vendor/login.</p>
                   <FormMessage />
                 </FormItem>
               )} />
@@ -210,7 +210,7 @@ function RestaurantFormDialog({ open, onOpenChange, org }: { open: boolean; onOp
                 <FormLabel>Status</FormLabel>
                 <Select onValueChange={field.onChange} defaultValue={field.value}>
                   <FormControl>
-                    <SelectTrigger data-testid="select-restaurant-status"><SelectValue placeholder="Select a status" /></SelectTrigger>
+                    <SelectTrigger data-testid="select-vendor-status"><SelectValue placeholder="Select a status" /></SelectTrigger>
                   </FormControl>
                   <SelectContent>
                     <SelectItem value="active">Active</SelectItem>
@@ -222,8 +222,8 @@ function RestaurantFormDialog({ open, onOpenChange, org }: { open: boolean; onOp
             )} />
             <div className="flex justify-end gap-3 pt-2">
               <Button type="button" variant="outline" onClick={() => onOpenChange(false)} data-testid="button-cancel">Cancel</Button>
-              <Button type="submit" disabled={isPending} data-testid="button-submit-restaurant">
-                {isPending ? (isEditing ? "Saving..." : "Creating...") : (isEditing ? "Save Changes" : "Create Organization")}
+              <Button type="submit" disabled={isPending} data-testid="button-submit-vendor">
+                {isPending ? (isEditing ? "Saving..." : "Creating...") : (isEditing ? "Save Changes" : "Create Vendor")}
               </Button>
             </div>
           </form>
@@ -233,11 +233,11 @@ function RestaurantFormDialog({ open, onOpenChange, org }: { open: boolean; onOp
   );
 }
 
-export default function AdminRestaurants() {
+export default function AdminVendors() {
   const [formOpen, setFormOpen] = useState(false);
-  const [editingOrg, setEditingOrg] = useState<RestaurantOrg | undefined>();
-  const [archiveTarget, setArchiveTarget] = useState<RestaurantOrg | undefined>();
-  const [deleteTarget, setDeleteTarget] = useState<RestaurantOrg | undefined>();
+  const [editingVendor, setEditingVendor] = useState<Vendor | undefined>();
+  const [archiveTarget, setArchiveTarget] = useState<Vendor | undefined>();
+  const [deleteTarget, setDeleteTarget] = useState<Vendor | undefined>();
   const [search, setSearch] = useState("");
   const [view, setView] = useState<ViewMode>("active");
   const [sort, setSort] = useState<SortOrder>("newest");
@@ -246,21 +246,21 @@ export default function AdminRestaurants() {
   const [bulkDeleteOpen, setBulkDeleteOpen] = useState(false);
   const { toast } = useToast();
 
-  const { data: allOrgs = [], isLoading, isError, error, refetch } = useQuery<RestaurantOrg[]>({
-    queryKey: ["/api/restaurant-orgs?includeArchived=true"],
+  const { data: allVendors = [], isLoading, isError, error, refetch } = useQuery<Vendor[]>({
+    queryKey: ["/api/vendors?includeArchived=true"],
   });
 
   const { data: completeness = {} } = useQuery<CompletenessMap>({
-    queryKey: ["/api/restaurant-orgs/completeness"],
+    queryKey: ["/api/vendors/completeness"],
   });
 
   const archiveMutation = useMutation({
-    mutationFn: (id: string) => apiRequest("PATCH", `/api/restaurant-orgs/${id}/archive`),
+    mutationFn: (id: string) => apiRequest("PATCH", `/api/vendors/${id}/archive`),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/restaurant-orgs?includeArchived=true"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/vendors?includeArchived=true"] });
       queryClient.invalidateQueries({ queryKey: ["/api/relationships"] });
       queryClient.invalidateQueries({ queryKey: ["/api/admin/stats"] });
-      toast({ title: "Organization archived", description: "The organization has been archived." });
+      toast({ title: "Vendor archived", description: "The vendor has been archived." });
       setArchiveTarget(undefined);
     },
     onError: (error: Error) => {
@@ -269,11 +269,11 @@ export default function AdminRestaurants() {
   });
 
   const restoreMutation = useMutation({
-    mutationFn: (id: string) => apiRequest("PATCH", `/api/restaurant-orgs/${id}/restore`),
+    mutationFn: (id: string) => apiRequest("PATCH", `/api/vendors/${id}/restore`),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/restaurant-orgs?includeArchived=true"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/vendors?includeArchived=true"] });
       queryClient.invalidateQueries({ queryKey: ["/api/admin/stats"] });
-      toast({ title: "Organization restored", description: "The organization has been restored to active." });
+      toast({ title: "Vendor restored", description: "The vendor has been restored to active." });
     },
     onError: (error: Error) => {
       toast({ title: "Error", description: error.message, variant: "destructive" });
@@ -281,11 +281,11 @@ export default function AdminRestaurants() {
   });
 
   const deleteMutation = useMutation({
-    mutationFn: (id: string) => apiRequest("DELETE", `/api/restaurant-orgs/${id}`),
+    mutationFn: (id: string) => apiRequest("DELETE", `/api/vendors/${id}`),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/restaurant-orgs?includeArchived=true"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/vendors?includeArchived=true"] });
       queryClient.invalidateQueries({ queryKey: ["/api/admin/stats"] });
-      toast({ title: "Organization deleted", description: "The organization has been permanently deleted." });
+      toast({ title: "Vendor deleted", description: "The vendor has been permanently deleted." });
       setDeleteTarget(undefined);
     },
     onError: (error: Error) => {
@@ -294,13 +294,13 @@ export default function AdminRestaurants() {
   });
 
   const bulkArchiveMutation = useMutation({
-    mutationFn: (ids: string[]) => Promise.all(ids.map(id => apiRequest("PATCH", `/api/restaurant-orgs/${id}/archive`))),
+    mutationFn: (ids: string[]) => Promise.all(ids.map(id => apiRequest("PATCH", `/api/vendors/${id}/archive`))),
     onSuccess: (_, ids) => {
-      queryClient.invalidateQueries({ queryKey: ["/api/restaurant-orgs?includeArchived=true"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/vendors?includeArchived=true"] });
       queryClient.invalidateQueries({ queryKey: ["/api/relationships"] });
       queryClient.invalidateQueries({ queryKey: ["/api/admin/stats"] });
       setSelectedIds(new Set());
-      toast({ title: "Organizations archived", description: `${ids.length} organization${ids.length !== 1 ? "s" : ""} archived successfully.` });
+      toast({ title: "Vendors archived", description: `${ids.length} vendor${ids.length !== 1 ? "s" : ""} archived successfully.` });
     },
     onError: (error: Error) => {
       toast({ title: "Error", description: error.message, variant: "destructive" });
@@ -308,12 +308,12 @@ export default function AdminRestaurants() {
   });
 
   const bulkRestoreMutation = useMutation({
-    mutationFn: (ids: string[]) => Promise.all(ids.map(id => apiRequest("PATCH", `/api/restaurant-orgs/${id}/restore`))),
+    mutationFn: (ids: string[]) => Promise.all(ids.map(id => apiRequest("PATCH", `/api/vendors/${id}/restore`))),
     onSuccess: (_, ids) => {
-      queryClient.invalidateQueries({ queryKey: ["/api/restaurant-orgs?includeArchived=true"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/vendors?includeArchived=true"] });
       queryClient.invalidateQueries({ queryKey: ["/api/admin/stats"] });
       setSelectedIds(new Set());
-      toast({ title: "Organizations restored", description: `${ids.length} organization${ids.length !== 1 ? "s" : ""} restored successfully.` });
+      toast({ title: "Vendors restored", description: `${ids.length} vendor${ids.length !== 1 ? "s" : ""} restored successfully.` });
     },
     onError: (error: Error) => {
       toast({ title: "Error", description: error.message, variant: "destructive" });
@@ -321,39 +321,39 @@ export default function AdminRestaurants() {
   });
 
   const bulkDeleteMutation = useMutation({
-    mutationFn: (ids: string[]) => Promise.all(ids.map(id => apiRequest("DELETE", `/api/restaurant-orgs/${id}`))),
+    mutationFn: (ids: string[]) => Promise.all(ids.map(id => apiRequest("DELETE", `/api/vendors/${id}`))),
     onSuccess: (_, ids) => {
-      queryClient.invalidateQueries({ queryKey: ["/api/restaurant-orgs?includeArchived=true"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/vendors?includeArchived=true"] });
       queryClient.invalidateQueries({ queryKey: ["/api/admin/stats"] });
       setSelectedIds(new Set());
       setBulkDeleteOpen(false);
-      toast({ title: "Organizations deleted", description: `${ids.length} organization${ids.length !== 1 ? "s" : ""} permanently deleted.` });
+      toast({ title: "Vendors deleted", description: `${ids.length} vendor${ids.length !== 1 ? "s" : ""} permanently deleted.` });
     },
     onError: (error: Error) => {
       toast({ title: "Error", description: error.message, variant: "destructive" });
     },
   });
 
-  const activeOrgs = allOrgs.filter(o => o.status !== "archived");
-  const archivedOrgs = allOrgs.filter(o => o.status === "archived");
+  const activeVendors = allVendors.filter(v => v.status !== "archived");
+  const archivedVendors = allVendors.filter(v => v.status === "archived");
 
-  const viewOrgs = view === "active" ? activeOrgs : view === "archived" ? archivedOrgs : allOrgs;
+  const viewVendors = view === "active" ? activeVendors : view === "archived" ? archivedVendors : allVendors;
 
-  const searchFiltered = viewOrgs.filter(o => {
+  const searchFiltered = viewVendors.filter(v => {
     const q = search.toLowerCase();
     const phoneDigits = search.replace(/\D/g, "");
     return (
-      o.name.toLowerCase().includes(search.toLowerCase()) ||
-      o.contactName.toLowerCase().includes(q) ||
-      o.email.toLowerCase().includes(q) ||
-      (phoneDigits.length > 0 && String(o.phone).includes(phoneDigits))
+      v.name.toLowerCase().includes(q) ||
+      v.contactName.toLowerCase().includes(q) ||
+      v.email.toLowerCase().includes(q) ||
+      (phoneDigits.length > 0 && String(v.phone).includes(phoneDigits))
     );
   });
 
   const filtered = onboardingFilter === "all"
     ? searchFiltered
-    : searchFiltered.filter(o => {
-        const info = completeness[o.id];
+    : searchFiltered.filter(v => {
+        const info = completeness[v.id];
         if (!info) return false;
         return onboardingFilter === "complete" ? info.complete : !info.complete;
       });
@@ -364,8 +364,8 @@ export default function AdminRestaurants() {
     return new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime();
   });
 
-  const allSelected = sorted.length > 0 && sorted.every(o => selectedIds.has(o.id));
-  const someSelected = sorted.some(o => selectedIds.has(o.id)) && !allSelected;
+  const allSelected = sorted.length > 0 && sorted.every(v => selectedIds.has(v.id));
+  const someSelected = sorted.some(v => selectedIds.has(v.id)) && !allSelected;
 
   useEffect(() => { setSelectedIds(new Set()); }, [view]);
 
@@ -378,7 +378,7 @@ export default function AdminRestaurants() {
   }
 
   function handleToggleAll(checked: boolean) {
-    if (checked) setSelectedIds(new Set(sorted.map(o => o.id)));
+    if (checked) setSelectedIds(new Set(sorted.map(v => v.id)));
     else setSelectedIds(new Set());
   }
 
@@ -399,34 +399,34 @@ export default function AdminRestaurants() {
 
   function handleExport() {
     exportToCsv(
-      csvFilename("restaurant-orgs", view),
+      csvFilename("vendors", view),
       [
-        { header: "name",         value: o => o.name },
-        { header: "contact_name", value: o => o.contactName },
-        { header: "email",        value: o => o.email },
-        { header: "phone",        value: o => formatPhone(o.phone) },
-        { header: "status",       value: o => o.status },
-        { header: "created_at",   value: o => new Date(o.createdAt).toISOString() },
+        { header: "name",         value: v => v.name },
+        { header: "contact_name", value: v => v.contactName },
+        { header: "email",        value: v => v.email },
+        { header: "phone",        value: v => formatPhone(v.phone) },
+        { header: "status",       value: v => v.status },
+        { header: "created_at",   value: v => new Date(v.createdAt).toISOString() },
       ],
       sorted,
     );
   }
 
   const viewLabels: Record<ViewMode, string> = {
-    active: `Active (${activeOrgs.length})`,
-    archived: `Archived (${archivedOrgs.length})`,
-    all: `All (${allOrgs.length})`,
+    active: `Active (${activeVendors.length})`,
+    archived: `Archived (${archivedVendors.length})`,
+    all: `All (${allVendors.length})`,
   };
 
   return (
     <div className="max-w-6xl mx-auto px-6 py-8">
       <div className="mb-8">
-        <h1 className="text-2xl font-semibold tracking-tight text-foreground" data-testid="text-page-title">Restaurant Organizations</h1>
-        <p className="text-sm text-muted-foreground mt-1">Manage restaurant organizations that purchase from vendors.</p>
+        <h1 className="text-2xl font-semibold tracking-tight text-foreground" data-testid="text-page-title">Vendors</h1>
+        <p className="text-sm text-muted-foreground mt-1">Manage vendors that supply your restaurant organizations.</p>
       </div>
 
       <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 mb-6">
-        <div className="flex items-center gap-1 p-1 rounded-lg bg-muted" data-testid="view-tabs-restaurants">
+        <div className="flex items-center gap-1 p-1 rounded-lg bg-muted" data-testid="view-tabs-vendors">
           {(["active", "archived", "all"] as ViewMode[]).map(v => (
             <button
               key={v}
@@ -436,7 +436,7 @@ export default function AdminRestaurants() {
                   ? "bg-background text-foreground shadow-sm"
                   : "text-muted-foreground hover:text-foreground"
               }`}
-              data-testid={`tab-${v}-restaurants`}
+              data-testid={`tab-${v}-vendors`}
             >
               {viewLabels[v]}
             </button>
@@ -444,7 +444,7 @@ export default function AdminRestaurants() {
         </div>
         <div className="flex items-center gap-3 ml-auto w-full sm:w-auto">
           <Select value={sort} onValueChange={v => setSort(v as SortOrder)}>
-            <SelectTrigger className="w-[130px] shrink-0" data-testid="select-sort-restaurants">
+            <SelectTrigger className="w-[130px] shrink-0" data-testid="select-sort-vendors">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
@@ -454,7 +454,7 @@ export default function AdminRestaurants() {
             </SelectContent>
           </Select>
           <Select value={onboardingFilter} onValueChange={v => setOnboardingFilter(v as "all" | "complete" | "incomplete")}>
-            <SelectTrigger className="w-[150px] shrink-0" data-testid="select-onboarding-filter-restaurants">
+            <SelectTrigger className="w-[150px] shrink-0" data-testid="select-onboarding-filter-vendors">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
@@ -465,27 +465,27 @@ export default function AdminRestaurants() {
           </Select>
           <div className="relative flex-1 sm:flex-initial">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-            <Input placeholder="Name, contact, or phone..." value={search} onChange={e => setSearch(e.target.value)} className="pl-9 w-full sm:w-[220px]" data-testid="input-search-restaurants" />
+            <Input placeholder="Name, contact, or phone..." value={search} onChange={e => setSearch(e.target.value)} className="pl-9 w-full sm:w-[220px]" data-testid="input-search-vendors" />
           </div>
           <Button
             variant="outline"
             onClick={handleExport}
             disabled={sorted.length === 0}
-            data-testid="button-export-restaurants"
+            data-testid="button-export-vendors"
           >
             <Download className="h-4 w-4 mr-2" />Export CSV
           </Button>
-          <Link href="/admin/restaurants/onboard">
-            <Button data-testid="button-onboard-restaurant">
-              <ListChecks className="h-4 w-4 mr-2" />Onboard Restaurant
+          <Link href="/admin/vendors/onboard">
+            <Button data-testid="button-onboard-vendor">
+              <ListChecks className="h-4 w-4 mr-2" />Onboard Vendor
             </Button>
           </Link>
         </div>
       </div>
 
       {(search.trim() !== "" || onboardingFilter !== "all") && !isLoading && (
-        <p className="text-xs text-muted-foreground mb-3" data-testid="text-filtered-count-restaurants">
-          Showing {sorted.length} of {viewOrgs.length} {viewOrgs.length === 1 ? "organization" : "organizations"}
+        <p className="text-xs text-muted-foreground mb-3" data-testid="text-filtered-count-vendors">
+          Showing {sorted.length} of {viewVendors.length} {viewVendors.length === 1 ? "vendor" : "vendors"}
         </p>
       )}
 
@@ -538,50 +538,50 @@ export default function AdminRestaurants() {
         </div>
       )}
 
-      <div className="border rounded-lg bg-card overflow-hidden" data-testid="table-restaurants">
+      <div className="border rounded-lg bg-card overflow-hidden" data-testid="table-vendors">
         {isError ? (
-          <div className="flex flex-col items-center justify-center py-16 px-4">
+          <div className="flex flex-col items-center justify-center py-16 px-4" data-testid="error-state-vendors">
             <div className="rounded-full bg-destructive/10 p-4 mb-4"><AlertCircle className="h-8 w-8 text-destructive" /></div>
-            <h3 className="text-lg font-semibold mb-1">Failed to load organizations</h3>
+            <h3 className="text-lg font-semibold mb-1">Failed to load vendors</h3>
             <p className="text-sm text-muted-foreground mb-6">{error?.message || "Something went wrong."}</p>
-            <Button variant="outline" onClick={() => refetch()}><RefreshCw className="h-4 w-4 mr-2" />Retry</Button>
+            <Button variant="outline" onClick={() => refetch()} data-testid="button-retry"><RefreshCw className="h-4 w-4 mr-2" />Retry</Button>
           </div>
         ) : isLoading ? (
           <div className="space-y-3 p-4">{Array.from({ length: 4 }).map((_, i) => (
             <div key={i} className="flex items-center gap-4"><Skeleton className="h-4 w-[180px]" /><Skeleton className="h-4 w-[140px]" /><Skeleton className="h-4 w-[160px]" /><Skeleton className="h-4 w-[110px]" /><Skeleton className="h-5 w-[60px] rounded-full" /><Skeleton className="h-8 w-[70px] ml-auto" /></div>
           ))}</div>
-        ) : filtered.length === 0 && viewOrgs.length === 0 && view === "active" && allOrgs.length === 0 ? (
-          <div className="flex flex-col items-center justify-center py-16 px-4" data-testid="empty-state-restaurants">
-            <div className="rounded-full bg-primary/10 p-4 mb-4"><UtensilsCrossed className="h-8 w-8 text-primary" /></div>
-            <h3 className="text-lg font-semibold mb-1">No restaurant organizations yet</h3>
-            <p className="text-sm text-muted-foreground mb-6 text-center max-w-sm">Get started by onboarding your first restaurant organization.</p>
-            <Link href="/admin/restaurants/onboard">
-              <Button data-testid="button-onboard-first-restaurant">
-                <ListChecks className="h-4 w-4 mr-2" />Onboard Your First Restaurant
+        ) : filtered.length === 0 && viewVendors.length === 0 && view === "active" && allVendors.length === 0 ? (
+          <div className="flex flex-col items-center justify-center py-16 px-4" data-testid="empty-state-vendors">
+            <div className="rounded-full bg-primary/10 p-4 mb-4"><Building2 className="h-8 w-8 text-primary" /></div>
+            <h3 className="text-lg font-semibold mb-1">No vendors yet</h3>
+            <p className="text-sm text-muted-foreground mb-6 text-center max-w-sm">Get started by onboarding your first vendor.</p>
+            <Link href="/admin/vendors/onboard">
+              <Button data-testid="button-onboard-first-vendor">
+                <ListChecks className="h-4 w-4 mr-2" />Onboard Your First Vendor
               </Button>
             </Link>
           </div>
-        ) : filtered.length === 0 && viewOrgs.length === 0 ? (
+        ) : filtered.length === 0 && viewVendors.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-12 px-4" data-testid={`empty-state-${view}`}>
             <div className="rounded-full bg-muted p-3 mb-3">
-              {view === "archived" ? <Archive className="h-6 w-6 text-muted-foreground" /> : <UtensilsCrossed className="h-6 w-6 text-muted-foreground" />}
+              {view === "archived" ? <Archive className="h-6 w-6 text-muted-foreground" /> : <Building2 className="h-6 w-6 text-muted-foreground" />}
             </div>
             <p className="text-sm font-medium text-foreground mb-1">
-              {view === "archived" ? "No archived organizations" : "No organizations in this view"}
+              {view === "archived" ? "No archived vendors" : "No vendors in this view"}
             </p>
             <p className="text-xs text-muted-foreground">
-              {view === "archived" ? "Archive an organization from the Active tab to see it here." : "Try switching to a different tab."}
+              {view === "archived" ? "Archive a vendor from the Active tab to see it here." : "Try switching to a different tab."}
             </p>
           </div>
         ) : searchFiltered.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-12 px-4">
             <Search className="h-8 w-8 text-muted-foreground/50 mb-3" />
-            <p className="text-sm text-muted-foreground">No organizations match "{search}"</p>
+            <p className="text-sm text-muted-foreground">No vendors match "{search}"</p>
           </div>
         ) : filtered.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-12 px-4" data-testid="empty-state-onboarding-filter">
             <Search className="h-8 w-8 text-muted-foreground/50 mb-3" />
-            <p className="text-sm font-medium text-foreground mb-1">No {onboardingFilter} organizations</p>
+            <p className="text-sm font-medium text-foreground mb-1">No {onboardingFilter} vendors</p>
             <p className="text-xs text-muted-foreground">Try selecting a different onboarding status filter.</p>
           </div>
         ) : (
@@ -595,7 +595,7 @@ export default function AdminRestaurants() {
                     data-testid="checkbox-select-all"
                   />
                 </TableHead>
-                <TableHead className="font-medium">Organization</TableHead>
+                <TableHead className="font-medium">Company</TableHead>
                 <TableHead className="font-medium">Contact</TableHead>
                 <TableHead className="font-medium">Email</TableHead>
                 <TableHead className="font-medium">Phone</TableHead>
@@ -605,43 +605,43 @@ export default function AdminRestaurants() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {sorted.map(org => (
-                <TableRow key={org.id} data-testid={`row-restaurant-${org.id}`} className={org.status === "archived" ? "opacity-60" : ""}>
+              {sorted.map(vendor => (
+                <TableRow key={vendor.id} data-testid={`row-vendor-${vendor.id}`} className={vendor.status === "archived" ? "opacity-60" : ""}>
                   <TableCell className="w-10 pr-0">
                     <Checkbox
-                      checked={selectedIds.has(org.id)}
-                      onCheckedChange={(checked) => handleToggleRow(org.id, !!checked)}
-                      data-testid={`checkbox-restaurant-${org.id}`}
+                      checked={selectedIds.has(vendor.id)}
+                      onCheckedChange={(checked) => handleToggleRow(vendor.id, !!checked)}
+                      data-testid={`checkbox-vendor-${vendor.id}`}
                     />
                   </TableCell>
-                  <TableCell className="font-medium" data-testid={`text-restaurant-name-${org.id}`}>
-                    <Link href={`/admin/restaurants/${org.id}`}>
-                      <span className="text-primary hover:underline cursor-pointer" data-testid={`link-restaurant-${org.id}`}>{org.name}</span>
+                  <TableCell className="font-medium" data-testid={`text-vendor-name-${vendor.id}`}>
+                    <Link href={`/admin/vendors/${vendor.id}`}>
+                      <span className="text-primary hover:underline cursor-pointer" data-testid={`link-vendor-${vendor.id}`}>{vendor.name}</span>
                     </Link>
                   </TableCell>
-                  <TableCell className="text-muted-foreground">{org.contactName}</TableCell>
-                  <TableCell className="text-muted-foreground">{org.email}</TableCell>
-                  <TableCell className="text-muted-foreground">{formatPhone(org.phone)}</TableCell>
-                  <TableCell><StatusBadge status={org.status} /></TableCell>
-                  <TableCell data-testid={`cell-onboarding-${org.id}`}>
-                    <OnboardingBadge info={completeness[org.id]} />
+                  <TableCell className="text-muted-foreground">{vendor.contactName}</TableCell>
+                  <TableCell className="text-muted-foreground">{vendor.email}</TableCell>
+                  <TableCell className="text-muted-foreground">{formatPhone(vendor.phone)}</TableCell>
+                  <TableCell><StatusBadge status={vendor.status} /></TableCell>
+                  <TableCell data-testid={`cell-onboarding-${vendor.id}`}>
+                    <OnboardingBadge info={completeness[vendor.id]} />
                   </TableCell>
                   <TableCell className="text-right">
                     <div className="flex items-center justify-end gap-1">
-                      {org.status !== "archived" && (
-                        <Link href={`/admin/restaurants/${org.id}`}>
-                          <Button variant="ghost" size="sm" className="h-8 px-2 text-muted-foreground hover:text-foreground" data-testid={`button-view-restaurant-${org.id}`}>
+                      {vendor.status !== "archived" && (
+                        <Link href={`/admin/vendors/${vendor.id}`}>
+                          <Button variant="ghost" size="sm" className="h-8 px-2 text-muted-foreground hover:text-foreground" data-testid={`button-view-vendor-${vendor.id}`}>
                             <Eye className="h-3.5 w-3.5 mr-1" />View
                           </Button>
                         </Link>
                       )}
-                      {org.status !== "archived" && (
-                        <Button variant="ghost" size="sm" onClick={() => { setEditingOrg(org); setFormOpen(true); }} className="h-8 px-2 text-muted-foreground hover:text-foreground" data-testid={`button-edit-restaurant-${org.id}`}>
+                      {vendor.status !== "archived" && (
+                        <Button variant="ghost" size="sm" onClick={() => { setEditingVendor(vendor); setFormOpen(true); }} className="h-8 px-2 text-muted-foreground hover:text-foreground" data-testid={`button-edit-vendor-${vendor.id}`}>
                           <Pencil className="h-3.5 w-3.5 mr-1" />Edit
                         </Button>
                       )}
-                      {org.status !== "archived" ? (
-                        <Button variant="ghost" size="sm" onClick={() => setArchiveTarget(org)} className="h-8 px-2 text-muted-foreground hover:text-destructive" data-testid={`button-archive-restaurant-${org.id}`}>
+                      {vendor.status !== "archived" ? (
+                        <Button variant="ghost" size="sm" onClick={() => setArchiveTarget(vendor)} className="h-8 px-2 text-muted-foreground hover:text-destructive" data-testid={`button-archive-vendor-${vendor.id}`}>
                           <Archive className="h-3.5 w-3.5 mr-1" />Archive
                         </Button>
                       ) : (
@@ -649,19 +649,19 @@ export default function AdminRestaurants() {
                           <Button
                             variant="ghost"
                             size="sm"
-                            onClick={() => restoreMutation.mutate(org.id)}
+                            onClick={() => restoreMutation.mutate(vendor.id)}
                             disabled={restoreMutation.isPending}
                             className="h-8 px-2 text-muted-foreground hover:text-emerald-600"
-                            data-testid={`button-restore-restaurant-${org.id}`}
+                            data-testid={`button-restore-vendor-${vendor.id}`}
                           >
                             <RotateCcw className="h-3.5 w-3.5 mr-1" />Restore
                           </Button>
                           <Button
                             variant="ghost"
                             size="sm"
-                            onClick={() => setDeleteTarget(org)}
+                            onClick={() => setDeleteTarget(vendor)}
                             className="h-8 px-2 text-muted-foreground hover:text-destructive"
-                            data-testid={`button-delete-restaurant-${org.id}`}
+                            data-testid={`button-delete-vendor-${vendor.id}`}
                           >
                             <Trash2 className="h-3.5 w-3.5 mr-1" />Delete
                           </Button>
@@ -677,7 +677,7 @@ export default function AdminRestaurants() {
       </div>
 
       {formOpen && (
-        <RestaurantFormDialog open={formOpen} onOpenChange={open => { setFormOpen(open); if (!open) setEditingOrg(undefined); }} org={editingOrg} />
+        <VendorFormDialog open={formOpen} onOpenChange={open => { setFormOpen(open); if (!open) setEditingVendor(undefined); }} vendor={editingVendor} />
       )}
 
       <AlertDialog open={!!archiveTarget} onOpenChange={open => !open && setArchiveTarget(undefined)}>
@@ -685,16 +685,16 @@ export default function AdminRestaurants() {
           <AlertDialogHeader>
             <AlertDialogTitle className="flex items-center gap-2">
               <Archive className="h-5 w-5 text-amber-600 shrink-0" />
-              Archive Organization
+              Archive Vendor
             </AlertDialogTitle>
             <AlertDialogDescription asChild>
               <div className="space-y-2 text-sm text-muted-foreground">
                 <p>
-                  <strong className="text-foreground">{archiveTarget?.name}</strong> will be moved to the Archived tab and will no longer appear in the active organization list.
+                  <strong className="text-foreground">{archiveTarget?.name}</strong> will be moved to the Archived tab and will no longer appear in the active vendor list.
                 </p>
-                <p>Any linked vendor-restaurant relationships will be removed while this organization is archived.</p>
+                <p>Any linked vendor-restaurant relationships will be removed while this vendor is archived.</p>
                 <p className="text-emerald-700 dark:text-emerald-400 font-medium">
-                  This is reversible — you can restore this organization at any time from the Archived tab.
+                  This is reversible — you can restore this vendor at any time from the Archived tab.
                 </p>
               </div>
             </AlertDialogDescription>
@@ -706,7 +706,7 @@ export default function AdminRestaurants() {
               className="bg-amber-600 text-white hover:bg-amber-700"
               data-testid="button-confirm-archive"
             >
-              {archiveMutation.isPending ? "Archiving..." : "Archive Organization"}
+              {archiveMutation.isPending ? "Archiving..." : "Archive Vendor"}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
@@ -715,11 +715,11 @@ export default function AdminRestaurants() {
       <TypedDeleteDialog
         open={!!deleteTarget}
         onOpenChange={open => !open && setDeleteTarget(undefined)}
-        entityType="restaurant organization"
+        entityType="vendor"
         consequences={[
           `"${deleteTarget?.name}" and all of its data will be permanently removed.`,
-          "All vendor-restaurant relationships linked to this organization will also be permanently deleted.",
-          "Attachments, notes, and all associated data will be lost.",
+          "All vendor-restaurant relationships linked to this vendor will also be permanently deleted.",
+          "Attachments, notes, and catalog data will be lost.",
         ]}
         onConfirm={() => deleteTarget && deleteMutation.mutate(deleteTarget.id)}
         isPending={deleteMutation.isPending}
@@ -728,12 +728,12 @@ export default function AdminRestaurants() {
       <TypedDeleteDialog
         open={bulkDeleteOpen}
         onOpenChange={open => { if (!open) setBulkDeleteOpen(false); }}
-        entityType="restaurant organization"
-        title={`Permanently Delete ${selectedIds.size} Organization${selectedIds.size !== 1 ? "s" : ""}`}
+        entityType="vendor"
+        title={`Permanently Delete ${selectedIds.size} Vendor${selectedIds.size !== 1 ? "s" : ""}`}
         consequences={[
-          `${selectedIds.size} organization${selectedIds.size !== 1 ? "s" : ""} and all associated data will be permanently removed.`,
+          `${selectedIds.size} vendor${selectedIds.size !== 1 ? "s" : ""} and all associated data will be permanently removed.`,
+          "All associated products will be permanently deleted.",
           "All linked vendor-restaurant relationships will be permanently deleted.",
-          "Attachments, notes, and all associated data will be lost.",
           "This action cannot be reversed.",
         ]}
         onConfirm={handleBulkDelete}

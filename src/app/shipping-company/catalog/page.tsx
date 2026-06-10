@@ -1,8 +1,8 @@
 "use client";
 
-import VendorProductCatalog from "@/views/vendor-product-catalog";
-import PortalAuthGuard from "@/components/portal-auth-guard";
-import ShippingLayout from "@/components/shipping-layout";
+import VendorProductCatalog from "@/views/vendor/product-catalog";
+import PortalAuthGuard from "@/components/shared/portal-auth-guard";
+import ShippingLayout from "@/components/shipping/layout";
 
 const ROLES = ["vendor_admin", "manager"];
 

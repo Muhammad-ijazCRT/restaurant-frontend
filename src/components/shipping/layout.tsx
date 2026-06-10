@@ -10,9 +10,9 @@ import {
   getShippingPortalLabels,
   isShippingRouteAllowed,
 } from "@/lib/shipping-portal-labels";
-import { NotificationBell } from "@/components/notification-bell";
-import { PortalRoleSwitcher } from "@/components/portal-role-switcher";
-import { ProfileMenu } from "@/components/profile-menu";
+import { NotificationBell } from "@/components/shared/notification-bell";
+import { PortalRoleSwitcher } from "@/components/shared/portal-role-switcher";
+import { ProfileMenu } from "@/components/shared/profile-menu";
 
 export default function ShippingLayout({ children }: { children: React.ReactNode }) {
   const { vendorId } = useVendorAuth();

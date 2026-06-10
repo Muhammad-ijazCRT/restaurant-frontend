@@ -9,8 +9,8 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { clearAuthSession } from "@/lib/portal-auth";
-import { NotificationBell } from "@/components/notification-bell";
-import { ProfileMenu } from "@/components/profile-menu";
+import { NotificationBell } from "@/components/shared/notification-bell";
+import { ProfileMenu } from "@/components/shared/profile-menu";
 import { getUserData } from "@/lib/portal-auth";
 
 const navItems = [

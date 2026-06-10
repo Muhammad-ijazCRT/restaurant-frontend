@@ -1,7 +1,7 @@
 import { useEffect, useState, type FormEvent } from "react";
 import { Link, useLocation } from "@/lib/wouter-compat";
-import AuthLayout from "@/components/auth-layout";
-import { showAuthFlash } from "@/components/auth-flash";
+import AuthLayout from "@/components/shared/auth-layout";
+import { showAuthFlash } from "@/components/shared/auth-flash";
 import {
   getQueryParam,
   getUserRole,

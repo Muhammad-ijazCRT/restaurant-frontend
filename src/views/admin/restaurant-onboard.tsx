@@ -26,8 +26,8 @@ import {
   UtensilsCrossed, UserCircle, Mail, Phone, Building2,
   ArrowLeft, ArrowRight, Check, CheckCircle2, Link2, Eye, EyeOff,
 } from "lucide-react";
-import { AttachmentsSection } from "@/components/attachments-section";
-import { InternalNotesSection } from "@/components/internal-notes-section";
+import { AttachmentsSection } from "@/components/shared/attachments-section";
+import { InternalNotesSection } from "@/components/shared/internal-notes-section";
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 

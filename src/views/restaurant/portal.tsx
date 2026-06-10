@@ -4,7 +4,7 @@ import { useRestaurantAuth } from "@/contexts/restaurant-auth-context";
 import type { VendorRestaurantRelationship } from "@shared/schema";
 import { formatCurrency } from "@shared/schema";
 import { Skeleton } from "@/components/ui/skeleton";
-import { RestaurantDashboardMetricCard } from "@/components/restaurant-dashboard-metric-card";
+import { RestaurantDashboardMetricCard } from "@/components/restaurant/dashboard-metric-card";
 import {
   buildRestaurantDashboardStats,
   normalizeOrderEntries,

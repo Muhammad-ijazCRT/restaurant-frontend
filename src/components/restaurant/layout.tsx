@@ -4,8 +4,8 @@ import { useEffect } from "react";
 import { useRestaurantAuth } from "@/contexts/restaurant-auth-context";
 import type { RestaurantOrg } from "@shared/schema";
 import { ChevronRight, UtensilsCrossed } from "lucide-react";
-import { NotificationBell } from "@/components/notification-bell";
-import { ProfileMenu } from "@/components/profile-menu";
+import { NotificationBell } from "@/components/shared/notification-bell";
+import { ProfileMenu } from "@/components/shared/profile-menu";
 import { getUserData, getUserRole } from "@/lib/portal-auth";
 import {
   canAccessRestaurantSettings,

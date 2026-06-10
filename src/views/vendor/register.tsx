@@ -1,4 +1,4 @@
-import PortalRegisterForm from "@/components/portal-register-form";
+import PortalRegisterForm from "@/components/shared/portal-register-form";
 import { useVendorAuth } from "@/contexts/vendor-auth-context";
 
 export default function VendorRegister() {

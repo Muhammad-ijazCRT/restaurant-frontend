@@ -110,7 +110,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
-import { CutoffSettingsPanel } from "@/components/cutoff-settings-panel";
+import { CutoffSettingsPanel } from "@/components/vendor/cutoff-settings-panel";
 import Papa from "papaparse";
 
 // ─── Constants ────────────────────────────────────────────────────────────────

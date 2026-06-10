@@ -1,8 +1,8 @@
 "use client";
 
-import ProfilePage from "@/views/profile-page";
-import PortalAuthGuard from "@/components/portal-auth-guard";
-import RestaurantLayout from "@/components/restaurant-layout";
+import ProfilePage from "@/views/shared/profile-page";
+import PortalAuthGuard from "@/components/shared/portal-auth-guard";
+import RestaurantLayout from "@/components/restaurant/layout";
 import { RestaurantPortalNavProvider } from "@/contexts/restaurant-portal-nav-context";
 
 const ROLES = ["restaurant", "restaurant_manager", "restaurant_employee"];
