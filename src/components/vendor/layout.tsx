@@ -5,7 +5,7 @@ import { useVendorPortalNav } from "@/contexts/vendor-portal-nav-context";
 import { VENDOR_SECTION_IDS, type VendorSectionId } from "@/lib/vendor-portal-sections";
 import { vendorKeys } from "@/api/vendor/vendors";
 import type { Vendor } from "@shared/schema";
-import { useEffect, useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Building2 } from "lucide-react";
 import { NotificationBell } from "@/components/shared/notification-bell";
 import { PortalRoleSwitcher } from "@/components/shared/portal-role-switcher";
@@ -41,7 +41,18 @@ export default function VendorLayout({ children }: { children: React.ReactNode }
     enabled: !!vendorId,
   });
 
-  const hashSection = window.location.hash.replace("#", "") as VendorSectionId;
+  const [hashSection, setHashSection] = useState<VendorSectionId | null>(null);
+
+  useEffect(() => {
+    const readHash = () => {
+      const hash = window.location.hash.replace("#", "") as VendorSectionId;
+      setHashSection(Object.values(VENDOR_SECTION_IDS).includes(hash) ? hash : null);
+    };
+    readHash();
+    window.addEventListener("hashchange", readHash);
+    return () => window.removeEventListener("hashchange", readHash);
+  }, []);
+
   const routeSection =
     location.startsWith("/vendor/relationships")
       ? VENDOR_SECTION_IDS.restaurants
@@ -53,7 +64,7 @@ export default function VendorLayout({ children }: { children: React.ReactNode }
             ? VENDOR_SECTION_IDS.products
             : location.startsWith("/vendor/employees")
               ? ("employees" as any)
-              : location === "/vendor/portal" && Object.values(VENDOR_SECTION_IDS).includes(hashSection)
+              : location === "/vendor/portal" && hashSection
                 ? hashSection
                 : VENDOR_SECTION_IDS.dashboard;
   const activeSection = portalNav?.activeSection ?? routeSection;

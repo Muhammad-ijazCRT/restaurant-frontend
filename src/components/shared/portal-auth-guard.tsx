@@ -1,4 +1,6 @@
-import { useEffect } from "react";
+"use client";
+
+import { useEffect, useState } from "react";
 import { useLocation } from "@/lib/wouter-compat";
 import {
   getAuthToken,
@@ -13,12 +15,15 @@ interface PortalAuthGuardProps {
   loginPath: string;
 }
 
+type AuthStatus = "pending" | "allowed" | "denied";
+
 export default function PortalAuthGuard({
   children,
   expectedRoles,
   loginPath,
 }: PortalAuthGuardProps) {
   const [location, navigate] = useLocation();
+  const [authStatus, setAuthStatus] = useState<AuthStatus>("pending");
 
   useEffect(() => {
     const role = getUserRole();
@@ -29,23 +34,21 @@ export default function PortalAuthGuard({
       if (homePath && homePath !== location) {
         navigate(homePath);
       }
+      setAuthStatus("denied");
       return;
     }
 
     if (!isAuthenticatedForRoles(expectedRoles)) {
       const redirect = encodeURIComponent(location);
       navigate(`${loginPath}?redirect=${redirect}`);
+      setAuthStatus("denied");
+      return;
     }
+
+    setAuthStatus("allowed");
   }, [location, navigate, expectedRoles, loginPath]);
 
-  const role = getUserRole();
-  const hasToken = !!getAuthToken();
-
-  if (hasToken && role && !expectedRoles.includes(role)) {
-    return null;
-  }
-
-  if (!isAuthenticatedForRoles(expectedRoles)) {
+  if (authStatus !== "allowed") {
     return null;
   }
 
