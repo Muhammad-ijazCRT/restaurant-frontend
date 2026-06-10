@@ -84,3 +84,21 @@ export function resolveInvoicedOrderDisplay(options: {
 
   return { snapshotLines: [], orderTotal: 0 };
 }
+
+export function getInvoiceRestaurantNotes(
+  snapshotLines: InvoiceLineItemSnapshot[],
+): string[] {
+  return snapshotLines
+    .map((line) => {
+      const note = line.restaurantNote?.trim();
+      if (!note) return null;
+      return `${line.productName}: ${note}`;
+    })
+    .filter(Boolean) as string[];
+}
+
+export function invoiceSnapshotHasRestaurantNotes(
+  snapshotLines: InvoiceLineItemSnapshot[],
+): boolean {
+  return snapshotLines.some((line) => Boolean(line.restaurantNote?.trim()));
+}

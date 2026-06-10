@@ -21,6 +21,7 @@ import {
 } from "lucide-react";
 import { adminDashboardKeys } from "@/api/admin/dashboard";
 import type { ActivityLog, ActivityAction } from "@shared/schema";
+import { formatPortalTimestamp, formatRelativeTime } from "@/lib/format-relative-time";
 
 type ActionMeta = {
   label: string;
@@ -125,46 +126,6 @@ function matchesActivitySearch(log: ActivityLog, query: string): boolean {
   return words.every((word) => wordMatchesHaystack(word, haystack));
 }
 
-function parseDate(dateStr: string | Date | null | undefined): Date {
-  if (!dateStr) return new Date(0);
-  if (dateStr instanceof Date) return dateStr;
-  return new Date(dateStr.endsWith("Z") ? dateStr.slice(0, -1) : dateStr);
-}
-
-function formatRelativeTime(date: string | Date): string {
-  const d = parseDate(date);
-  if (isNaN(d.getTime()) || d.getFullYear() <= 1970) return "Unknown";
-
-  const now = new Date();
-  let diffMs = now.getTime() - d.getTime();
-  if (diffMs < 0) diffMs = 0;
-
-  const diffSec = Math.floor(diffMs / 1000);
-  if (diffSec < 60) return `${diffSec} sec ago`;
-  
-  const diffMin = Math.floor(diffSec / 60);
-  if (diffMin < 60) return `${diffMin} min ago`;
-  
-  const diffHour = Math.floor(diffMin / 60);
-  if (diffHour < 24) return `${diffHour} hour${diffHour !== 1 ? 's' : ''} ago`;
-  
-  const diffDays = Math.floor(diffHour / 24);
-  if (diffDays < 30) return `${diffDays} day${diffDays !== 1 ? 's' : ''} ago`;
-  
-  const diffMonths = Math.floor(diffDays / 30);
-  if (diffMonths < 12) return `${diffMonths} month${diffMonths !== 1 ? 's' : ''} ago`;
-  
-  const diffYears = Math.floor(diffDays / 365);
-  return `${diffYears} year${diffYears !== 1 ? 's' : ''} ago`;
-}
-
-function formatFullTimestamp(date: string | Date): string {
-  return parseDate(date).toLocaleString("en-US", {
-    month: "short", day: "numeric", year: "numeric",
-    hour: "numeric", minute: "2-digit", hour12: true,
-  });
-}
-
 function parseCsvMeta(metadata: string | null | undefined): string | null {
   if (!metadata) return null;
   try {
@@ -206,7 +167,7 @@ export default function AdminActivityLog() {
   const isFiltered = search.trim().length > 0;
 
   return (
-    <div className="mx-auto w-full max-w-6xl px-8 pb-8 pt-20" data-testid="page-activity-log">
+    <div data-testid="page-activity-log">
       <div className="mb-5" data-testid="section-header">
         <div className="flex items-center gap-3 mb-1">
           <ClipboardList className="h-5 w-5 text-muted-foreground" />
@@ -331,11 +292,11 @@ export default function AdminActivityLog() {
 
                       <time
                         className="text-xs text-muted-foreground whitespace-nowrap"
-                        title={formatFullTimestamp(log.createdAt)}
+                        title={formatPortalTimestamp(log.createdAt)}
                         dateTime={String(log.createdAt)}
                         data-testid={`log-time-${log.id}`}
                       >
-                        {formatRelativeTime(log.createdAt)}
+                        {formatRelativeTime(log.createdAt) || "Unknown"}
                       </time>
                     </div>
                   </li>

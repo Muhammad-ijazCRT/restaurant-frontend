@@ -167,7 +167,7 @@ export default function AdminOrderDetail() {
 
   if (isLoading) {
     return (
-      <div className="max-w-3xl mx-auto px-6 py-8 space-y-6">
+      <div className="space-y-6">
         <Skeleton className="h-8 w-40" />
         <div className="space-y-2">
           <Skeleton className="h-8 w-56" />
@@ -182,7 +182,7 @@ export default function AdminOrderDetail() {
 
   if (isError || !data) {
     return (
-      <div className="max-w-3xl mx-auto px-6 py-8">
+      <div>
         <Link href="/admin/relationships">
           <Button variant="ghost" size="sm" className="mb-6 -ml-2 text-muted-foreground">
             <ArrowLeft className="h-4 w-4 mr-1" />Back
@@ -277,7 +277,7 @@ export default function AdminOrderDetail() {
   ];
 
   return (
-    <div className="max-w-3xl mx-auto px-6 py-8">
+    <div>
       {/* Back button */}
       <Link href={backHref}>
         <Button

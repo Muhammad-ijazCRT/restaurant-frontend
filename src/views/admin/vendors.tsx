@@ -423,7 +423,7 @@ export default function AdminVendors() {
   };
 
   return (
-    <div className="max-w-6xl mx-auto px-6 py-8">
+    <div>
       <div className="mb-8">
         <h1 className="text-2xl font-semibold tracking-tight text-foreground" data-testid="text-page-title">Vendors</h1>
         <p className="text-sm text-muted-foreground mt-1">Manage vendors that supply your restaurant organizations.</p>

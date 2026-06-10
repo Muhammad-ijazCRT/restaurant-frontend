@@ -1,6 +1,7 @@
 import { useEffect } from "react";
 import { Link } from "@/lib/wouter-compat";
 import { ArrowRight, Store, Package } from "lucide-react";
+import { RodexBrandLink } from "@/components/shared/rodex-brand";
 import "@/styles/landing.css";
 
 function useScrollReveal() {
@@ -29,21 +30,6 @@ function useScrollReveal() {
     nodes.forEach((node) => observer.observe(node));
     return () => observer.disconnect();
   }, []);
-}
-
-function RodexLogo() {
-  return (
-    <Link href="/" className="rodex-brand" aria-label="RodexOS home">
-      <svg className="rodex-brand-icon" viewBox="0 0 40 40" fill="none" aria-hidden="true">
-        <path d="M8 32V8h12.5c6.9 0 11.5 4.2 11.5 10.2S27.4 28.5 20.5 28.5H16v3.5H8z" fill="#111" />
-        <path d="M16 14.5h4.2c3.4 0 5.6 1.9 5.6 4.8s-2.2 4.7-5.6 4.7H16V14.5z" fill="#fff" />
-        <path d="M30 8h6v24h-6V8z" fill="#F05A28" />
-      </svg>
-      <span className="rodex-brand-text">
-        Rodex<span className="rodex-brand-accent">OS</span>
-      </span>
-    </Link>
-  );
 }
 
 function DashboardMockup() {
@@ -133,7 +119,7 @@ export default function LandingPage() {
     <div className="landing-page">
       <header className="rodex-header rodex-header-anim">
         <div className="landing-container rodex-header-inner">
-          <RodexLogo />
+          <RodexBrandLink className="rodex-brand" iconClassName="rodex-brand-icon" textClassName="rodex-brand-text" />
           <nav className="rodex-nav rodex-nav-anim" aria-label="Main navigation">
             <a href="#about" className="rodex-nav-link">About</a>
             <a href="#contact" className="rodex-nav-link">Contact</a>
@@ -275,7 +261,7 @@ export default function LandingPage() {
 
       <footer className="rodex-footer rodex-reveal">
         <div className="landing-container rodex-footer-inner">
-          <RodexLogo />
+          <RodexBrandLink className="rodex-brand" iconClassName="rodex-brand-icon" textClassName="rodex-brand-text" />
           <nav className="rodex-footer-nav" aria-label="Footer navigation">
             <a href="#about">About</a>
             <a href="#contact">Contact</a>

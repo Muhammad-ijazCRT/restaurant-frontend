@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { restaurantOrderApi, restaurantOrderKeys } from "@/api/restaurant/orders";
+import { profileKeys } from "@/api/shared/profile";
 import { relationshipKeys } from "@/api/shared/relationships";
 import { vendorKeys } from "@/api/vendor/vendors";
 import { restaurantOrgKeys } from "@/api/restaurant/orgs";
@@ -229,6 +230,7 @@ export default function RestaurantOrderComposer() {
         (prev: { order: Order; lineItems: OrderLineItem[] }[] = []) => [data, ...prev],
       );
       queryClient.invalidateQueries({ queryKey: vendorOrderKeys.list(vendorId) });
+      void queryClient.invalidateQueries({ queryKey: profileKeys.notifications() });
       setConfirmSubmit(false);
       toast({ title: "Order submitted", description: "Your order has been sent to the vendor." });
       navigate(`/restaurant/vendor/${vendorId}`);
@@ -250,7 +252,7 @@ export default function RestaurantOrderComposer() {
 
   if (isLoading) {
     return (
-      <div className="max-w-5xl mx-auto px-6 py-8 space-y-4">
+      <div className="space-y-4">
         <Skeleton className="h-24 w-full rounded-lg" />
         <Skeleton className="h-96 w-full rounded-lg" />
       </div>
@@ -260,7 +262,7 @@ export default function RestaurantOrderComposer() {
   if (!vendor || !relationship) return null;
 
   return (
-    <div className="flex max-w-5xl w-full mx-auto px-6 py-8 gap-6 items-start">
+    <div className="flex w-full gap-6 items-start">
 
         {/* ── Left panel: product list ──────────────────────────────────────── */}
         <div className="flex-1 min-w-0 border rounded-lg bg-card overflow-hidden">

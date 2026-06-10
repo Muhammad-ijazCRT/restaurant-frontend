@@ -12,6 +12,7 @@ import {
   AlertCircle, RefreshCw, ArrowRight, Archive, ToggleLeft,
   TrendingUp, Clock, AlertTriangle, CheckCircle2, CircleDollarSign,
 } from "lucide-react";
+import { formatRelativeTime, parsePortalDate } from "@/lib/format-relative-time";
 
 type DashboardStats = {
   vendors: { total: number; active: number; archived: number };
@@ -237,37 +238,13 @@ const statusVariants: Record<string, string> = {
 };
 
 function parseDate(dateStr: string | null | undefined): Date {
-  if (!dateStr) return new Date(0);
-  // Strip 'Z' to force browser to parse as local time
-  return new Date(dateStr.endsWith("Z") ? dateStr.slice(0, -1) : dateStr);
+  return parsePortalDate(dateStr) ?? new Date(0);
 }
 
 function formatRelativeDate(date: Date | string | null | undefined): string {
   if (!date) return "Unknown";
-  const d = typeof date === "string" ? parseDate(date) : date;
-  if (isNaN(d.getTime()) || d.getFullYear() <= 1970) return "Unknown";
-  
-  const now = new Date();
-  let diffMs = now.getTime() - d.getTime();
-  if (diffMs < 0) diffMs = 0; // Fix negative times due to slight time sync issues
-  
-  const diffSec = Math.floor(diffMs / 1000);
-  if (diffSec < 60) return `${diffSec} sec ago`;
-  
-  const diffMin = Math.floor(diffSec / 60);
-  if (diffMin < 60) return `${diffMin} min ago`;
-  
-  const diffHour = Math.floor(diffMin / 60);
-  if (diffHour < 24) return `${diffHour} hour${diffHour !== 1 ? 's' : ''} ago`;
-  
-  const diffDays = Math.floor(diffHour / 24);
-  if (diffDays < 30) return `${diffDays} day${diffDays !== 1 ? 's' : ''} ago`;
-  
-  const diffMonths = Math.floor(diffDays / 30);
-  if (diffMonths < 12) return `${diffMonths} month${diffMonths !== 1 ? 's' : ''} ago`;
-  
-  const diffYears = Math.floor(diffDays / 365);
-  return `${diffYears} year${diffYears !== 1 ? 's' : ''} ago`;
+  const relative = formatRelativeTime(date);
+  return relative || "Unknown";
 }
 
 function ActivityRow({ item }: { item: ActivityItem }) {
@@ -418,7 +395,7 @@ export default function AdminDashboard() {
   const feed = activity ? buildActivityFeed(activity) : [];
 
   return (
-    <div className="max-w-5xl mx-auto px-6 py-8">
+    <div>
       <div className="mb-8">
         <h1 className="text-2xl font-semibold tracking-tight text-foreground" data-testid="text-page-title">
           Dashboard

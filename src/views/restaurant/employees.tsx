@@ -118,6 +118,7 @@ function EmployeeDialog({
         ...(data.password ? { loginPassword: data.password } : {}),
       };
       if (isEditing) {
+        if (!employee?.id) throw new Error("Employee not selected");
         await restaurantEmployeeApi.update(restaurantId, employee.id, payload);
         return;
       }
@@ -336,7 +337,7 @@ export default function RestaurantEmployees() {
   }
 
   return (
-    <div className="mx-auto max-w-6xl px-6 py-8" data-testid="page-restaurant-employees">
+    <div data-testid="page-restaurant-employees">
       <div className="mb-5 flex items-start justify-between gap-4">
         <div>
           <h1 className="text-xl font-semibold text-foreground">Employees</h1>

@@ -142,7 +142,7 @@ export default function ProfilePage() {
   }
 
   return (
-    <div className="flex items-start justify-center px-4 py-12">
+    <div className="flex items-start justify-center">
       <Card className="w-full max-w-lg shadow-lg">
         <CardHeader className="text-center pb-2">
           <CardTitle className="text-2xl font-bold">My Profile</CardTitle>

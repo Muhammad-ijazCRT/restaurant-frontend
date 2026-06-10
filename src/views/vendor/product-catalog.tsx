@@ -337,7 +337,7 @@ export default function VendorProductCatalog() {
   if (!vendorId) return null;
 
   return (
-    <div className="mx-auto max-w-6xl px-6 py-8" data-testid="page-vendor-products">
+    <div data-testid="page-vendor-products">
       <div className="overflow-hidden rounded-lg border bg-card">
         <div className="flex flex-wrap items-center justify-between gap-3 border-b px-5 py-4">
           <div className="flex items-center gap-2">

@@ -192,7 +192,7 @@ export default function VendorRelationshipDetail() {
   }
 
   return (
-    <div className="px-7 py-7">
+    <div>
       <div className="mb-7 flex items-center gap-4 text-sm">
         <Link href="/vendor/relationships">
           <button className="flex items-center gap-2 text-muted-foreground hover:text-foreground">

@@ -3,7 +3,7 @@ import { Settings, Bell, Shield, Palette, Globe } from "lucide-react";
 
 export default function SettingsPage() {
   return (
-    <div className="flex flex-col items-center justify-start min-h-full w-full px-4 py-12 bg-muted/10">
+    <div className="flex flex-col items-center justify-start min-h-full w-full">
       {/* Page Header - Centered */}
       <div className="w-full max-w-2xl text-center mb-8">
         <div className="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-primary/10 mb-4">

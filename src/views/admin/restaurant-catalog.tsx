@@ -54,7 +54,7 @@ export default function RestaurantCatalog() {
 
   if (isLoading) {
     return (
-      <div className="max-w-4xl mx-auto px-6 py-8">
+      <div>
         <Skeleton className="h-6 w-32 mb-6" />
         <Skeleton className="h-8 w-64 mb-2" />
         <Skeleton className="h-4 w-48 mb-8" />
@@ -70,7 +70,7 @@ export default function RestaurantCatalog() {
 
   if (isForbidden) {
     return (
-      <div className="max-w-4xl mx-auto px-6 py-8">
+      <div>
         <Link href={`/admin/restaurants/${restaurantId}`}>
           <Button variant="ghost" size="sm" className="mb-6 -ml-2 text-muted-foreground hover:text-foreground" data-testid="button-back">
             <ArrowLeft className="h-4 w-4 mr-1" />Back to Restaurant
@@ -91,7 +91,7 @@ export default function RestaurantCatalog() {
 
   if (catalogError || !catalog) {
     return (
-      <div className="max-w-4xl mx-auto px-6 py-8">
+      <div>
         <Link href={`/admin/restaurants/${restaurantId}`}>
           <Button variant="ghost" size="sm" className="mb-6 -ml-2 text-muted-foreground hover:text-foreground" data-testid="button-back">
             <ArrowLeft className="h-4 w-4 mr-1" />Back to Restaurant
@@ -112,7 +112,7 @@ export default function RestaurantCatalog() {
   const activeProducts = products.filter(p => p.status !== "archived");
 
   return (
-    <div className="max-w-4xl mx-auto px-6 py-8">
+    <div>
       <Link href={`/admin/restaurants/${restaurantId}`}>
         <Button variant="ghost" size="sm" className="mb-6 -ml-2 text-muted-foreground hover:text-foreground" data-testid="button-back">
           <ArrowLeft className="h-4 w-4 mr-1" />Back to {org?.name || "Restaurant"}

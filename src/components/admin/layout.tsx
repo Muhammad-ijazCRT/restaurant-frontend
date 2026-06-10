@@ -5,13 +5,12 @@ import {
   UtensilsCrossed,
   Link2,
   ClipboardList,
-  LogOut,
 } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { clearAuthSession } from "@/lib/portal-auth";
+import { clearAuthSession, getUserData } from "@/lib/portal-auth";
 import { NotificationBell } from "@/components/shared/notification-bell";
 import { ProfileMenu } from "@/components/shared/profile-menu";
-import { getUserData } from "@/lib/portal-auth";
+import { PortalPageContainer } from "@/components/shared/portal-page-container";
+import { PortalSidebarBrand } from "@/components/shared/rodex-brand";
 
 const navItems = [
   { path: "/super-admin/dashboard", label: "Dashboard", icon: LayoutDashboard },
@@ -34,9 +33,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     <div className="h-full bg-background flex overflow-hidden" data-testid="admin-layout">
       <aside className="w-[240px] h-full border-r border-sidebar-border bg-sidebar flex flex-col shrink-0">
         <div className="h-14 flex items-center px-5 border-b border-sidebar-border">
-          <span className="text-sm font-semibold tracking-tight text-sidebar-foreground" data-testid="text-app-title">
-            Admin Console
-          </span>
+          <PortalSidebarBrand subtitle="Admin Console" href="/super-admin/dashboard" />
         </div>
         <nav className="flex-1 py-3 px-3 space-y-0.5">
           {navItems.map((item) => {
@@ -68,15 +65,14 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
       <div className="fixed right-6 top-4 z-20 flex items-center gap-2">
         <NotificationBell />
         <ProfileMenu
-          user={user}
-          roleLabel="Super Admin"
+          user={user}          roleLabel="Super Admin"
           onLogout={handleLogout}
           profileHref="/super-admin/profile"
           settingsHref="/super-admin/settings"
         />
       </div>
-      <main className="flex-1 min-h-0 overflow-y-auto">
-        {children}
+      <main className="flex-1 min-h-0 overflow-y-auto bg-muted/40">
+        <PortalPageContainer>{children}</PortalPageContainer>
       </main>
     </div>
   );

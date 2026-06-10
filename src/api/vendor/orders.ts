@@ -28,6 +28,8 @@ export const vendorOrderPaths = {
     `/api/vendors/${vendorId}/orders/${orderId}/deliver`,
   resolveIssue: (vendorId: string, orderId: string) =>
     `/api/vendors/${vendorId}/orders/${orderId}/resolve-issue`,
+  forwardReviewToDriver: (vendorId: string, orderId: string) =>
+    `/api/vendors/${vendorId}/orders/${orderId}/forward-review-to-driver`,
   fulfillments: (vendorId: string, orderId: string) =>
     `/api/vendors/${vendorId}/orders/${orderId}/fulfillments`,
 } as const;
@@ -49,4 +51,6 @@ export const vendorOrderApi = {
     apiRequest("PATCH", vendorOrderPaths.deliver(vendorId, orderId), data),
   resolveIssue: (vendorId: string, orderId: string, data: unknown) =>
     apiRequest("PATCH", vendorOrderPaths.resolveIssue(vendorId, orderId), data),
+  forwardReviewToDriver: (vendorId: string, orderId: string) =>
+    apiRequest("PATCH", vendorOrderPaths.forwardReviewToDriver(vendorId, orderId)),
 };

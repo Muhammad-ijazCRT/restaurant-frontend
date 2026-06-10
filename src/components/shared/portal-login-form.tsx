@@ -2,6 +2,7 @@ import { useEffect, useState, type FormEvent } from "react";
 import { profileKeys } from "@/api/shared/profile";
 import { Link, useLocation } from "@/lib/wouter-compat";
 import AuthLayout from "@/components/shared/auth-layout";
+import { RodexBrandLink } from "@/components/shared/rodex-brand";
 import { showAuthFlash } from "@/components/shared/auth-flash";
 import {
   getQueryParam,
@@ -151,6 +152,9 @@ export default function PortalLoginForm({
 
   return (
     <AuthLayout>
+      <div className="mb-5 flex justify-center">
+        <RodexBrandLink href="/" />
+      </div>
       <h2>{heading}</h2>
       <p className="subtitle">{subtitle}</p>
 

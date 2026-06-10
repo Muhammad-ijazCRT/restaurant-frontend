@@ -832,7 +832,7 @@ export default function RestaurantOnboard() {
   }
 
   return (
-    <div className="max-w-3xl mx-auto px-6 py-8">
+    <div>
       <div className="mb-6">
         <Link href="/admin/restaurants">
           <Button

@@ -34,7 +34,7 @@ function RestaurantOverviewDashboard({
   onOrdersClick: () => void;
 }) {
   return (
-    <div className="mx-auto max-w-5xl px-6 py-8" data-testid="restaurant-employee-dashboard">
+    <div data-testid="restaurant-employee-dashboard">
       <div className="mb-8">
         <h1 className="text-xl font-semibold tracking-tight text-foreground">Overview</h1>
         <p className="mt-1 text-sm text-muted-foreground">
@@ -119,7 +119,7 @@ function RestaurantOverviewDashboard({
 
 function OverviewSkeleton() {
   return (
-    <div className="mx-auto max-w-5xl space-y-8 px-6 py-8">
+    <div className="space-y-8">
       <div className="space-y-2">
         <Skeleton className="h-7 w-32" />
         <Skeleton className="h-4 w-80" />
@@ -171,7 +171,7 @@ export default function RestaurantPortal() {
 
   if (!restaurantId) {
     return (
-      <div className="mx-auto max-w-5xl px-6 py-8 text-center text-sm text-muted-foreground">
+      <div className="text-center text-sm text-muted-foreground">
         Restaurant context unavailable. Try logging in again.
       </div>
     );

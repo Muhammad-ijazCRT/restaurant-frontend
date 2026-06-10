@@ -107,7 +107,7 @@ export default function VendorRelationships() {
   if (!vendorId) return null;
 
   return (
-    <div className="px-7 py-7">
+    <div>
       <div className="mb-6">
         <h1 className="text-xl font-semibold tracking-tight text-foreground">
           Relationships

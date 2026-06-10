@@ -15,6 +15,8 @@ import {
   getRestaurantPortalLabels,
   isRestaurantRouteAllowed,
 } from "@/lib/restaurant-portal-labels";
+import { PortalPageContainer } from "@/components/shared/portal-page-container";
+import { PortalSidebarBrand } from "@/components/shared/rodex-brand";
 import { countNeedsReviewOrders, normalizeOrderEntries } from "@/lib/restaurant-orders";
 
 export default function RestaurantLayout({ children }: { children: React.ReactNode }) {
@@ -54,8 +56,8 @@ export default function RestaurantLayout({ children }: { children: React.ReactNo
   return (
     <div className="flex h-full overflow-hidden bg-background" data-testid="restaurant-layout">
       <aside className="flex h-full w-[280px] shrink-0 flex-col border-r border-sidebar-border bg-sidebar">
-        <div className="flex h-12 items-center border-b border-sidebar-border px-6">
-          <p className="text-base font-semibold text-sidebar-foreground">{portalLabels.sidebarTitle}</p>
+        <div className="flex h-14 items-center border-b border-sidebar-border px-5">
+          <PortalSidebarBrand subtitle={portalLabels.sidebarTitle} href="/restaurant/portal" />
         </div>
         <nav className="flex-1 overflow-y-auto px-3 py-4">
           {navItems.map((item) => {
@@ -113,7 +115,9 @@ export default function RestaurantLayout({ children }: { children: React.ReactNo
             />
           </div>
         </header>
-        <main className="min-h-0 flex-1 overflow-y-auto bg-muted/40">{children}</main>
+        <main className="min-h-0 flex-1 overflow-y-auto bg-muted/40">
+          <PortalPageContainer>{children}</PortalPageContainer>
+        </main>
       </div>
     </div>
   );

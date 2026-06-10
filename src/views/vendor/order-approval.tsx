@@ -1,12 +1,23 @@
 import { useParams, useLocation } from "@/lib/wouter-compat";
-import { vendorOrderPaths } from "@/api/vendor/orders";
+import { vendorOrderPaths, vendorOrderApi } from "@/api/vendor/orders";
 import { vendorOrderKeys } from "@/api/vendor/orders";
+import { profileKeys } from "@/api/shared/profile";
 import { apiUrl } from "@/lib/api";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation } from "@tanstack/react-query";
 import { useVendorAuth } from "@/contexts/vendor-auth-context";
 import { isDisputedOrder } from "@/lib/order-status-utils";
 import { formatCurrency } from "@shared/schema";
-import { Badge } from "@/components/ui/badge";
+import type { LineFulfillment, Order } from "@shared/schema";
+import {
+  getEffectiveLineQty,
+  getOriginalOrderTotal,
+  getVendorAdjustedQty,
+  getVendorAdjustedTotal,
+  getVendorNote,
+  normalizeLineFulfillment,
+} from "@/lib/vendor-order-fulfillment";
+import { queryClient } from "@/lib/queryClient";
+import { useToast } from "@/hooks/use-toast";import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
@@ -14,9 +25,8 @@ import {
 } from "@/components/ui/table";
 import {
   ArrowLeft, Package, CalendarDays, UtensilsCrossed,
-  Hash, AlertCircle, ShieldAlert, CreditCard, Download,
-} from "lucide-react";
-import Papa from "papaparse";
+  Hash, AlertCircle, ShieldAlert, CreditCard, Download, Truck,
+} from "lucide-react";import Papa from "papaparse";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -31,31 +41,28 @@ interface EnrichedLineItem {
 }
 
 interface VendorOrderDetailResponse {
-  order: {
-    id: string;
-    displayId: number | null;
-    restaurantOrgId: string;
-    vendorId: string;
-    status: string;
-    createdAt: string;
-    restaurantReviewSubmittedAt: string | null;
-    vendorApprovedAt: string | null;
-    vendorRejectedAt: string | null;
-    vendorRejectionReason: string | null;
-    paidAt: string | null;
-  };
+  order: Pick<
+    Order,
+    | "id"
+    | "displayId"
+    | "restaurantOrgId"
+    | "vendorId"
+    | "status"
+    | "createdAt"
+    | "restaurantReviewSubmittedAt"
+    | "restaurantIssueStatus"
+    | "vendorApprovedAt"
+    | "vendorRejectedAt"
+    | "vendorRejectionReason"
+    | "paidAt"
+    | "pickingStatus"
+  >;
   lineItems: EnrichedLineItem[];
   restaurantName: string;
   vendorName: string;
 }
 
-interface LineFulfillment {
-  id: string;
-  orderLineItemId: string;
-  restaurantReceivedQty: number | null;
-  restaurantNote: string | null;
-}
-
+type ReviewFulfillment = LineFulfillment;
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
 function formatDate(dateStr: string): string {
@@ -74,7 +81,7 @@ export default function VendorOrderApproval() {
   const { orderId } = useParams<{ orderId: string }>();
   const { vendorId } = useVendorAuth();
   const [, navigate] = useLocation();
-
+  const { toast } = useToast();
   if (!vendorId) {
     navigate("/vendor/login");
     return null;
@@ -98,7 +105,7 @@ export default function VendorOrderApproval() {
 
   // ── Fetch fulfillments (restaurant/driver resolution details) ────────────
 
-  const { data: fulfillments = [] } = useQuery<LineFulfillment[]>({
+  const { data: fulfillments = [] } = useQuery<ReviewFulfillment[]>({
     queryKey: vendorOrderKeys.fulfillments(vendorId, orderId),
     enabled: !!vendorId && !!orderId,
     staleTime: Infinity,
@@ -109,17 +116,36 @@ export default function VendorOrderApproval() {
     },
   });
 
-  // ── Loading ───────────────────────────────────────────────────────────────
+  const forwardMutation = useMutation({
+    mutationFn: async () => {
+      const res = await vendorOrderApi.forwardReviewToDriver(vendorId!, orderId!);
+      return res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: vendorOrderKeys.detail(vendorId!, orderId!) });
+      queryClient.invalidateQueries({ queryKey: vendorOrderKeys.list(vendorId!) });
+      void queryClient.invalidateQueries({ queryKey: profileKeys.notifications() });
+      toast({
+        title: "Sent to driver",
+        description: "Restaurant review changes were forwarded to the driver for approval.",
+      });
+      navigate("/vendor/portal");
+    },
+    onError: (err: Error) => {
+      toast({ title: "Error", description: err.message, variant: "destructive" });
+    },
+  });
 
+  // ── Loading ───────────────────────────────────────────────────────────────
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-muted/20">
+      <div className="min-h-[40vh] bg-muted/20">
         <header className="h-14 bg-background border-b flex items-center px-6 gap-3">
           <Skeleton className="h-5 w-24" />
           <Skeleton className="h-4 w-4" />
           <Skeleton className="h-5 w-32" />
         </header>
-        <div className="max-w-4xl mx-auto px-6 py-8 space-y-4">
+        <div className="space-y-4">
           <Skeleton className="h-28 w-full rounded-lg" />
           <Skeleton className="h-64 w-full rounded-lg" />
         </div>
@@ -129,7 +155,7 @@ export default function VendorOrderApproval() {
 
   if (isError || !data) {
     return (
-      <div className="min-h-screen flex flex-col items-center justify-center gap-4 p-6">
+      <div className="flex min-h-[40vh] flex-col items-center justify-center gap-4 p-6">
         <p className="text-destructive text-sm font-medium" data-testid="text-approval-error">
           Order not found or access denied.
         </p>
@@ -143,26 +169,31 @@ export default function VendorOrderApproval() {
 
   const { order, lineItems, restaurantName, vendorName } = data;
 
-  const fulfillmentMap = new Map(fulfillments.map(f => [f.orderLineItemId, f]));
+  const fulfillmentMap = new Map(
+    fulfillments.map((f) => [f.orderLineItemId, normalizeLineFulfillment(f)!]),
+  );
 
-  const orderedTotal = lineItems.reduce(
-    (sum, li) => sum + parseFloat(li.unitPriceAtTimeOfOrder) * li.quantity, 0
+  const orderedTotal = getOriginalOrderTotal(lineItems);
+  const vendorTotal = getVendorAdjustedTotal(lineItems, (lineItemId) =>
+    fulfillmentMap.get(lineItemId),
   );
   const reviewedTotal = lineItems.reduce((sum, li) => {
     const f = fulfillmentMap.get(li.id);
-    const qty = f?.restaurantReceivedQty ?? li.quantity;
+    const expectedQty = getEffectiveLineQty(f, li.quantity, order);
+    const qty = f?.restaurantReceivedQty ?? expectedQty;
     return sum + parseFloat(li.unitPriceAtTimeOfOrder) * qty;
   }, 0);
 
   const isAlreadyApproved = order.status === "invoiced" || !!order.vendorApprovedAt;
   const isDisputed = isDisputedOrder(order);
-  const invoiceTotal = isAlreadyApproved ? reviewedTotal : orderedTotal;
-
+  const isPendingVendor = order.restaurantIssueStatus === "pending_vendor";
+  const isPendingDriver = order.restaurantIssueStatus === "pending_driver";
+  const invoiceTotal = isAlreadyApproved ? reviewedTotal : reviewedTotal;
   function buildCsvRows() {
     return lineItems.map((li) => {
       const f = fulfillmentMap.get(li.id);
-      const receivedQty = f?.restaurantReceivedQty ?? li.quantity;
-      const lineTotal = parseFloat(li.unitPriceAtTimeOfOrder) * receivedQty;
+      const expectedQty = getEffectiveLineQty(f, li.quantity, order);
+      const receivedQty = f?.restaurantReceivedQty ?? expectedQty;      const lineTotal = parseFloat(li.unitPriceAtTimeOfOrder) * receivedQty;
       return {
         order_id: order.displayId ?? order.id,
         restaurant: restaurantName,
@@ -180,7 +211,26 @@ export default function VendorOrderApproval() {
 
   function downloadCsv() {
     const rows = buildCsvRows();
-    const csv = Papa.unparse(rows);
+    const csv = Papa.unparse({
+      fields: [
+        "order_id",
+        "restaurant",
+        "vendor",
+        "product",
+        "sku",
+        "ordered_qty",
+        "received_qty",
+        "unit_price",
+        "line_total",
+        "restaurant_note",
+        ...(order.driverResolutionNote ? ["driver_resolution_note"] : []),
+      ],
+      data: rows.map((row) =>
+        order.driverResolutionNote
+          ? { ...row, driver_resolution_note: order.driverResolutionNote }
+          : row,
+      ),
+    });
     const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
@@ -241,6 +291,7 @@ export default function VendorOrderApproval() {
             </tbody>
           </table>
           <div class="total">Invoice Total: ${formatCurrency(String(invoiceTotal.toFixed(2)))}</div>
+          ${order.driverResolutionNote ? `<div class="meta"><strong>Driver Resolution Note:</strong> ${order.driverResolutionNote}</div>` : ""}
         </body>
       </html>
     `;
@@ -259,7 +310,7 @@ export default function VendorOrderApproval() {
   }
 
   return (
-    <div className="min-h-screen bg-muted/20 pb-16">
+    <div className="pb-16">
       {/* ── Header ───────────────────────────────────────────────────────── */}
       <header className="h-14 bg-background border-b flex items-center justify-between px-6 sticky top-0 z-10">
         <div className="flex items-center gap-2 min-w-0">
@@ -289,7 +340,7 @@ export default function VendorOrderApproval() {
         </div>
       </header>
 
-      <div className="max-w-4xl mx-auto px-6 py-8 space-y-6">
+      <div className="space-y-6">
         {/* ── Order Info Card ─────────────────────────────────────────── */}
         <div className="bg-card border rounded-lg p-5 space-y-4" data-testid="card-order-info">
           <div className="flex items-start justify-between gap-4 flex-wrap">
@@ -298,10 +349,9 @@ export default function VendorOrderApproval() {
               <span className="text-xl font-bold text-foreground" data-testid="text-order-display-id">
                 Order #{order.displayId ?? "—"}
               </span>
-              <Badge className={`text-xs ${isAlreadyApproved ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-900 dark:text-emerald-300 border-emerald-200 dark:border-emerald-700" : isDisputed ? "bg-red-100 text-red-700 dark:bg-red-900 dark:text-red-300 border-red-200 dark:border-red-700" : "bg-slate-100 text-slate-700 dark:bg-slate-900 dark:text-slate-300 border-slate-200 dark:border-slate-700"}`}>
-                {isAlreadyApproved ? "Invoiced" : isDisputed ? "Disputed" : "Awaiting Restaurant/Driver Action"}
-              </Badge>
-            </div>
+              <Badge className={`text-xs ${isAlreadyApproved ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-900 dark:text-emerald-300 border-emerald-200 dark:border-emerald-700" : isPendingVendor ? "bg-amber-100 text-amber-700 dark:bg-amber-950 dark:text-amber-300 border-amber-200 dark:border-amber-700" : isPendingDriver ? "bg-sky-100 text-sky-700 dark:bg-sky-950 dark:text-sky-300 border-sky-200 dark:border-sky-700" : isDisputed ? "bg-red-100 text-red-700 dark:bg-red-900 dark:text-red-300 border-red-200 dark:border-red-700" : "bg-slate-100 text-slate-700 dark:bg-slate-900 dark:text-slate-300 border-slate-200 dark:border-slate-700"}`}>
+                {isAlreadyApproved ? "Invoiced" : isPendingVendor ? "Needs Vendor Review" : isPendingDriver ? "With Driver" : isDisputed ? "Disputed" : "Awaiting Action"}
+              </Badge>            </div>
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-1">
@@ -340,15 +390,30 @@ export default function VendorOrderApproval() {
             </div>
           </div>
 
-          {!isAlreadyApproved && (
-            <div className="flex items-start gap-2 px-3 py-2.5 rounded-md bg-amber-50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-800 mt-2" data-testid="banner-discrepancy">
+          {isPendingVendor && (
+            <div className="flex items-start gap-2 px-3 py-2.5 rounded-md bg-amber-50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-800 mt-2" data-testid="banner-pending-vendor">
               <AlertCircle className="h-4 w-4 text-amber-600 dark:text-amber-400 shrink-0 mt-0.5" />
               <p className="text-sm text-amber-700 dark:text-amber-300">
-                Vendor approval is disabled. This screen is for viewing the restaurant review and invoice only.
+                Restaurant changed received quantities or added notes. Review the changes, then forward to the driver for final approval and invoicing.
               </p>
             </div>
           )}
-        </div>
+          {isPendingDriver && !isAlreadyApproved && (
+            <div className="flex items-start gap-2 px-3 py-2.5 rounded-md bg-sky-50 dark:bg-sky-950/20 border border-sky-200 dark:border-sky-800 mt-2" data-testid="banner-pending-driver">
+              <Truck className="h-4 w-4 text-sky-600 dark:text-sky-400 shrink-0 mt-0.5" />
+              <p className="text-sm text-sky-700 dark:text-sky-300">
+                This review was forwarded to the driver. Invoice will be created after driver approval.
+              </p>
+            </div>
+          )}
+          {!isAlreadyApproved && !isPendingVendor && !isPendingDriver && (
+            <div className="flex items-start gap-2 px-3 py-2.5 rounded-md bg-muted/40 border mt-2" data-testid="banner-discrepancy">
+              <AlertCircle className="h-4 w-4 text-muted-foreground shrink-0 mt-0.5" />
+              <p className="text-sm text-muted-foreground">
+                View restaurant review details and invoice information.
+              </p>
+            </div>
+          )}        </div>
 
         {/* ── Restaurant Review Table ──────────────────────────────────── */}
         <div className="bg-card border rounded-lg overflow-hidden" data-testid="card-approval-table">
@@ -364,21 +429,24 @@ export default function VendorOrderApproval() {
             <Table>
               <TableHeader>
                 <TableRow className="hover:bg-transparent bg-muted/30">
-                  <TableHead className="font-semibold pl-5 w-[35%]">Product</TableHead>
-                  <TableHead className="font-semibold text-right w-24">Ordered Qty</TableHead>
+                  <TableHead className="font-semibold pl-5 w-[24%]">Product</TableHead>
+                  <TableHead className="font-semibold text-right w-20">Ordered Qty</TableHead>
+                  <TableHead className="font-semibold text-right w-20">Vendor Qty</TableHead>
+                  <TableHead className="font-semibold min-w-[120px]">Vendor Note</TableHead>
                   <TableHead className="font-semibold text-right w-24">Unit Price</TableHead>
                   <TableHead className="font-semibold text-right w-28 text-violet-700 dark:text-violet-300">Received Qty</TableHead>
-                  <TableHead className="font-semibold min-w-[160px] text-violet-700 dark:text-violet-300">Restaurant Note</TableHead>
-                  <TableHead className="font-semibold text-right w-28 text-violet-700 dark:text-violet-300">Invoice Total</TableHead>
+                  <TableHead className="font-semibold min-w-[140px] text-violet-700 dark:text-violet-300">Restaurant Note</TableHead>
+                  <TableHead className="font-semibold text-right w-28 text-violet-700 dark:text-violet-300">Line Total</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {lineItems.map((li, idx) => {
                   const f = fulfillmentMap.get(li.id);
-                  const receivedQty = f?.restaurantReceivedQty ?? li.quantity;
+                  const vendorQty = getVendorAdjustedQty(f, li.quantity);
+                  const expectedQty = getEffectiveLineQty(f, li.quantity, order);
+                  const receivedQty = f?.restaurantReceivedQty ?? expectedQty;
                   const lineTotal = parseFloat(li.unitPriceAtTimeOfOrder) * receivedQty;
-                  const hasLineDiscrepancy = receivedQty !== li.quantity;
-
+                  const hasLineDiscrepancy = receivedQty !== expectedQty;
                   return (
                     <TableRow
                       key={li.id}
@@ -406,11 +474,20 @@ export default function VendorOrderApproval() {
                         </span>
                       </TableCell>
                       <TableCell className="text-right py-4">
-                        <span className="text-sm text-muted-foreground" data-testid={`text-approval-unit-price-${li.id}`}>
-                          {formatCurrency(li.unitPriceAtTimeOfOrder)}
+                        <span className="text-sm font-medium text-foreground" data-testid={`text-approval-vendor-qty-${li.id}`}>
+                          {vendorQty}
+                        </span>
+                      </TableCell>
+                      <TableCell className="py-4">
+                        <span className="text-sm text-muted-foreground" data-testid={`text-approval-vendor-note-${li.id}`}>
+                          {getVendorNote(f) || "—"}
                         </span>
                       </TableCell>
                       <TableCell className="text-right py-4">
+                        <span className="text-sm text-muted-foreground" data-testid={`text-approval-unit-price-${li.id}`}>
+                          {formatCurrency(li.unitPriceAtTimeOfOrder)}
+                        </span>
+                      </TableCell>                      <TableCell className="text-right py-4">
                         <span
                           className={`text-sm font-semibold ${hasLineDiscrepancy ? "text-amber-600 dark:text-amber-400" : "text-violet-700 dark:text-violet-300"}`}
                           data-testid={`text-approval-received-qty-${li.id}`}
@@ -418,10 +495,9 @@ export default function VendorOrderApproval() {
                           {receivedQty}
                           {hasLineDiscrepancy && (
                             <span className="block text-xs font-normal text-amber-500 dark:text-amber-400">
-                              (ordered {li.quantity})
+                              (expected {expectedQty})
                             </span>
-                          )}
-                        </span>
+                          )}                        </span>
                       </TableCell>
                       <TableCell className="py-4">
                         <span
@@ -449,15 +525,21 @@ export default function VendorOrderApproval() {
           {/* Footer */}
           <div className="px-5 py-4 border-t bg-violet-50/20 dark:bg-violet-950/10 flex flex-col gap-3">
             <div className="flex items-center justify-between flex-wrap gap-3">
-              <div className="flex items-center gap-6">
+              <div className="flex items-center gap-6 flex-wrap">
                 <div className="text-sm text-muted-foreground">
-                  Original total:
-                  <span className="ml-1.5 line-through" data-testid="text-original-total">
+                  Ordered total:
+                  <span className="ml-1.5" data-testid="text-original-total">
                     {formatCurrency(String(orderedTotal.toFixed(2)))}
                   </span>
                 </div>
+                <div className="text-sm text-muted-foreground">
+                  Vendor total:
+                  <span className="ml-1.5" data-testid="text-vendor-total">
+                    {formatCurrency(String(vendorTotal.toFixed(2)))}
+                  </span>
+                </div>
                 <div className="text-sm">
-                  Reviewed total:
+                  Review total:
                   <span className="ml-1.5 font-bold text-violet-700 dark:text-violet-300" data-testid="text-reviewed-total">
                     {formatCurrency(String(invoiceTotal.toFixed(2)))}
                   </span>
@@ -469,11 +551,22 @@ export default function VendorOrderApproval() {
                   size="sm"
                   onClick={() => navigate("/vendor/portal")}
                   data-testid="button-back-footer"
-                  >
-                    <ArrowLeft className="h-3.5 w-3.5 mr-1.5" />
-                    Back
+                >
+                  <ArrowLeft className="h-3.5 w-3.5 mr-1.5" />
+                  Back
                 </Button>
-              <div className="flex items-center gap-1.5 text-sm text-muted-foreground" data-testid="text-readonly-note">
+                {isPendingVendor && (
+                  <Button
+                    size="sm"
+                    className="bg-amber-600 hover:bg-amber-700 text-white"
+                    onClick={() => forwardMutation.mutate()}
+                    disabled={forwardMutation.isPending}
+                    data-testid="button-forward-to-driver"
+                  >
+                    <Truck className="h-3.5 w-3.5 mr-1.5" />
+                    {forwardMutation.isPending ? "Sending…" : "Send to Driver"}
+                  </Button>
+                )}              <div className="flex items-center gap-1.5 text-sm text-muted-foreground" data-testid="text-readonly-note">
                 <CreditCard className="h-4 w-4" />
                 View only
               </div>
@@ -496,6 +589,12 @@ export default function VendorOrderApproval() {
                 </div>
               </div>
             )}
+            {order.driverResolutionNote ? (
+              <div className="rounded-md border border-sky-200 bg-sky-50/50 p-4 dark:border-sky-800 dark:bg-sky-950/20" data-testid="banner-driver-resolution-note">
+                <p className="text-xs font-semibold text-sky-700 dark:text-sky-300">Driver Resolution Note</p>
+                <p className="text-sm text-foreground mt-0.5">{order.driverResolutionNote}</p>
+              </div>
+            ) : null}
           </div>
         </div>
       </div>

@@ -1,6 +1,10 @@
-/** Parse DB timestamps as local time (matches Activity Log page). */
+/** Parse API/DB timestamps into a JavaScript Date (UTC-aware). */
 export function parsePortalDate(date: string | Date | number | null | undefined): Date | null {
   if (date === undefined || date === null) return null;
+
+  if (date instanceof Date) {
+    return Number.isNaN(date.getTime()) ? null : date;
+  }
 
   if (typeof date === "number") {
     const parsed = new Date(date);
@@ -10,13 +14,23 @@ export function parsePortalDate(date: string | Date | number | null | undefined)
   if (typeof date === "string") {
     const trimmed = date.trim();
     if (!trimmed) return null;
-    // MySQL datetimes are local; JSON often adds a trailing Z — treat as local, not UTC.
-    const localValue = trimmed.endsWith("Z") ? trimmed.slice(0, -1) : trimmed;
-    const parsed = new Date(localValue);
-    return Number.isNaN(parsed.getTime()) ? null : parsed;
+
+    // ISO 8601 with timezone — keep Z/offset so the instant is correct everywhere.
+    if (/[zZ]$/.test(trimmed) || /[+-]\d{2}:?\d{2}$/.test(trimmed)) {
+      const parsed = new Date(trimmed);
+      return Number.isNaN(parsed.getTime()) ? null : parsed;
+    }
+
+    // Naive datetime strings from the DB are stored in UTC.
+    const normalized = trimmed.includes("T") ? trimmed : trimmed.replace(" ", "T");
+    const parsed = new Date(`${normalized}Z`);
+    if (!Number.isNaN(parsed.getTime())) return parsed;
+
+    const fallback = new Date(trimmed);
+    return Number.isNaN(fallback.getTime()) ? null : fallback;
   }
 
-  return Number.isNaN(date.getTime()) ? null : date;
+  return null;
 }
 
 export function formatRelativeTime(date: string | Date | number | null | undefined): string {
@@ -44,4 +58,18 @@ export function formatRelativeTime(date: string | Date | number | null | undefin
 
   const diffYears = Math.floor(diffDays / 365);
   return `${diffYears} year${diffYears !== 1 ? "s" : ""} ago`;
+}
+
+export function formatPortalTimestamp(date: string | Date | number | null | undefined): string {
+  const d = parsePortalDate(date);
+  if (!d || d.getFullYear() <= 1970) return "Unknown";
+
+  return d.toLocaleString("en-US", {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+    hour: "numeric",
+    minute: "2-digit",
+    hour12: true,
+  });
 }

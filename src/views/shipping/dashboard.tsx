@@ -413,7 +413,7 @@ export default function ShippingDashboard() {
   }
 
   return (
-    <div className="mx-auto max-w-7xl px-6 py-8" data-testid="page-shipping-dashboard">
+    <div data-testid="page-shipping-dashboard">
       <div className="mb-6 flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
         <div>
           {!isDriver ? (

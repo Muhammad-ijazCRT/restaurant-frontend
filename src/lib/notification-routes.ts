@@ -32,6 +32,8 @@ const VENDOR_ORDER_APPROVAL_ACTIONS = new Set([
   "order_paid",
   "order_review_submitted",
   "order_review_resubmitted",
+  "order_issue_pending_vendor",
+  "order_review_forwarded_to_driver",
   "order_issue_resolved",
   "order_issue_resolved_driver",
 ]);

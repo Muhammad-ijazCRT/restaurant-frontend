@@ -219,7 +219,7 @@ export default function RestaurantDetail() {
 
   if (orgLoading) {
     return (
-      <div className="max-w-4xl mx-auto px-6 py-8">
+      <div>
         <Skeleton className="h-6 w-32 mb-6" />
         <Skeleton className="h-8 w-64 mb-2" />
         <Skeleton className="h-4 w-48 mb-8" />
@@ -233,7 +233,7 @@ export default function RestaurantDetail() {
 
   if (orgError || !org) {
     return (
-      <div className="max-w-4xl mx-auto px-6 py-8">
+      <div>
         <Link href="/admin/restaurants">
           <Button variant="ghost" size="sm" className="mb-6 -ml-2 text-muted-foreground hover:text-foreground" data-testid="button-back">
             <ArrowLeft className="h-4 w-4 mr-1" />Back to Restaurants
@@ -249,7 +249,7 @@ export default function RestaurantDetail() {
   }
 
   return (
-    <div className="max-w-4xl mx-auto px-6 py-8">
+    <div>
       <Link href="/admin/restaurants">
         <Button variant="ghost" size="sm" className="mb-6 -ml-2 text-muted-foreground hover:text-foreground" data-testid="button-back">
           <ArrowLeft className="h-4 w-4 mr-1" />Back to Restaurants

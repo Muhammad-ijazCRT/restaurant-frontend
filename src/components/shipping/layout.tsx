@@ -13,7 +13,9 @@ import {
 } from "@/lib/shipping-portal-labels";
 import { NotificationBell } from "@/components/shared/notification-bell";
 import { PortalRoleSwitcher } from "@/components/shared/portal-role-switcher";
+import { PortalPageContainer } from "@/components/shared/portal-page-container";
 import { ProfileMenu } from "@/components/shared/profile-menu";
+import { PortalSidebarBrand } from "@/components/shared/rodex-brand";
 
 export default function ShippingLayout({ children }: { children: React.ReactNode }) {
   const { vendorId } = useVendorAuth();
@@ -46,14 +48,11 @@ export default function ShippingLayout({ children }: { children: React.ReactNode
   return (
     <div className="flex h-full overflow-hidden bg-background" data-testid="shipping-layout">
       <aside className="flex h-full w-[280px] shrink-0 flex-col border-r border-sidebar-border bg-sidebar">
-        <div className="flex h-16 items-center gap-2 border-b border-sidebar-border px-5">
-          <div className="min-w-0">
-            <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-muted-foreground">
-              {portalLabels.consoleLabel}
-            </p>
-            <p className="truncate text-sm font-semibold text-sidebar-foreground">{vendorName}</p>
-            <p className="truncate text-xs text-muted-foreground">{portalLabels.roleLabel}</p>
-          </div>
+        <div className="flex h-14 items-center border-b border-sidebar-border px-5">
+          <PortalSidebarBrand
+            subtitle={portalLabels.consoleLabel}
+            href={resolveRoleHomePath(role ?? "")}
+          />
         </div>
         <nav className="flex-1 overflow-y-auto px-3 py-4">
           {navItems.map((item) => {
@@ -97,7 +96,9 @@ export default function ShippingLayout({ children }: { children: React.ReactNode
             />
           </div>
         </header>
-        <main className="min-h-0 flex-1 overflow-y-auto bg-muted/30">{children}</main>
+        <main className="min-h-0 flex-1 overflow-y-auto bg-muted/40">
+          <PortalPageContainer>{children}</PortalPageContainer>
+        </main>
       </div>
     </div>
   );

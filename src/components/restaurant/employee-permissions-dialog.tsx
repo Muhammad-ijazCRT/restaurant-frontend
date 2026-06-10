@@ -48,9 +48,11 @@ export default function RestaurantEmployeePermissionsDialog({
   const { toast } = useToast();
   const [selectedExtras, setSelectedExtras] = useState<string[]>([]);
 
+  const employeeId = employee?.id ?? "";
+
   const { data, isLoading, isError } = useQuery<PermissionsResponse>({
-    queryKey: restaurantEmployeeKeys.permissions(restaurantId, employee!.id),
-    enabled: open && !!employee?.id,
+    queryKey: restaurantEmployeeKeys.permissions(restaurantId, employeeId),
+    enabled: open && !!employeeId,
   });
 
   useEffect(() => {
@@ -65,14 +67,16 @@ export default function RestaurantEmployeePermissionsDialog({
 
   const saveMutation = useMutation({
     mutationFn: async () => {
-      await restaurantEmployeeApi.updatePermissions(restaurantId, employee!.id, {
+      if (!employee?.id) throw new Error("Employee not selected");
+      await restaurantEmployeeApi.updatePermissions(restaurantId, employee.id, {
         extraPermissions: selectedExtras,
       });
     },
     onSuccess: () => {
+      if (!employee?.id) return;
       queryClient.invalidateQueries({ queryKey: restaurantEmployeeKeys.list(restaurantId) });
       queryClient.invalidateQueries({
-        queryKey: restaurantEmployeeKeys.permissions(restaurantId, employee!.id),
+        queryKey: restaurantEmployeeKeys.permissions(restaurantId, employee.id),
       });
       toast({ title: "Permissions saved" });
       onOpenChange(false);

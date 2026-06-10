@@ -41,7 +41,11 @@ import type {
   Invoice,
 } from "@shared/schema";
 import { formatPhone, formatCurrency } from "@shared/schema";
-import { normalizeInvoiceLineItems } from "@/lib/invoice-utils";
+import {
+  normalizeInvoiceLineItems,
+  getInvoiceRestaurantNotes,
+  invoiceSnapshotHasRestaurantNotes,
+} from "@/lib/invoice-utils";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -1211,12 +1215,10 @@ export default function VendorPortal() {
   );
   const needsApprovalOrders = vendorOrders.filter(
     ({ order }) =>
-      order.restaurantReviewSubmittedAt &&
+      order.restaurantIssueStatus === "pending_vendor" &&
       !isDisputedOrder(order) &&
       order.status !== "invoiced" &&
-      order.status !== "paid" &&
-      order.restaurantIssueStatus !== "pending_driver" &&
-      order.restaurantIssueStatus !== "resolved_by_driver",
+      order.status !== "paid",
   );
   const disputedVpOrders = vendorOrders.filter(({ order }) => isDisputedOrder(order));
   const invoicedOrders = vendorOrders.filter(
@@ -1272,6 +1274,11 @@ export default function VendorPortal() {
       label: "Needs Driver Review",
       classes:
         "bg-amber-100 text-amber-700 dark:bg-amber-950 dark:text-amber-300",
+    },
+    pending_vendor: {
+      label: "Needs Vendor Review",
+      classes:
+        "bg-violet-100 text-violet-700 dark:bg-violet-950 dark:text-violet-300",
     },
     resolved_by_driver: {
       label: "Resolved by Driver",
@@ -1412,7 +1419,7 @@ export default function VendorPortal() {
 
   if (vendorLoading) {
     return (
-      <div className="max-w-5xl mx-auto px-6 py-8 space-y-4">
+      <div className="space-y-4">
         <Skeleton className="h-8 w-64" />
         <div className="grid grid-cols-3 gap-4">
           {[...Array(3)].map((_, i) => (
@@ -1443,7 +1450,7 @@ export default function VendorPortal() {
   }
 
   return (
-    <div className="px-7 py-7">
+    <div>
       <div id={VENDOR_SECTION_IDS.dashboard} className="scroll-mt-6">
         <div className="mb-8 flex items-start justify-between gap-4">
           <div>
@@ -1586,7 +1593,7 @@ export default function VendorPortal() {
 
   return (
     <>
-      <div className="max-w-5xl mx-auto px-6 py-8">
+      <div>
         {/* Dashboard */}
         <div id={VENDOR_SECTION_IDS.dashboard} className="scroll-mt-6 mb-8">
           <h1
@@ -2628,6 +2635,8 @@ export default function VendorPortal() {
                         const isExpanded = !!expandedOrderIds[order.id];
                         const snapshotLines = normalizeInvoiceLineItems(invoice?.lineItems);
                         const hasSnapshot = snapshotLines.length > 0;
+                        const showRestaurantNoteColumn = invoiceSnapshotHasRestaurantNotes(snapshotLines);
+                        const restaurantNotes = getInvoiceRestaurantNotes(snapshotLines);
                         const total = hasSnapshot
                           ? parseFloat(invoice!.approvedTotal)
                           : lineItems.reduce(
@@ -2721,6 +2730,11 @@ export default function VendorPortal() {
                                           <th className="text-right font-medium pb-1.5">
                                             Total
                                           </th>
+                                          {showRestaurantNoteColumn ? (
+                                            <th className="text-left font-medium pb-1.5 pl-2">
+                                              Restaurant Note
+                                            </th>
+                                          ) : null}
                                         </tr>
                                       </thead>
                                       <tbody>
@@ -2746,6 +2760,11 @@ export default function VendorPortal() {
                                                 <td className="py-2 text-right font-medium text-foreground">
                                                   {formatCurrency(sl.lineTotal)}
                                                 </td>
+                                                {showRestaurantNoteColumn ? (
+                                                  <td className="py-2 pl-2 text-muted-foreground">
+                                                    {sl.restaurantNote || "—"}
+                                                  </td>
+                                                ) : null}
                                               </tr>
                                             ))
                                           : lineItems.map((li) => {
@@ -2786,7 +2805,7 @@ export default function VendorPortal() {
                                       </tbody>
                                       <tfoot>
                                         <tr>
-                                          <td colSpan={3} />
+                                          <td colSpan={showRestaurantNoteColumn ? 4 : 3} />
                                           <td className="pt-2 text-right text-muted-foreground font-medium">
                                             Approved Total
                                           </td>
@@ -2795,9 +2814,32 @@ export default function VendorPortal() {
                                               String(total.toFixed(2)),
                                             )}
                                           </td>
+                                          {showRestaurantNoteColumn ? <td /> : null}
                                         </tr>
                                       </tfoot>
                                     </table>
+                                    {order.driverResolutionNote ? (
+                                      <div className="mt-4 rounded-md border border-sky-200 bg-sky-50/50 px-3 py-2 dark:border-sky-800 dark:bg-sky-950/20">
+                                        <p className="text-xs font-semibold text-sky-700 dark:text-sky-300">
+                                          Driver Resolution Note
+                                        </p>
+                                        <p className="mt-1 text-sm text-foreground">
+                                          {order.driverResolutionNote}
+                                        </p>
+                                      </div>
+                                    ) : null}
+                                    {restaurantNotes.length > 0 && !showRestaurantNoteColumn ? (
+                                      <div className="mt-4 rounded-md border border-violet-200 bg-violet-50/50 px-3 py-2 dark:border-violet-800 dark:bg-violet-950/20">
+                                        <p className="text-xs font-semibold text-violet-700 dark:text-violet-300">
+                                          Restaurant Notes
+                                        </p>
+                                        <div className="mt-1 space-y-1 text-sm text-foreground">
+                                          {restaurantNotes.map((note) => (
+                                            <p key={note}>{note}</p>
+                                          ))}
+                                        </div>
+                                      </div>
+                                    ) : null}
                                   </div>
                                 </TableCell>
                               </TableRow>
@@ -2892,6 +2934,8 @@ export default function VendorPortal() {
                         const isExpanded = !!expandedOrderIds[order.id];
                         const snapshotLines = normalizeInvoiceLineItems(invoice?.lineItems);
                         const hasSnapshot = snapshotLines.length > 0;
+                        const showRestaurantNoteColumn = invoiceSnapshotHasRestaurantNotes(snapshotLines);
+                        const restaurantNotes = getInvoiceRestaurantNotes(snapshotLines);
                         const total = hasSnapshot
                           ? parseFloat(invoice!.approvedTotal)
                           : lineItems.reduce(

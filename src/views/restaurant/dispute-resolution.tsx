@@ -213,7 +213,7 @@ export default function RestaurantDisputeResolution() {
 
   if (isLoading) {
     return (
-      <div className="max-w-4xl mx-auto px-6 py-8 space-y-4">
+      <div className="space-y-4">
         <Skeleton className="h-28 w-full rounded-lg" />
         <Skeleton className="h-64 w-full rounded-lg" />
       </div>
@@ -222,7 +222,7 @@ export default function RestaurantDisputeResolution() {
 
   if (isError || !data) {
     return (
-      <div className="min-h-screen flex flex-col items-center justify-center gap-4 p-6">
+      <div className="flex min-h-[40vh] flex-col items-center justify-center gap-4 p-6">
         <p className="text-destructive text-sm font-medium" data-testid="text-dispute-error">
           Order not found or you do not have access.
         </p>
@@ -238,7 +238,7 @@ export default function RestaurantDisputeResolution() {
 
   if (!isDisputedOrder(order)) {
     return (
-      <div className="max-w-4xl mx-auto px-6 py-8 space-y-4">
+      <div className="space-y-4">
         <Skeleton className="h-28 w-full rounded-lg" />
         <Skeleton className="h-64 w-full rounded-lg" />
       </div>
@@ -256,7 +256,7 @@ export default function RestaurantDisputeResolution() {
   );
 
   return (
-    <div className="max-w-4xl mx-auto px-6 py-8 pb-16 space-y-6">
+    <div className="space-y-6 pb-16">
         {/* ── Order Info Card ───────────────────────────────────────────── */}
         <div className="bg-card border rounded-lg p-5 space-y-4" data-testid="card-order-info">
           <div className="flex items-start justify-between gap-4 flex-wrap">

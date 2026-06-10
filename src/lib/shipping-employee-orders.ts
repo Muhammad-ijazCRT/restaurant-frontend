@@ -22,6 +22,7 @@ export function isDriverQueueOrder(
   userId: string | null | undefined,
 ): boolean {
   if (!isOrderAssignedToDriver(order, userId)) return false;
+  if (order.restaurantIssueStatus === "pending_driver") return true;
   if (["delivered", "invoiced"].includes(order.status)) return false;
   return true;
 }
@@ -43,6 +44,7 @@ export function isDriverCompletedOrder(
   userId: string | null | undefined,
 ): boolean {
   if (!isOrderAssignedToDriver(order, userId)) return false;
+  if (order.restaurantIssueStatus === "pending_driver") return false;
   return ["delivered", "invoiced"].includes(order.status);
 }
 

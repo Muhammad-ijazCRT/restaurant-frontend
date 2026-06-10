@@ -26,6 +26,14 @@ import type {
 } from "@shared/schema";
 import { resolveInvoicedOrderDisplay } from "@/lib/invoice-utils";
 import { isDisputedOrder, isInvoicedUnpaidOrder } from "@/lib/order-status-utils";
+import {
+  getEffectiveLineQty,
+  getOriginalOrderTotal,
+  getVendorAdjustedQty,
+  getVendorAdjustedTotal,
+  getVendorNote,
+  normalizeLineFulfillment,
+} from "@/lib/vendor-order-fulfillment";
 import { formatPhone, formatCurrency } from "@shared/schema";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -103,17 +111,22 @@ function DeliveredOrderReview({
   const [draft, setDraft] = useState<Record<string, ReviewDraftItem>>({});
 
   useEffect(() => {
-    if (existingFulfillments.length > 0) {
-      const map: Record<string, ReviewDraftItem> = {};
-      for (const f of existingFulfillments) {
-        map[f.orderLineItemId] = {
-          receivedQty: f.restaurantReceivedQty != null ? String(f.restaurantReceivedQty) : "",
-          note: f.restaurantNote ?? "",
-        };
-      }
-      setDraft(map);
+    if (lineItems.length === 0) return;
+    const fulfillmentByLine = new Map(
+      existingFulfillments.map((f) => [f.orderLineItemId, normalizeLineFulfillment(f)!]),
+    );
+    const map: Record<string, ReviewDraftItem> = {};
+    for (const li of lineItems) {
+      const fulfillment = fulfillmentByLine.get(li.id);
+      const expectedQty = getEffectiveLineQty(fulfillment, li.quantity, order);
+      const savedReceived = fulfillment?.restaurantReceivedQty;
+      map[li.id] = {
+        receivedQty: savedReceived != null ? String(savedReceived) : String(expectedQty),
+        note: fulfillment?.restaurantNote ?? "",
+      };
     }
-  }, [existingFulfillments]);
+    setDraft(map);
+  }, [existingFulfillments, lineItems, order]);
 
   const submitMutation = useMutation({
     mutationFn: async () => {
@@ -127,11 +140,9 @@ function DeliveredOrderReview({
       const res = await restaurantReviewApi.submit(restaurantId, order.id, { items });
       return res.json();
     },
-    onSuccess: () => {
+    onSuccess: (result: { pendingVendorReview?: boolean; invoiced?: boolean }) => {
       queryClient.invalidateQueries({ queryKey: restaurantReviewKeys.review(restaurantId, order.id) });
       queryClient.invalidateQueries({ queryKey: submittedOrdersQueryKey });
-      // Invalidate VP orders so the order moves from Delivered → Needs Vendor Approval
-      // immediately when both portals are open in the same browser session.
       queryClient.invalidateQueries({ queryKey: vendorOrderKeys.list(order.vendorId) });
       void queryClient.invalidateQueries({ queryKey: profileKeys.notifications() });
     },
@@ -154,10 +165,19 @@ function DeliveredOrderReview({
     );
   }
 
+  const fulfillmentMap = new Map(
+    existingFulfillments.map((f) => [f.orderLineItemId, normalizeLineFulfillment(f)!]),
+  );
+  const orderedTotal = getOriginalOrderTotal(lineItems);
+  const vendorTotal = getVendorAdjustedTotal(lineItems, (lineItemId) =>
+    fulfillmentMap.get(lineItemId),
+  );
   const orderTotal = lineItems.reduce((acc, li) => {
     const liDraft = draft[li.id] ?? { receivedQty: "", note: "" };
-    const receivedQtyNum = liDraft.receivedQty !== "" ? parseInt(liDraft.receivedQty, 10) : null;
-    return acc + parseFloat(li.unitPriceAtTimeOfOrder) * (receivedQtyNum ?? li.quantity);
+    const expectedQty = getEffectiveLineQty(fulfillmentMap.get(li.id), li.quantity, order);
+    const receivedQtyNum =
+      liDraft.receivedQty !== "" ? parseInt(liDraft.receivedQty, 10) : expectedQty;
+    return acc + parseFloat(li.unitPriceAtTimeOfOrder) * receivedQtyNum;
   }, 0);
 
   return (
@@ -167,19 +187,26 @@ function DeliveredOrderReview({
           <TableHeader>
             <TableRow className="hover:bg-transparent">
               <TableHead className="font-medium pl-10">Product</TableHead>
-              <TableHead className="font-medium text-right w-20">Ordered</TableHead>
-              <TableHead className="font-medium text-right w-24">Unit Price</TableHead>
-              <TableHead className="font-medium text-right w-28">Received Qty</TableHead>
-              <TableHead className="font-medium text-right w-24">Line Total</TableHead>
-              <TableHead className="font-medium min-w-[160px]">Note</TableHead>
+              <TableHead className="font-medium text-right w-16">Ordered</TableHead>
+              <TableHead className="font-medium text-right w-16">Vendor</TableHead>
+              <TableHead className="font-medium min-w-[100px]">Vendor Note</TableHead>
+              <TableHead className="font-medium text-right w-20">Unit Price</TableHead>
+              <TableHead className="font-medium text-right w-24">Received Qty</TableHead>
+              <TableHead className="font-medium text-right w-20">Line Total</TableHead>
+              <TableHead className="font-medium min-w-[140px]">Note</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {lineItems.map(li => {
               const product = productMap.get(li.productId);
-              const liDraft = draft[li.id] ?? { receivedQty: "", note: "" };
-              const receivedQtyNum = liDraft.receivedQty !== "" ? parseInt(liDraft.receivedQty, 10) : null;
-              const lineTotal = parseFloat(li.unitPriceAtTimeOfOrder) * (receivedQtyNum ?? li.quantity);
+              const fulfillment = fulfillmentMap.get(li.id);
+              const vendorQty = getVendorAdjustedQty(fulfillment, li.quantity);
+              const expectedQty = getEffectiveLineQty(fulfillment, li.quantity, order);
+              const liDraft = draft[li.id] ?? { receivedQty: String(expectedQty), note: "" };
+              const receivedQtyNum =
+                liDraft.receivedQty !== "" ? parseInt(liDraft.receivedQty, 10) : expectedQty;
+              const lineTotal = parseFloat(li.unitPriceAtTimeOfOrder) * receivedQtyNum;
+              const hasDiscrepancy = receivedQtyNum !== expectedQty;
               return (
                 <TableRow key={li.id} data-testid={`row-review-item-${li.id}`}>
                   <TableCell className="pl-10">
@@ -194,6 +221,12 @@ function DeliveredOrderReview({
                   </TableCell>
                   <TableCell className="text-right text-sm text-muted-foreground" data-testid={`text-review-ordered-qty-${li.id}`}>
                     {li.quantity}
+                  </TableCell>
+                  <TableCell className="text-right text-sm font-medium">
+                    {vendorQty}
+                  </TableCell>
+                  <TableCell className="text-sm text-muted-foreground">
+                    {getVendorNote(fulfillment) || "—"}
                   </TableCell>
                   <TableCell className="text-right text-sm text-muted-foreground">
                     {formatCurrency(li.unitPriceAtTimeOfOrder)}
@@ -216,7 +249,9 @@ function DeliveredOrderReview({
                     )}
                   </TableCell>
                   <TableCell className="text-right text-sm font-semibold" data-testid={`text-review-line-total-${li.id}`}>
-                    {formatCurrency(String(lineTotal.toFixed(2)))}
+                    <span className={hasDiscrepancy ? "text-red-600 dark:text-red-400" : ""}>
+                      {formatCurrency(String(lineTotal.toFixed(2)))}
+                    </span>
                   </TableCell>
                   <TableCell>
                     {readOnly ? (
@@ -250,9 +285,15 @@ function DeliveredOrderReview({
             </span>
           )}
         </div>
-        <div className="flex items-center gap-4">
+        <div className="flex items-center gap-3 flex-wrap justify-end">
+          <span className="text-xs text-muted-foreground">
+            Ordered: {formatCurrency(String(orderedTotal.toFixed(2)))}
+          </span>
+          <span className="text-xs text-muted-foreground">
+            Vendor: {formatCurrency(String(vendorTotal.toFixed(2)))}
+          </span>
           <span className={`text-sm font-semibold ${accentColor === "blue" ? "text-blue-700 dark:text-blue-400" : "text-amber-700 dark:text-amber-400"}`} data-testid={`text-review-footer-total-${order.id}`}>
-            Total: {formatCurrency(String(orderTotal.toFixed(2)))}
+            Review: {formatCurrency(String(orderTotal.toFixed(2)))}
           </span>
           {!readOnly && (
             <Button
@@ -304,11 +345,6 @@ export default function RestaurantVendorDetail() {
   const [draggedId, setDraggedId] = useState<string | null>(null);
   const [dragOverId, setDragOverId] = useState<string | null>(null);
 
-  if (!restaurantId) {
-    navigate("/restaurant/login");
-    return null;
-  }
-
   // ── Data fetching ──────────────────────────────────────────────────────────
 
   const { data: restaurant } = useQuery<RestaurantOrg>({
@@ -356,11 +392,6 @@ export default function RestaurantVendorDetail() {
     r => r.restaurantOrgId === restaurantId && r.status !== "archived"
   );
   const relationship = linkedRelationships.find(r => r.vendorId === vendorId) ?? null;
-
-  if (!relLoading && !relationship) {
-    navigate("/restaurant/portal");
-    return null;
-  }
 
   // ── Product filtering ──────────────────────────────────────────────────────
 
@@ -475,6 +506,7 @@ export default function RestaurantVendorDetail() {
         (prev: { order: Order; lineItems: OrderLineItem[] }[] = []) => [data, ...prev],
       );
       queryClient.invalidateQueries({ queryKey: vendorOrderKeys.list(vendorId) });
+      void queryClient.invalidateQueries({ queryKey: profileKeys.notifications() });
       setConfirmSubmit(false);
       toast({ title: "Order submitted", description: "Your order has been submitted to the vendor." });
     },
@@ -529,13 +561,27 @@ export default function RestaurantVendorDetail() {
     },
   });
 
+  useEffect(() => {
+    if (!restaurantId) {
+      navigate("/restaurant/login");
+    }
+  }, [restaurantId, navigate]);
+
+  useEffect(() => {
+    if (restaurantId && !relLoading && !relationship) {
+      navigate("/restaurant/portal");
+    }
+  }, [restaurantId, relLoading, relationship, navigate]);
+
   // ── Loading state ──────────────────────────────────────────────────────────
 
   const isLoading = vendorLoading || relLoading;
 
+  if (!restaurantId) return null;
+
   if (isLoading) {
     return (
-      <div className="max-w-5xl mx-auto px-6 py-8 space-y-4">
+      <div className="space-y-4">
         <Skeleton className="h-32 w-full rounded-lg" />
         <Skeleton className="h-64 w-full rounded-lg" />
       </div>
@@ -563,7 +609,7 @@ export default function RestaurantVendorDetail() {
   const productMap = new Map(products.map(p => [p.id, p]));
 
   return (
-    <div className="max-w-5xl mx-auto px-6 py-8 pb-12 space-y-6">
+    <div className="space-y-6 pb-12">
 
         {/* Vendor Info Card */}
         <div className="border rounded-lg bg-card overflow-hidden">
@@ -1240,6 +1286,14 @@ export default function RestaurantVendorDetail() {
                                     </tr>
                                   </tfoot>
                                 </table>
+                                {order.driverResolutionNote ? (
+                                  <div className="mt-4 rounded-md border border-sky-200 bg-sky-50/50 px-3 py-2 dark:border-sky-800 dark:bg-sky-950/20">
+                                    <p className="text-xs font-semibold text-sky-700 dark:text-sky-300">
+                                      Driver Resolution Note
+                                    </p>
+                                    <p className="mt-1 text-sm text-foreground">{order.driverResolutionNote}</p>
+                                  </div>
+                                ) : null}
                               </div>
                             )}
                           </div>

@@ -348,7 +348,7 @@ export default function VendorEmployees() {
   }
 
   return (
-    <div className="mx-auto max-w-6xl px-6 py-8" data-testid="page-vendor-employees">
+    <div data-testid="page-vendor-employees">
       <div className="mb-5 flex items-start justify-between gap-4">
         <div>
           <h1 className="text-xl font-semibold text-foreground">Employees</h1>

@@ -188,7 +188,7 @@ export default function RelationshipDetail() {
 
   if (relError) {
     return (
-      <div className="max-w-4xl mx-auto px-6 py-8">
+      <div>
         <Link href="/admin/relationships">
           <Button variant="ghost" size="sm" className="mb-6 -ml-2 text-muted-foreground">
             <ArrowLeft className="h-4 w-4 mr-1" />Back to Relationships
@@ -209,7 +209,7 @@ export default function RelationshipDetail() {
   }
 
   return (
-    <div className="max-w-4xl mx-auto px-6 py-8">
+    <div>
       <Link href="/admin/relationships">
         <Button variant="ghost" size="sm" className="mb-6 -ml-2 text-muted-foreground hover:text-foreground" data-testid="link-back-relationships">
           <ArrowLeft className="h-4 w-4 mr-1" />Back to Relationships

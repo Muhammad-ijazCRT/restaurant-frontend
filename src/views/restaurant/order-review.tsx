@@ -12,6 +12,15 @@ import { useRestaurantAuth } from "@/contexts/restaurant-auth-context";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { apiUrl } from "@/lib/api";
 import { formatCurrency } from "@shared/schema";
+import type { LineFulfillment, Order } from "@shared/schema";
+import {
+  getEffectiveLineQty,
+  getOriginalOrderTotal,
+  getVendorAdjustedQty,
+  getVendorAdjustedTotal,
+  getVendorNote,
+  normalizeLineFulfillment,
+} from "@/lib/vendor-order-fulfillment";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -22,7 +31,7 @@ import {
 import { useToast } from "@/hooks/use-toast";
 import {
   ArrowLeft, Package, CalendarDays, Building2, UtensilsCrossed,
-  ClipboardCheck, Truck, CheckCircle2, Hash, ShieldAlert,
+  ClipboardCheck, Truck, CheckCircle2, Hash,
 } from "lucide-react";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -43,25 +52,27 @@ interface LineItemWithProduct {
 }
 
 interface OrderDetailResponse {
-  order: {
-    id: string;
-    displayId: number | null;
-    restaurantOrgId: string;
-    vendorId: string;
-    status: string;
-    createdAt: string;
-    restaurantReviewSubmittedAt: string | null;
-    vendorApprovedAt: string | null;
-    paidAt: string | null;
-  };
+  order: Pick<
+    Order,
+    | "id"
+    | "displayId"
+    | "restaurantOrgId"
+    | "vendorId"
+    | "status"
+    | "createdAt"
+    | "restaurantReviewSubmittedAt"
+    | "restaurantIssueStatus"
+    | "vendorApprovedAt"
+    | "paidAt"
+    | "pickingStatus"
+  >;
   lineItems: LineItemWithProduct[];
 }
 
-interface LineFulfillment {
-  id: string;
-  orderLineItemId: string;
-  restaurantReceivedQty: number | null;
-  restaurantNote: string | null;
+interface ReviewFulfillment extends LineFulfillment {
+  fulfilledQuantity?: number | null;
+  loadedQuantity?: number | null;
+  warehouseNote?: string | null;
 }
 
 interface Substitution {
@@ -97,7 +108,6 @@ export default function RestaurantOrderReview() {
   const { toast } = useToast();
 
   const [draft, setDraft] = useState<Record<string, ReviewDraftItem>>({});
-  const [issueMode, setIssueMode] = useState(false);
 
   if (!restaurantId) {
     navigate("/restaurant/login");
@@ -138,7 +148,7 @@ export default function RestaurantOrderReview() {
 
   // ── Fetch existing fulfillments ───────────────────────────────────────────
 
-  const { data: existingFulfillments = [] } = useQuery<LineFulfillment[]>({
+  const { data: existingFulfillments = [] } = useQuery<ReviewFulfillment[]>({
     queryKey: restaurantReviewKeys.review(restaurantId, orderId),
     enabled: !!restaurantId && !!orderId,
     staleTime: Infinity,
@@ -187,19 +197,30 @@ export default function RestaurantOrderReview() {
     },
   });
 
-  // Pre-populate draft from existing fulfillments
+  // Pre-populate draft from existing fulfillments or default to vendor/warehouse qty
   useEffect(() => {
-    if (existingFulfillments.length > 0) {
-      const map: Record<string, ReviewDraftItem> = {};
-      for (const f of existingFulfillments) {
-        map[f.orderLineItemId] = {
-          receivedQty: f.restaurantReceivedQty != null ? String(f.restaurantReceivedQty) : "",
-          note: f.restaurantNote ?? "",
-        };
-      }
-      setDraft(map);
+    const lineItems = data?.lineItems ?? [];
+    if (lineItems.length === 0) return;
+
+    const fulfillmentByLine = new Map(
+      existingFulfillments.map((f) => [f.orderLineItemId, normalizeLineFulfillment(f)!]),
+    );
+    const map: Record<string, ReviewDraftItem> = {};
+
+    for (const li of lineItems) {
+      const fulfillment = fulfillmentByLine.get(li.id);
+      const expectedQty = getEffectiveLineQty(fulfillment, li.quantity, data?.order ?? undefined);
+      const savedReceived = fulfillment?.restaurantReceivedQty;
+      map[li.id] = {
+        receivedQty:
+          savedReceived != null
+            ? String(savedReceived)
+            : String(expectedQty),
+        note: fulfillment?.restaurantNote ?? "",
+      };
     }
-  }, [existingFulfillments]);
+    setDraft(map);
+  }, [existingFulfillments, data?.lineItems, data?.order]);
 
   // ── Submit review mutation ────────────────────────────────────────────────
 
@@ -213,13 +234,14 @@ export default function RestaurantOrderReview() {
           : null,
         note: draft[li.id]?.note || null,
       }));
-      const res = await restaurantReviewApi.submit(restaurantId, orderId, {
-        items,
-        reportIssue: issueMode,
-      });
-      return res.json();
+      const res = await restaurantReviewApi.submit(restaurantId, orderId, { items });
+      return res.json() as Promise<{
+        order: OrderDetailResponse["order"];
+        pendingVendorReview?: boolean;
+        invoiced?: boolean;
+      }>;
     },
-    onSuccess: () => {
+    onSuccess: (result) => {
       queryClient.invalidateQueries({
         queryKey: restaurantReviewKeys.review(restaurantId, orderId),
       });
@@ -239,9 +261,9 @@ export default function RestaurantOrderReview() {
       void queryClient.refetchQueries({ queryKey: vendorOrderKeys.list(vendorId) });
       void queryClient.invalidateQueries({ queryKey: profileKeys.notifications() });
       toast({
-        title: issueMode ? "Issue reported" : "Review submitted",
-        description: issueMode
-          ? "The order has been sent back to the driver for resolution."
+        title: result.pendingVendorReview ? "Review sent to vendor" : "Review submitted",
+        description: result.pendingVendorReview
+          ? "Quantity changes were sent to the vendor for review before invoicing."
           : "Order has been invoiced successfully.",
       });
       navigate(`/restaurant/vendor/${vendorId}`);
@@ -269,7 +291,7 @@ export default function RestaurantOrderReview() {
 
   if (isLoading) {
     return (
-      <div className="max-w-4xl mx-auto px-6 py-8 space-y-4">
+      <div className="space-y-4">
         <Skeleton className="h-28 w-full rounded-lg" />
         <Skeleton className="h-64 w-full rounded-lg" />
       </div>
@@ -278,7 +300,7 @@ export default function RestaurantOrderReview() {
 
   if (isError || !data) {
     return (
-      <div className="min-h-screen flex flex-col items-center justify-center gap-4 p-6">
+      <div className="flex min-h-[40vh] flex-col items-center justify-center gap-4 p-6">
         <p className="text-destructive text-sm font-medium" data-testid="text-review-error">
           Order not found or you do not have access.
         </p>
@@ -292,19 +314,25 @@ export default function RestaurantOrderReview() {
 
   const { order, lineItems } = data;
   const isReadOnly = !!order.restaurantReviewSubmittedAt;
+  const fulfillmentMap = new Map(
+    existingFulfillments.map((f) => [f.orderLineItemId, normalizeLineFulfillment(f)!]),
+  );
+
+  const orderedTotal = getOriginalOrderTotal(lineItems);
+  const vendorTotal = getVendorAdjustedTotal(lineItems, (lineItemId) =>
+    fulfillmentMap.get(lineItemId),
+  );
 
   const orderTotal = lineItems.reduce((acc, li) => {
     const liDraft = draft[li.id] ?? { receivedQty: "", note: "" };
-    const receivedQtyNum = liDraft.receivedQty !== "" ? parseInt(liDraft.receivedQty, 10) : null;
-    return acc + parseFloat(li.unitPriceAtTimeOfOrder) * (receivedQtyNum ?? li.quantity);
+    const expectedQty = getEffectiveLineQty(fulfillmentMap.get(li.id), li.quantity, order);
+    const receivedQtyNum =
+      liDraft.receivedQty !== "" ? parseInt(liDraft.receivedQty, 10) : expectedQty;
+    return acc + parseFloat(li.unitPriceAtTimeOfOrder) * receivedQtyNum;
   }, 0);
 
-  const orderedTotal = lineItems.reduce(
-    (acc, li) => acc + parseFloat(li.unitPriceAtTimeOfOrder) * li.quantity, 0
-  );
-
   return (
-    <div className="max-w-4xl mx-auto px-6 py-8 pb-16 space-y-6">
+    <div className="space-y-6 pb-16">
         {/* ── Order Info Card ───────────────────────────────────────────── */}
         <div className="bg-card border rounded-lg p-5 space-y-4" data-testid="card-order-info">
           <div className="flex items-start justify-between gap-4 flex-wrap">
@@ -316,11 +344,11 @@ export default function RestaurantOrderReview() {
                 </span>
                 {isReadOnly ? (
                   <Badge className="text-xs bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-300 border-blue-200 dark:border-blue-700">
-                    Invoiced
+                    {order.status === "invoiced" || order.vendorApprovedAt ? "Invoiced" : "Review Submitted"}
                   </Badge>
                 ) : (
                   <Badge className="text-xs bg-amber-100 text-amber-700 dark:bg-amber-950 dark:text-amber-300">
-                    Review Draft
+                    Needs Review
                   </Badge>
                 )}
               </div>
@@ -369,7 +397,13 @@ export default function RestaurantOrderReview() {
           <div className="flex items-center gap-2.5 px-4 py-3 rounded-lg bg-blue-50 dark:bg-blue-950/20 border border-blue-200 dark:border-blue-800" data-testid="banner-review-submitted">
             <CheckCircle2 className="h-4 w-4 text-blue-600 dark:text-blue-400 shrink-0" />
             <p className="text-sm text-blue-700 dark:text-blue-300">
-              Review already submitted — invoice created or pending driver resolution.
+              {order.restaurantIssueStatus === "pending_vendor"
+                ? "Review submitted — waiting for vendor to review quantity changes."
+                : order.restaurantIssueStatus === "pending_driver"
+                  ? "Review submitted — waiting for driver approval."
+                  : order.status === "invoiced" || order.vendorApprovedAt
+                    ? "Review submitted — invoice created."
+                    : "Review already submitted."}
             </p>
           </div>
         )}
@@ -447,20 +481,29 @@ export default function RestaurantOrderReview() {
             <Table>
               <TableHeader>
                 <TableRow className="hover:bg-transparent bg-muted/30">
-                  <TableHead className="font-semibold pl-5 w-[35%]">Product</TableHead>
-                  <TableHead className="font-semibold text-right w-20">Ordered</TableHead>
+                  <TableHead className="font-semibold pl-5 w-[28%]">Product</TableHead>
+                  <TableHead className="font-semibold text-right w-20">Ordered Qty</TableHead>
+                  <TableHead className="font-semibold text-right w-20">Vendor Qty</TableHead>
+                  <TableHead className="font-semibold min-w-[120px]">Vendor Note</TableHead>
                   <TableHead className="font-semibold text-right w-24">Unit Price</TableHead>
-                  <TableHead className="font-semibold text-right w-32">Received Qty</TableHead>
+                  <TableHead className="font-semibold text-right w-24">Vendor Total</TableHead>
+                  <TableHead className="font-semibold text-right w-28">Received Qty</TableHead>
                   <TableHead className="font-semibold text-right w-24">Line Total</TableHead>
-                  <TableHead className="font-semibold min-w-[180px]">Note</TableHead>
+                  <TableHead className="font-semibold min-w-[160px]">Note</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {lineItems.map((li, idx) => {
-                  const liDraft = draft[li.id] ?? { receivedQty: "", note: "" };
-                  const receivedQtyNum = liDraft.receivedQty !== "" ? parseInt(liDraft.receivedQty, 10) : null;
-                  const lineTotal = parseFloat(li.unitPriceAtTimeOfOrder) * (receivedQtyNum ?? li.quantity);
-                  const hasDiscrepancy = receivedQtyNum != null && receivedQtyNum !== li.quantity;
+                  const fulfillment = fulfillmentMap.get(li.id);
+                  const vendorQty = getVendorAdjustedQty(fulfillment, li.quantity);
+                  const expectedQty = getEffectiveLineQty(fulfillment, li.quantity, order);
+                  const vendorNote = getVendorNote(fulfillment);
+                  const liDraft = draft[li.id] ?? { receivedQty: String(expectedQty), note: "" };
+                  const receivedQtyNum =
+                    liDraft.receivedQty !== "" ? parseInt(liDraft.receivedQty, 10) : expectedQty;
+                  const lineTotal = parseFloat(li.unitPriceAtTimeOfOrder) * receivedQtyNum;
+                  const vendorLineTotal = parseFloat(li.unitPriceAtTimeOfOrder) * vendorQty;
+                  const hasDiscrepancy = receivedQtyNum !== expectedQty;
 
                   return (
                     <TableRow
@@ -489,8 +532,23 @@ export default function RestaurantOrderReview() {
                         </span>
                       </TableCell>
                       <TableCell className="text-right py-4">
+                        <span className="text-sm font-medium text-foreground" data-testid={`text-review-vendor-qty-${li.id}`}>
+                          {vendorQty}
+                        </span>
+                      </TableCell>
+                      <TableCell className="py-4">
+                        <span className="text-sm text-muted-foreground" data-testid={`text-review-vendor-note-${li.id}`}>
+                          {vendorNote || "—"}
+                        </span>
+                      </TableCell>
+                      <TableCell className="text-right py-4">
                         <span className="text-sm text-muted-foreground">
                           {formatCurrency(li.unitPriceAtTimeOfOrder)}
+                        </span>
+                      </TableCell>
+                      <TableCell className="text-right py-4">
+                        <span className="text-sm font-medium text-foreground" data-testid={`text-review-vendor-total-${li.id}`}>
+                          {formatCurrency(String(vendorLineTotal.toFixed(2)))}
                         </span>
                       </TableCell>
                       <TableCell className="text-right py-4">
@@ -549,21 +607,25 @@ export default function RestaurantOrderReview() {
 
           {/* Footer */}
           <div className="px-5 py-4 border-t bg-muted/20 flex items-center justify-between flex-wrap gap-3">
-            <div className="flex items-center gap-4">
+            <div className="flex items-center gap-4 flex-wrap">
               <div className="text-sm text-muted-foreground">
                 Ordered total:
                 <span className="ml-1.5 font-medium text-foreground">
                   {formatCurrency(String(orderedTotal.toFixed(2)))}
                 </span>
               </div>
-              {!isReadOnly && (
-                <div className="text-sm text-muted-foreground">
-                  Review total:
-                  <span className="ml-1.5 font-semibold text-amber-700 dark:text-amber-400" data-testid="text-review-total">
-                    {formatCurrency(String(orderTotal.toFixed(2)))}
-                  </span>
-                </div>
-              )}
+              <div className="text-sm text-muted-foreground">
+                Vendor total:
+                <span className="ml-1.5 font-medium text-foreground">
+                  {formatCurrency(String(vendorTotal.toFixed(2)))}
+                </span>
+              </div>
+              <div className="text-sm text-muted-foreground">
+                Review total:
+                <span className="ml-1.5 font-semibold text-amber-700 dark:text-amber-400" data-testid="text-review-total">
+                  {formatCurrency(String(orderTotal.toFixed(2)))}
+                </span>
+              </div>
               {isReadOnly && (
                 <div className="flex items-center gap-1.5 text-sm text-blue-700 dark:text-blue-400">
                   <CheckCircle2 className="h-3.5 w-3.5" />
@@ -572,17 +634,6 @@ export default function RestaurantOrderReview() {
               )}
             </div>
             <div className="flex items-center gap-3">
-              {!isReadOnly && (
-                <Button
-                  variant={issueMode ? "destructive" : "outline"}
-                  size="sm"
-                  onClick={() => setIssueMode((prev) => !prev)}
-                  data-testid="button-report-issue"
-                >
-                  <ShieldAlert className="h-3.5 w-3.5 mr-1.5" />
-                  {issueMode ? "Issue Mode On" : "Report Issue"}
-                </Button>
-              )}
               <Button
                 variant="outline"
                 size="sm"
@@ -601,7 +652,7 @@ export default function RestaurantOrderReview() {
                   data-testid="button-submit-review"
                 >
                   <ClipboardCheck className="h-3.5 w-3.5 mr-1.5" />
-                  {submitMutation.isPending ? "Submitting…" : (issueMode ? "Send Back to Driver" : "Submit Review")}
+                  {submitMutation.isPending ? "Submitting…" : "Submit Review"}
                 </Button>
               )}
             </div>

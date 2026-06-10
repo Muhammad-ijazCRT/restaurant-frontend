@@ -11,6 +11,8 @@ import { NotificationBell } from "@/components/shared/notification-bell";
 import { PortalRoleSwitcher } from "@/components/shared/portal-role-switcher";
 import { ProfileMenu } from "@/components/shared/profile-menu";
 import { getUserData, getUserRole, resolveRoleHomePath } from "@/lib/portal-auth";
+import { PortalPageContainer } from "@/components/shared/portal-page-container";
+import { PortalSidebarBrand } from "@/components/shared/rodex-brand";
 import {
   canAccessVendorSettings,
   getVendorPortalLabels,
@@ -80,10 +82,8 @@ export default function VendorLayout({ children }: { children: React.ReactNode }
   return (
     <div className="h-full bg-background flex overflow-hidden" data-testid="vendor-layout">
       <aside className="w-[300px] h-full border-r border-sidebar-border bg-sidebar flex flex-col shrink-0">
-        <div className="h-12 flex items-center gap-2 px-6 border-b border-sidebar-border">
-          <div className="min-w-0">
-            <p className="text-base font-semibold text-sidebar-foreground">{portalLabels.sidebarTitle}</p>
-          </div>
+        <div className="h-14 flex items-center px-5 border-b border-sidebar-border">
+          <PortalSidebarBrand subtitle={portalLabels.sidebarTitle} href="/vendor/portal" />
         </div>
 
         <nav className="flex-1 py-4 px-3 overflow-y-auto">
@@ -133,7 +133,9 @@ export default function VendorLayout({ children }: { children: React.ReactNode }
             />
           </div>
         </header>
-        <main className="flex-1 min-h-0 overflow-y-auto bg-muted/40">{children}</main>
+        <main className="flex-1 min-h-0 overflow-y-auto bg-muted/40">
+          <PortalPageContainer>{children}</PortalPageContainer>
+        </main>
       </div>
     </div>
   );

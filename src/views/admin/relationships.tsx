@@ -274,7 +274,7 @@ export default function AdminRelationships() {
   }
 
   return (
-    <div className="max-w-6xl mx-auto px-6 py-8">
+    <div>
       <div className="mb-8">
         <h1 className="text-2xl font-semibold tracking-tight text-foreground" data-testid="text-page-title">
           Vendor-Restaurant Relationships

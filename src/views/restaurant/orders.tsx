@@ -99,7 +99,7 @@ export default function RestaurantOrders() {
 
   if (!restaurantId) {
     return (
-      <div className="mx-auto max-w-5xl px-6 py-8 text-center text-sm text-muted-foreground">
+      <div className="text-center text-sm text-muted-foreground">
         Restaurant context unavailable. Try logging in again.
       </div>
     );
@@ -109,7 +109,7 @@ export default function RestaurantOrders() {
 
   if (isLoading) {
     return (
-      <div className="mx-auto max-w-5xl space-y-4 px-6 py-8">
+      <div className="space-y-4">
         <Skeleton className="h-10 w-64" />
         <Skeleton className="h-40 w-full rounded-lg" />
         <Skeleton className="h-40 w-full rounded-lg" />
@@ -119,14 +119,14 @@ export default function RestaurantOrders() {
 
   if (activeRelationships.length === 1) {
     return (
-      <div className="mx-auto max-w-5xl px-6 py-8 text-center text-sm text-muted-foreground">
+      <div className="text-center text-sm text-muted-foreground">
         Opening vendor orders...
       </div>
     );
   }
 
   return (
-    <div className="mx-auto max-w-5xl space-y-6 px-6 py-8">
+    <div className="space-y-6">
       <div>
         <h1 className="text-xl font-semibold">Orders</h1>
         <p className="mt-1 text-sm text-muted-foreground">
