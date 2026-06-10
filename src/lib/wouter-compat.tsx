@@ -32,8 +32,10 @@ export function useParams<T extends Record<string, string | undefined> = Record<
   const params = useNextParams();
   const normalized: Record<string, string | undefined> = {};
 
-  for (const [key, value] of Object.entries(params)) {
-    normalized[key] = Array.isArray(value) ? value[0] : value;
+  if (params) {
+    for (const [key, value] of Object.entries(params)) {
+      normalized[key] = Array.isArray(value) ? value[0] : value;
+    }
   }
 
   return normalized as T;
