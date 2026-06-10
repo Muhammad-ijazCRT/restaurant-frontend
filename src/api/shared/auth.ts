@@ -7,3 +7,7 @@ export const authPaths = {
   restaurantRegister: "/api/restaurant/register",
   switchRole: "/api/vendor/switch-role",
 } as const;
+
+
+
+
