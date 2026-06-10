@@ -47,9 +47,10 @@ export default function VendorEmployeePermissionsDialog({
 }) {
   const { toast } = useToast();
   const [selectedExtras, setSelectedExtras] = useState<string[]>([]);
+  const employeeId = employee?.id ?? "";
 
   const { data, isLoading, isError } = useQuery<PermissionsResponse>({
-    queryKey: vendorEmployeeKeys.permissions(vendorId, employee!.id),
+    queryKey: vendorEmployeeKeys.permissions(vendorId, employeeId),
     enabled: open && !!employee?.id,
   });
 
@@ -65,13 +66,16 @@ export default function VendorEmployeePermissionsDialog({
 
   const saveMutation = useMutation({
     mutationFn: async () => {
-      await vendorEmployeeApi.updatePermissions(vendorId, employee!.id, { extraPermissions: selectedExtras });
+      if (!employee?.id) throw new Error("No employee selected");
+      await vendorEmployeeApi.updatePermissions(vendorId, employee.id, { extraPermissions: selectedExtras });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: vendorEmployeeKeys.list(vendorId) });
-      queryClient.invalidateQueries({
-        queryKey: vendorEmployeeKeys.permissions(vendorId, employee!.id),
-      });
+      if (employee?.id) {
+        queryClient.invalidateQueries({
+          queryKey: vendorEmployeeKeys.permissions(vendorId, employee.id),
+        });
+      }
       toast({ title: "Permissions saved" });
       onOpenChange(false);
     },

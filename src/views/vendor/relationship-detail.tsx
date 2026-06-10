@@ -1,4 +1,6 @@
 import { useEffect, type ComponentType, type ReactNode } from "react";
+import { restaurantOrgKeys } from "@/api/restaurant/orgs";
+import { relationshipKeys } from "@/api/shared/relationships";
 import { vendorOrderKeys } from "@/api/vendor/orders";
 import { Link, useLocation, useParams } from "@/lib/wouter-compat";
 import { useQuery } from "@tanstack/react-query";

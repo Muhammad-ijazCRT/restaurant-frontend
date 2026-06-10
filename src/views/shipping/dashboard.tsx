@@ -373,10 +373,10 @@ export default function ShippingDashboard() {
     if (role !== "driver") return [];
     return [
       {
-        bucketId: "readyForDelivery",
+        bucketId: "activeAssignments",
         label: "Delivery Queue",
-        value: Number(stats.readyForDelivery ?? 0),
-        hint: "orders ready for delivery",
+        value: Number(stats.activeAssignments ?? stats.assigned ?? 0),
+        hint: "orders assigned to you",
         icon: Truck,
         tone: "warning",
       },

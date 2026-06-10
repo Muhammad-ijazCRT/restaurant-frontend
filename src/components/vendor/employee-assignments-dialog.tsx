@@ -47,9 +47,10 @@ export default function VendorEmployeeAssignmentsDialog({
 }) {
   const { toast } = useToast();
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
+  const employeeId = employee?.id ?? "";
 
   const { data, isLoading, isError } = useQuery<AssignmentsResponse>({
-    queryKey: vendorEmployeeKeys.assignments(vendorId, employee!.id),
+    queryKey: vendorEmployeeKeys.assignments(vendorId, employeeId),
     enabled: open && !!employee?.id,
   });
 
@@ -60,13 +61,16 @@ export default function VendorEmployeeAssignmentsDialog({
 
   const saveMutation = useMutation({
     mutationFn: async () => {
-      await vendorEmployeeApi.updateAssignments(vendorId, employee!.id, { relationshipIds: selectedIds });
+      if (!employee?.id) throw new Error("No employee selected");
+      await vendorEmployeeApi.updateAssignments(vendorId, employee.id, { relationshipIds: selectedIds });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: vendorEmployeeKeys.list(vendorId) });
-      queryClient.invalidateQueries({
-        queryKey: vendorEmployeeKeys.assignments(vendorId, employee!.id),
-      });
+      if (employee?.id) {
+        queryClient.invalidateQueries({
+          queryKey: vendorEmployeeKeys.assignments(vendorId, employee.id),
+        });
+      }
       toast({ title: "Assignments saved" });
       onOpenChange(false);
     },

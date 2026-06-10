@@ -11,6 +11,13 @@ import { formatCurrency } from "@shared/schema";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { getUserData, getUserRole } from "@/lib/portal-auth";
 import { useVendorAuth } from "@/contexts/vendor-auth-context";
+import {
+  isDriverActiveDeliveryOrder,
+  isDriverCompletedOrder,
+  isDriverQueueOrder,
+  isDriverWaitingForWarehouse,
+  isWarehouseQueueOrder,
+} from "@/lib/shipping-employee-orders";
 import { useToast } from "@/hooks/use-toast";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -59,14 +66,10 @@ function filterDriverOrders(
   view: DriverOrderView,
 ) {
   const filtered = orders.filter(({ order }) => {
-    if (order.driverId !== userId) return false;
     if (view === "completed") {
-      return ["delivered", "invoiced"].includes(order.status);
+      return isDriverCompletedOrder(order, userId);
     }
-    return (
-      order.status === "ready_for_delivery" ||
-      order.restaurantIssueStatus === "pending_driver"
-    );
+    return isDriverQueueOrder(order, userId);
   });
 
   if (view === "completed") {
@@ -89,19 +92,12 @@ function filterVisibleOrders(
 ) {
   if (canManageAssignments) return orders.filter(({ order }) => order.status !== "draft");
   if (role === "warehouse_worker") {
-    return orders.filter(({ order }) =>
-      order.warehouseWorkerId === userId &&
-      ["submitted"].includes(order.status) &&
-      order.pickingStatus !== "approved",
-    );
+    return orders.filter(({ order }) => isWarehouseQueueOrder(order, userId));
   }
   if (role === "driver") {
     return filterDriverOrders(orders, userId, driverView);
   }
-  return orders.filter(({ order }) =>
-    order.driverId === userId &&
-    (order.status === "ready_for_delivery" || order.restaurantIssueStatus === "pending_driver"),
-  );
+  return orders.filter(({ order }) => isDriverActiveDeliveryOrder(order, userId));
 }
 
 function canDriverTakeAction(order: Order) {
@@ -122,6 +118,7 @@ export default function ShippingOrders() {
   const { vendorId } = useVendorAuth();
   const role = getUserRole();
   const user = getUserData();
+  const userId = user?.id != null ? String(user.id) : undefined;
   const { toast } = useToast();
   const canManageAssignments = role === "vendor_admin" || role === "manager";
   const [pickDraft, setPickDraft] = useState<Record<string, PickDraft>>({});
@@ -145,8 +142,8 @@ export default function ShippingOrders() {
   });
 
   const baseVisibleOrders = useMemo(
-    () => filterVisibleOrders(orders, role, user?.id, canManageAssignments, driverView),
-    [orders, role, user?.id, canManageAssignments, driverView],
+    () => filterVisibleOrders(orders, role, userId, canManageAssignments, driverView),
+    [orders, role, userId, canManageAssignments, driverView],
   );
 
   const visibleOrders = useMemo(() => {
@@ -383,6 +380,10 @@ export default function ShippingOrders() {
                         })}`
                       : "Completed delivery"
                     : "Opened from dashboard. This order is not in your active work queue, so actions are read-only."}
+                </div>
+              ) : role === "driver" && isDriverWaitingForWarehouse(entry.order, userId) ? (
+                <div className="border-b bg-amber-50 px-5 py-2 text-xs text-amber-800 dark:bg-amber-950/30 dark:text-amber-200">
+                  Assigned to you — waiting for warehouse picking to finish before delivery.
                 </div>
               ) : null}
               <div className="flex flex-wrap items-center justify-between gap-3 border-b px-5 py-4">
