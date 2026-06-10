@@ -1,0 +1,43 @@
+name,sku,unit_type,unit_size,price
+
+## ============================================================
+## PRODUCT IMPORT TEMPLATE — Instructions
+## ============================================================
+##
+## HOW TO USE THIS TEMPLATE:
+##   1. Delete ALL rows that start with ## (these are instructions only)
+##   2. Keep row 1 exactly as-is — it is the required header row
+##   3. Add one product per row below the header
+##   4. Save as CSV and upload
+##
+## COLUMN REFERENCE:
+##
+##   name        REQUIRED  — Product display name
+##                           Example: Whole Milk, Sliced Turkey, Dinner Rolls
+##
+##   sku         OPTIONAL  — Your internal product code
+##                           Leave blank if you do not use SKUs
+##                           Must be unique per vendor if provided
+##                           Example: SKU-1001, ITEM-42
+##
+##   unit_type   REQUIRED  — How the product is sold / measured
+##                           Accepted values (case-insensitive): case / lb / oz / each / bag / gallon / pallet
+##                           Example: case, lb, oz, each, bag, gallon, pallet
+##
+##   unit_size   REQUIRED  — Size or quantity per unit
+##                           Example: 12ct, 500g, 1lb, 6-pack
+##
+##   price       REQUIRED  — Unit price as a plain number (no $ sign)
+##                           Up to 2 decimal places
+##                           Example: 15.99, 3.50, 100
+##
+## NOTES:
+##   • All imported products default to In Stock
+##   • Do NOT rename or rearrange the header row columns
+##   • Rows with errors will be rejected and shown in the preview
+##   • You can fix and re-upload rejected rows separately
+##
+## EXAMPLES (delete these rows before importing):
+Whole Milk,SKU-1001,case,12ct,15.99
+Sliced Turkey,,lb,500g,8.50
+## ============================================================
