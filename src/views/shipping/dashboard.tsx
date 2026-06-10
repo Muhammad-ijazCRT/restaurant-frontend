@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import { vendorKeys, vendorPaths } from "@/api/vendor/vendors";
 import { Link, useLocation } from "@/lib/wouter-compat";
 import { useQuery } from "@tanstack/react-query";
 import {
@@ -316,14 +317,14 @@ export default function ShippingDashboard() {
   const canSeeCatalog = role === "vendor_admin" || role === "manager";
 
   const { data, isLoading, isError } = useQuery<DashboardResponse>({
-    queryKey: ["/api/vendors", vendorId, "employee-dashboard", period],
+    queryKey: vendorKeys.employeeDashboard(vendorId, period),
     enabled: !!vendorId,
     staleTime: 1000 * 30,
     refetchInterval: 1000 * 60,
     queryFn: async () => {
       const res = await apiRequest(
         "GET",
-        `/api/vendors/${vendorId}/employee-dashboard?period=${period}`,
+        vendorPaths.employeeDashboardWithPeriod(vendorId, period),
       );
       return res.json();
     },

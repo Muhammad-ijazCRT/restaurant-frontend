@@ -1,4 +1,11 @@
 import { useState, useEffect, useMemo } from "react";
+import { adminRestaurantApi } from "@/api/admin/restaurants";
+import { adminDashboardKeys } from "@/api/admin/dashboard";
+import { relationshipApi, relationshipKeys } from "@/api/shared/relationships";
+import { adminVendorKeys } from "@/api/admin/vendors";
+import { restaurantOrgKeys } from "@/api/restaurant/orgs";
+import { notesKeys } from "@/api/shared/notes";
+import { attachmentKeys } from "@/api/shared/attachments";
 import { useParams, useSearch, useLocation, Link } from "@/lib/wouter-compat";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { queryClient, apiRequest } from "@/lib/queryClient";
@@ -153,7 +160,7 @@ function StepRestaurantInfo({
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
   const { data: existingOrg } = useQuery<RestaurantOrg>({
-    queryKey: ["/api/restaurant-orgs", restaurantId],
+    queryKey: restaurantOrgKeys.detail(restaurantId),
     enabled: isEditing,
   });
 
@@ -223,12 +230,12 @@ function StepRestaurantInfo({
         status: data.status,
         loginPassword: data.password || undefined,
       };
-      const res = await apiRequest("POST", "/api/restaurant-orgs", payload);
+      const res = await adminRestaurantApi.create(payload);
       return res.json() as Promise<RestaurantOrg>;
     },
     onSuccess: (org) => {
-      queryClient.invalidateQueries({ queryKey: ["/api/restaurant-orgs"] });
-      queryClient.invalidateQueries({ queryKey: ["/api/admin/stats"] });
+      queryClient.invalidateQueries({ queryKey: restaurantOrgKeys.list() });
+      queryClient.invalidateQueries({ queryKey: adminDashboardKeys.stats() });
       onCreated(org.id);
     },
     onError: handleError,
@@ -246,11 +253,11 @@ function StepRestaurantInfo({
       if (data.password) {
         payload.loginPassword = data.password;
       }
-      return apiRequest("PATCH", `/api/restaurant-orgs/${restaurantId}`, payload);
+      return adminRestaurantApi.update(restaurantId, payload);
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/restaurant-orgs"] });
-      queryClient.invalidateQueries({ queryKey: ["/api/restaurant-orgs", restaurantId] });
+      queryClient.invalidateQueries({ queryKey: restaurantOrgKeys.list() });
+      queryClient.invalidateQueries({ queryKey: restaurantOrgKeys.detail(restaurantId) });
       toast({ title: "Restaurant updated" });
       onUpdated?.();
     },
@@ -499,11 +506,11 @@ function StepLinkVendors({
   const [isPending, setIsPending] = useState(false);
 
   const { data: allVendors = [], isLoading: vendorsLoading } = useQuery<Vendor[]>({
-    queryKey: ["/api/vendors"],
+    queryKey: adminVendorKeys.list(false),
   });
 
   const { data: allRelationships = [], isLoading: relsLoading } = useQuery<VendorRestaurantRelationship[]>({
-    queryKey: ["/api/relationships"],
+    queryKey: relationshipKeys.all(),
   });
 
   const activeVendors = useMemo(
@@ -558,14 +565,14 @@ function StepLinkVendors({
     try {
       await Promise.all(
         toCreate.map(vendorId =>
-          apiRequest("POST", "/api/relationships", {
+          relationshipApi.create({
             vendorId,
             restaurantOrgId: restaurantId,
             status: "active",
           })
         )
       );
-      queryClient.invalidateQueries({ queryKey: ["/api/relationships"] });
+      queryClient.invalidateQueries({ queryKey: relationshipKeys.all() });
       toast({
         title: `${toCreate.length} vendor${toCreate.length !== 1 ? "s" : ""} linked`,
       });
@@ -705,16 +712,16 @@ function StepReview({
   const [, navigate] = useLocation();
 
   const { data: restaurant } = useQuery<RestaurantOrg>({
-    queryKey: ["/api/restaurant-orgs", restaurantId],
+    queryKey: restaurantOrgKeys.detail(restaurantId),
   });
   const { data: attachments = [] } = useQuery<AttachmentMeta[]>({
-    queryKey: ["/api/attachments", "restaurant_org", restaurantId],
+    queryKey: attachmentKeys.list("restaurant_org", restaurantId),
   });
   const { data: notes = [] } = useQuery<InternalNote[]>({
-    queryKey: ["/api/notes", "restaurant_org", restaurantId],
+    queryKey: notesKeys.list("restaurant_org", restaurantId),
   });
   const { data: allRelationships = [] } = useQuery<VendorRestaurantRelationship[]>({
-    queryKey: ["/api/relationships"],
+    queryKey: relationshipKeys.all(),
   });
 
   const linkedVendorCount = allRelationships.filter(

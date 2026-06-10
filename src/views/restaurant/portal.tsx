@@ -1,4 +1,6 @@
 import { useLocation } from "@/lib/wouter-compat";
+import { relationshipKeys } from "@/api/shared/relationships";
+import { restaurantOrderKeys } from "@/api/restaurant/orders";
 import { useQuery } from "@tanstack/react-query";
 import { useRestaurantAuth } from "@/contexts/restaurant-auth-context";
 import type { VendorRestaurantRelationship } from "@shared/schema";
@@ -149,12 +151,12 @@ export default function RestaurantPortal() {
   const { isLoading: relationshipsLoading, data: allRelationships = [] } = useQuery<
     VendorRestaurantRelationship[]
   >({
-    queryKey: ["/api/relationships"],
+    queryKey: relationshipKeys.all(),
     enabled: !!restaurantId,
   });
 
   const { data: dashboardStats, isLoading: ordersLoading } = useQuery({
-    queryKey: ["/api/restaurant-orgs", restaurantId, "orders"],
+    queryKey: restaurantOrderKeys.list(restaurantId),
     enabled: !!restaurantId,
     select: (data) => buildRestaurantDashboardStats(normalizeOrderEntries(data)),
   });

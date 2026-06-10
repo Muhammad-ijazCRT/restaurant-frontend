@@ -1,4 +1,6 @@
 import { useEffect } from "react";
+import { vendorEmployeeApi } from "@/api/vendor/employees";
+import { vendorEmployeeKeys } from "@/api/vendor/employees";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation, useQuery } from "@tanstack/react-query";
@@ -24,7 +26,7 @@ function timeToLabel(hour: number, minute: number) {
 export function CutoffSettingsPanel({ vendorId, title = "Cutoff Settings", description = "Set the daily order cutoff used for lock and reminder timing." }: { vendorId: string; title?: string; description?: string }) {
   const { toast } = useToast();
   const { data } = useQuery<VendorCutoffSettings | null>({
-    queryKey: ["/api/vendors", vendorId, "cutoff-settings"],
+    queryKey: vendorEmployeeKeys.cutoffSettings(vendorId),
     enabled: !!vendorId,
   });
 
@@ -52,10 +54,10 @@ export function CutoffSettingsPanel({ vendorId, title = "Cutoff Settings", descr
 
   const mutation = useMutation({
     mutationFn: async (values: FormValues) => {
-      await apiRequest("PUT", `/api/vendors/${vendorId}/cutoff-settings`, values);
+      await vendorEmployeeApi.updateCutoffSettings(vendorId, values);
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/vendors", vendorId, "cutoff-settings"] });
+      queryClient.invalidateQueries({ queryKey: vendorEmployeeKeys.cutoffSettings(vendorId) });
       toast({ title: "Cutoff settings saved" });
     },
     onError: (err: Error) => toast({ title: "Save failed", description: err.message, variant: "destructive" }),

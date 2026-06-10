@@ -1,6 +1,7 @@
 import { useEffect } from "react";
 import { Link, useLocation } from "@/lib/wouter-compat";
 import { useQuery } from "@tanstack/react-query";
+import { vendorKeys } from "@/api/vendor/vendors";
 import type { Vendor } from "@shared/schema";
 import { useVendorAuth } from "@/contexts/vendor-auth-context";
 import { clearAuthSession, getUserData, getUserRole, resolveRoleHomePath } from "@/lib/portal-auth";
@@ -22,7 +23,7 @@ export default function ShippingLayout({ children }: { children: React.ReactNode
   const portalLabels = getShippingPortalLabels(role);
   const navItems = getShippingNavItems(role);
   const { data: vendor } = useQuery<Vendor>({
-    queryKey: ["/api/vendors", vendorId],
+    queryKey: vendorKeys.detail(vendorId),
     enabled: !!vendorId,
   });
   const activeItem = navItems.find(

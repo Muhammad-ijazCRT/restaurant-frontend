@@ -1,4 +1,10 @@
 import { useState, useEffect } from "react";
+import { restaurantOrderApi, restaurantOrderKeys } from "@/api/restaurant/orders";
+import { relationshipKeys } from "@/api/shared/relationships";
+import { vendorKeys } from "@/api/vendor/vendors";
+import { restaurantOrgKeys } from "@/api/restaurant/orgs";
+import { vendorOrderKeys } from "@/api/vendor/orders";
+import { vendorProductKeys } from "@/api/vendor/products";
 import { Link, useLocation, useParams } from "@/lib/wouter-compat";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { useRestaurantAuth } from "@/contexts/restaurant-auth-context";
@@ -56,27 +62,27 @@ export default function RestaurantOrderComposer() {
   // ── Data fetching ──────────────────────────────────────────────────────────
 
   const { data: restaurant } = useQuery<RestaurantOrg>({
-    queryKey: ["/api/restaurant-orgs", restaurantId],
+    queryKey: restaurantOrgKeys.detail(restaurantId),
     enabled: !!restaurantId,
   });
 
   const { data: allRelationships = [], isLoading: relLoading } = useQuery<VendorRestaurantRelationship[]>({
-    queryKey: ["/api/relationships"],
+    queryKey: relationshipKeys.all(),
     enabled: !!restaurantId,
   });
 
   const { data: vendor, isLoading: vendorLoading } = useQuery<Vendor>({
-    queryKey: ["/api/vendors", vendorId],
+    queryKey: vendorKeys.detail(vendorId),
     enabled: !!vendorId,
   });
 
   const { data: products = [], isLoading: productsLoading } = useQuery<Product[]>({
-    queryKey: ["/api/vendors", vendorId, "products"],
+    queryKey: vendorProductKeys.list(vendorId),
     enabled: !!vendorId,
   });
 
-  const draftQueryKey = ["/api/restaurant-orgs", restaurantId, "draft-order", vendorId];
-  const submittedQueryKey = ["/api/restaurant-orgs", restaurantId, "submitted-orders", vendorId];
+  const draftQueryKey = restaurantOrderKeys.draft(restaurantId, vendorId);
+  const submittedQueryKey = restaurantOrderKeys.submittedList(restaurantId, vendorId);
 
   const { data: draftData, isLoading: draftLoading } = useQuery<DraftResponse>({
     queryKey: draftQueryKey,
@@ -88,7 +94,7 @@ export default function RestaurantOrderComposer() {
   )?.id;
 
   const { data: orderSheetData = [], isLoading: orderSheetLoading } = useQuery<OrderSheetEntry[]>({
-    queryKey: ["/api/relationships", sheetRelationshipId, "order-sheet"],
+    queryKey: relationshipKeys.orderSheet(sheetRelationshipId),
     enabled: !!sheetRelationshipId,
   });
 
@@ -170,9 +176,9 @@ export default function RestaurantOrderComposer() {
         throw new Error("Please add at least one product with a quantity.");
       }
       if (existingDraft) {
-        return apiRequest("PATCH", `/api/restaurant-orgs/${restaurantId}/orders/${existingDraft.id}`, { items });
+        return restaurantOrderApi.update(restaurantId, existingDraft.id, { items });
       } else {
-        return apiRequest("POST", `/api/restaurant-orgs/${restaurantId}/orders`, {
+        return restaurantOrderApi.create(restaurantId, {
           vendorId,
           items,
           status: "draft",
@@ -204,16 +210,16 @@ export default function RestaurantOrderComposer() {
       let orderId = existingDraft?.id;
 
       if (orderId) {
-        await apiRequest("PATCH", `/api/restaurant-orgs/${restaurantId}/orders/${orderId}`, { items });
+        await restaurantOrderApi.update(restaurantId, orderId, { items });
       } else {
-        const createRes = await apiRequest("POST", `/api/restaurant-orgs/${restaurantId}/orders`, {
+        const createRes = await restaurantOrderApi.create(restaurantId, {
           vendorId, items, status: "draft",
         });
         const createData = await createRes.json();
         orderId = createData.order?.id ?? createData.id;
       }
 
-      const res = await apiRequest("PATCH", `/api/restaurant-orgs/${restaurantId}/orders/${orderId}`, { status: "submitted" });
+      const res = await restaurantOrderApi.update(restaurantId, orderId!, { status: "submitted" });
       return res.json() as Promise<{ order: Order; lineItems: OrderLineItem[] }>;
     },
     onSuccess: (data) => {
@@ -222,7 +228,7 @@ export default function RestaurantOrderComposer() {
         submittedQueryKey,
         (prev: { order: Order; lineItems: OrderLineItem[] }[] = []) => [data, ...prev],
       );
-      queryClient.invalidateQueries({ queryKey: ["/api/vendors", vendorId, "orders"] });
+      queryClient.invalidateQueries({ queryKey: vendorOrderKeys.list(vendorId) });
       setConfirmSubmit(false);
       toast({ title: "Order submitted", description: "Your order has been sent to the vendor." });
       navigate(`/restaurant/vendor/${vendorId}`);

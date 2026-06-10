@@ -32,7 +32,8 @@ const USER_ROLE_KEY = "user_role";
 const USER_DATA_KEY = "user_data";
 const FLASH_STORAGE_KEY = "app.flash.message";
 
-import { apiUrl } from "@/lib/api";
+import { apiUrl } from "@/api/client";
+import { authPaths } from "@/api/shared/auth";
 
 function canUseStorage(): boolean {
   return typeof window !== "undefined" && typeof localStorage !== "undefined";
@@ -117,7 +118,7 @@ export async function switchPortalRole(role: string): Promise<string> {
     throw new Error("You must be logged in to switch roles.");
   }
 
-  const response = await fetch(apiUrl("/api/vendor/switch-role"), {
+  const response = await fetch(apiUrl(authPaths.switchRole), {
     method: "POST",
     headers: {
       "Content-Type": "application/json",

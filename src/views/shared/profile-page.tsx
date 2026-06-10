@@ -1,4 +1,6 @@
 import { useState, useRef, useEffect } from "react";
+import { profilePaths } from "@/api/shared/profile";
+import { profileKeys } from "@/api/shared/profile";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Camera, Save, User, Mail, Phone, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -41,7 +43,7 @@ export default function ProfilePage() {
   });
 
   const { data: profile, isLoading } = useQuery<ProfileData>({
-    queryKey: ["/api/profile"],
+    queryKey: profileKeys.profile(),
   });
 
   useEffect(() => {
@@ -68,7 +70,7 @@ export default function ProfilePage() {
 
   const updateMutation = useMutation({
     mutationFn: async (data: typeof formData) => {
-      const res = await apiRequest("PUT", "/api/profile", data);
+      const res = await apiRequest("PUT", profilePaths.profile, data);
       return res.json();
     },
     onSuccess: (data) => {
@@ -79,8 +81,8 @@ export default function ProfilePage() {
         image: data?.image ?? formData.image,
       };
       setFormData(nextFormData);
-      queryClient.setQueryData(["/api/profile"], data);
-      queryClient.invalidateQueries({ queryKey: ["/api/profile"] });
+      queryClient.setQueryData(profileKeys.profile(), data);
+      queryClient.invalidateQueries({ queryKey: profileKeys.profile() });
 
       const storedUser = getUserData();
       if (storedUser) {

@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { vendorEmployeeApi, vendorEmployeeKeys } from "@/api/vendor/employees";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { Shield } from "lucide-react";
 import type { VendorEmployee } from "@shared/schema";
@@ -48,7 +49,7 @@ export default function VendorEmployeePermissionsDialog({
   const [selectedExtras, setSelectedExtras] = useState<string[]>([]);
 
   const { data, isLoading, isError } = useQuery<PermissionsResponse>({
-    queryKey: ["/api/vendors", vendorId, "employees", employee?.id, "permissions"],
+    queryKey: vendorEmployeeKeys.permissions(vendorId, employee!.id),
     enabled: open && !!employee?.id,
   });
 
@@ -64,16 +65,12 @@ export default function VendorEmployeePermissionsDialog({
 
   const saveMutation = useMutation({
     mutationFn: async () => {
-      await apiRequest(
-        "PATCH",
-        `/api/vendors/${vendorId}/employees/${employee!.id}/permissions`,
-        { extraPermissions: selectedExtras },
-      );
+      await vendorEmployeeApi.updatePermissions(vendorId, employee!.id, { extraPermissions: selectedExtras });
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/vendors", vendorId, "employees"] });
+      queryClient.invalidateQueries({ queryKey: vendorEmployeeKeys.list(vendorId) });
       queryClient.invalidateQueries({
-        queryKey: ["/api/vendors", vendorId, "employees", employee?.id, "permissions"],
+        queryKey: vendorEmployeeKeys.permissions(vendorId, employee!.id),
       });
       toast({ title: "Permissions saved" });
       onOpenChange(false);

@@ -1,4 +1,7 @@
 import { useEffect, useMemo } from "react";
+import { relationshipKeys } from "@/api/shared/relationships";
+import { adminVendorKeys } from "@/api/admin/vendors";
+import { restaurantOrderKeys } from "@/api/restaurant/orders";
 import { useLocation } from "@/lib/wouter-compat";
 import { useQuery } from "@tanstack/react-query";
 import { useRestaurantAuth } from "@/contexts/restaurant-auth-context";
@@ -54,15 +57,15 @@ export default function RestaurantOrders() {
   const [, navigate] = useLocation();
 
   const { data: relationships = [], isLoading: relationshipsLoading } = useQuery<VendorRestaurantRelationship[]>({
-    queryKey: ["/api/relationships"],
+    queryKey: relationshipKeys.all(),
     enabled: !!restaurantId,
   });
   const { data: vendors = [], isLoading: vendorsLoading } = useQuery<Vendor[]>({
-    queryKey: ["/api/vendors"],
+    queryKey: adminVendorKeys.list(false),
     enabled: !!restaurantId,
   });
   const { data: orderEntries = [], isLoading: ordersLoading } = useQuery({
-    queryKey: ["/api/restaurant-orgs", restaurantId, "orders"],
+    queryKey: restaurantOrderKeys.list(restaurantId),
     enabled: !!restaurantId,
     select: normalizeOrderEntries,
   });

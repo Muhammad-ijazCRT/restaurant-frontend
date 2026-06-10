@@ -1,4 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
+import { adminDashboardKeys } from "@/api/admin/dashboard";
 import { Link, useParams } from "@/lib/wouter-compat";
 import { formatCurrency } from "@shared/schema";
 import type { Vendor, RestaurantOrg, VendorRestaurantRelationship, Invoice } from "@shared/schema";
@@ -157,7 +158,7 @@ export default function AdminOrderDetail() {
   const { orderId } = useParams<{ orderId: string }>();
 
   const { data, isLoading, isError } = useQuery<AdminOrderDetail>({
-    queryKey: ["/api/admin/orders", orderId],
+    queryKey: adminDashboardKeys.adminOrder(orderId),
     enabled: !!orderId,
     staleTime: 0,
     gcTime: 0,

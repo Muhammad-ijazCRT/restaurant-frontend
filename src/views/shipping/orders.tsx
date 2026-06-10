@@ -1,4 +1,9 @@
 import { useEffect, useMemo, useRef, useState } from "react";
+import { vendorOrderApi } from "@/api/vendor/orders";
+import { profileKeys } from "@/api/shared/profile";
+import { vendorEmployeeKeys } from "@/api/vendor/employees";
+import { vendorOrderKeys } from "@/api/vendor/orders";
+import { vendorProductKeys } from "@/api/vendor/products";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { useLocation, useSearch } from "@/lib/wouter-compat";
 import type { LineFulfillment, Order, OrderLineItem, Product, VendorEmployee } from "@shared/schema";
@@ -127,15 +132,15 @@ export default function ShippingOrders() {
   const scrolledToOrderRef = useRef(false);
 
   const { data: orders = [], isLoading } = useQuery<VendorOrderEntry[]>({
-    queryKey: ["/api/vendors", vendorId, "orders"],
+    queryKey: vendorOrderKeys.list(vendorId),
     enabled: !!vendorId,
   });
   const { data: employees = [] } = useQuery<VendorEmployee[]>({
-    queryKey: ["/api/vendors", vendorId, "employees"],
+    queryKey: vendorEmployeeKeys.list(vendorId),
     enabled: !!vendorId && canManageAssignments,
   });
   const { data: products = [] } = useQuery<Product[]>({
-    queryKey: ["/api/vendors", vendorId, "products"],
+    queryKey: vendorProductKeys.list(vendorId),
     enabled: !!vendorId && canManageAssignments,
   });
 
@@ -196,10 +201,10 @@ export default function ShippingOrders() {
           note: item.note ?? "",
         };
       });
-      await apiRequest("PATCH", `/api/vendors/${vendorId}/orders/${orderId}/picking`, { items, submitForReview });
+      await vendorOrderApi.picking(vendorId, orderId, { items, submitForReview });
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/vendors", vendorId, "orders"] });
+      queryClient.invalidateQueries({ queryKey: vendorOrderKeys.list(vendorId) });
       toast({ title: "Picking saved" });
     },
     onError: (err: Error) => toast({ title: "Picking failed", description: err.message, variant: "destructive" }),
@@ -207,10 +212,10 @@ export default function ShippingOrders() {
 
   const approvePickingMutation = useMutation({
     mutationFn: async (orderId: string) => {
-      await apiRequest("PATCH", `/api/vendors/${vendorId}/orders/${orderId}/approve-picking`);
+      await vendorOrderApi.approvePicking(vendorId, orderId);
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/vendors", vendorId, "orders"] });
+      queryClient.invalidateQueries({ queryKey: vendorOrderKeys.list(vendorId) });
       toast({ title: "Order ready for delivery" });
     },
     onError: (err: Error) => toast({ title: "Approval failed", description: err.message, variant: "destructive" }),
@@ -218,10 +223,10 @@ export default function ShippingOrders() {
 
   const deliverMutation = useMutation({
     mutationFn: async (orderId: string) => {
-      await apiRequest("PATCH", `/api/vendors/${vendorId}/orders/${orderId}/deliver`, { note: driverNotes[orderId] ?? "" });
+      await vendorOrderApi.deliver(vendorId, orderId, { note: driverNotes[orderId] ?? '' });
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/vendors", vendorId, "orders"] });
+      queryClient.invalidateQueries({ queryKey: vendorOrderKeys.list(vendorId) });
       toast({ title: "Order delivered" });
     },
     onError: (err: Error) => toast({ title: "Delivery failed", description: err.message, variant: "destructive" }),
@@ -229,12 +234,12 @@ export default function ShippingOrders() {
 
   const resolveIssueMutation = useMutation({
     mutationFn: async (orderId: string) => {
-      await apiRequest("PATCH", `/api/vendors/${vendorId}/orders/${orderId}/resolve-issue`, {
+      await vendorOrderApi.resolveIssue(vendorId, orderId, {
         note: driverNotes[orderId] ?? "",
       });
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/vendors", vendorId, "orders"] });
+      queryClient.invalidateQueries({ queryKey: vendorOrderKeys.list(vendorId) });
       toast({ title: "Issue resolved", description: "Invoice created after driver approval." });
     },
     onError: (err: Error) => toast({ title: "Resolution failed", description: err.message, variant: "destructive" }),
@@ -243,11 +248,11 @@ export default function ShippingOrders() {
   const assignMutation = useMutation({
     mutationFn: async (orderId: string) => {
       const draft = assignDraft[orderId];
-      await apiRequest("PATCH", `/api/vendors/${vendorId}/orders/${orderId}/assign`, draft);
+      await vendorOrderApi.assign(vendorId, orderId, draft);
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/vendors", vendorId, "orders"] });
-      void queryClient.invalidateQueries({ queryKey: ["/api/notifications"] });
+      queryClient.invalidateQueries({ queryKey: vendorOrderKeys.list(vendorId) });
+      void queryClient.invalidateQueries({ queryKey: profileKeys.notifications() });
       toast({ title: "Order assigned" });
     },
     onError: (err: Error) => toast({ title: "Assignment failed", description: err.message, variant: "destructive" }),
@@ -256,7 +261,7 @@ export default function ShippingOrders() {
   const substitutionMutation = useMutation({
     mutationFn: async ({ orderId, lineItemId }: { orderId: string; lineItemId: string }) => {
       const draft = subDraft[lineItemId];
-      await apiRequest("POST", `/api/vendors/${vendorId}/orders/${orderId}/substitutions`, {
+      await vendorOrderApi.createSubstitution(vendorId, orderId, {
         lineItemId,
         substituteProductId: draft.substituteProductId,
         proposedQty: Number(draft.proposedQty),

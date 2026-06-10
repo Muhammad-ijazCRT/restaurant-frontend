@@ -19,6 +19,7 @@ import {
   Search,
   X,
 } from "lucide-react";
+import { adminDashboardKeys } from "@/api/admin/dashboard";
 import type { ActivityLog, ActivityAction } from "@shared/schema";
 
 type ActionMeta = {
@@ -192,7 +193,7 @@ function LogRowSkeleton() {
 export default function AdminActivityLog() {
   const [search, setSearch] = useState("");
   const { data: logs, isLoading } = useQuery<ActivityLog[]>({
-    queryKey: ["/api/activity-logs/all"],
+    queryKey: adminDashboardKeys.activityLogsAll(),
     staleTime: 0,
     refetchOnMount: "always",
   });

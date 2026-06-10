@@ -1,4 +1,5 @@
 import { useEffect, type ComponentType, type ReactNode } from "react";
+import { vendorOrderKeys } from "@/api/vendor/orders";
 import { Link, useLocation, useParams } from "@/lib/wouter-compat";
 import { useQuery } from "@tanstack/react-query";
 import { useVendorAuth } from "@/contexts/vendor-auth-context";
@@ -141,7 +142,7 @@ export default function VendorRelationshipDetail() {
     data: relationship,
     isLoading: relationshipLoading,
   } = useQuery<VendorRestaurantRelationship>({
-    queryKey: ["/api/relationships", relationshipId],
+    queryKey: relationshipKeys.detail(relationshipId),
     enabled: !!relationshipId,
   });
 
@@ -152,14 +153,14 @@ export default function VendorRelationshipDetail() {
     data: restaurant,
     isLoading: restaurantLoading,
   } = useQuery<RestaurantOrg>({
-    queryKey: ["/api/restaurant-orgs", relationship?.restaurantOrgId],
+    queryKey: restaurantOrgKeys.detail(relationship?.restaurantOrgId!),
     enabled: canLoadRelationshipData,
   });
 
   const { data: vendorOrders = [], isLoading: ordersLoading } = useQuery<
     VendorOrderEntry[]
   >({
-    queryKey: ["/api/vendors", vendorId!, "orders"],
+    queryKey: vendorOrderKeys.list(vendorId!),
     enabled: canLoadRelationshipData,
   });
 

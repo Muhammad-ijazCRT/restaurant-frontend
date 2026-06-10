@@ -1,4 +1,8 @@
 import { useState, useEffect } from "react";
+import { adminRestaurantApi } from "@/api/admin/restaurants";
+import { adminDashboardKeys } from "@/api/admin/dashboard";
+import { relationshipKeys } from "@/api/shared/relationships";
+import { adminRestaurantKeys } from "@/api/admin/restaurants";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { queryClient, apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
@@ -117,10 +121,10 @@ function RestaurantFormDialog({ open, onOpenChange, org }: { open: boolean; onOp
   }
 
   const createMutation = useMutation({
-    mutationFn: (data: InsertRestaurantOrg) => apiRequest("POST", "/api/restaurant-orgs", data),
+    mutationFn: (data: InsertRestaurantOrg) => adminRestaurantApi.create(data),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/restaurant-orgs?includeArchived=true"] });
-      queryClient.invalidateQueries({ queryKey: ["/api/admin/stats"] });
+      queryClient.invalidateQueries({ queryKey: adminRestaurantKeys.list() });
+      queryClient.invalidateQueries({ queryKey: adminDashboardKeys.stats() });
       toast({ title: "Restaurant created", description: "The restaurant was added and a welcome email with login details was sent." });
       onOpenChange(false);
     },
@@ -128,10 +132,10 @@ function RestaurantFormDialog({ open, onOpenChange, org }: { open: boolean; onOp
   });
 
   const updateMutation = useMutation({
-    mutationFn: (data: Partial<InsertRestaurantOrg>) => apiRequest("PATCH", `/api/restaurant-orgs/${org!.id}`, data),
+    mutationFn: (data: Partial<InsertRestaurantOrg>) => adminRestaurantApi.update(org!.id, data),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/restaurant-orgs?includeArchived=true"] });
-      queryClient.invalidateQueries({ queryKey: ["/api/admin/stats"] });
+      queryClient.invalidateQueries({ queryKey: adminRestaurantKeys.list() });
+      queryClient.invalidateQueries({ queryKey: adminDashboardKeys.stats() });
       toast({ title: "Restaurant updated", description: "The restaurant organization has been updated." });
       onOpenChange(false);
     },
@@ -247,19 +251,19 @@ export default function AdminRestaurants() {
   const { toast } = useToast();
 
   const { data: allOrgs = [], isLoading, isError, error, refetch } = useQuery<RestaurantOrg[]>({
-    queryKey: ["/api/restaurant-orgs?includeArchived=true"],
+    queryKey: adminRestaurantKeys.list(),
   });
 
   const { data: completeness = {} } = useQuery<CompletenessMap>({
-    queryKey: ["/api/restaurant-orgs/completeness"],
+    queryKey: adminRestaurantKeys.completeness(),
   });
 
   const archiveMutation = useMutation({
-    mutationFn: (id: string) => apiRequest("PATCH", `/api/restaurant-orgs/${id}/archive`),
+    mutationFn: (id: string) => adminRestaurantApi.archive(id),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/restaurant-orgs?includeArchived=true"] });
-      queryClient.invalidateQueries({ queryKey: ["/api/relationships"] });
-      queryClient.invalidateQueries({ queryKey: ["/api/admin/stats"] });
+      queryClient.invalidateQueries({ queryKey: adminRestaurantKeys.list() });
+      queryClient.invalidateQueries({ queryKey: relationshipKeys.all() });
+      queryClient.invalidateQueries({ queryKey: adminDashboardKeys.stats() });
       toast({ title: "Organization archived", description: "The organization has been archived." });
       setArchiveTarget(undefined);
     },
@@ -269,10 +273,10 @@ export default function AdminRestaurants() {
   });
 
   const restoreMutation = useMutation({
-    mutationFn: (id: string) => apiRequest("PATCH", `/api/restaurant-orgs/${id}/restore`),
+    mutationFn: (id: string) => adminRestaurantApi.restore(id),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/restaurant-orgs?includeArchived=true"] });
-      queryClient.invalidateQueries({ queryKey: ["/api/admin/stats"] });
+      queryClient.invalidateQueries({ queryKey: adminRestaurantKeys.list() });
+      queryClient.invalidateQueries({ queryKey: adminDashboardKeys.stats() });
       toast({ title: "Organization restored", description: "The organization has been restored to active." });
     },
     onError: (error: Error) => {
@@ -281,10 +285,10 @@ export default function AdminRestaurants() {
   });
 
   const deleteMutation = useMutation({
-    mutationFn: (id: string) => apiRequest("DELETE", `/api/restaurant-orgs/${id}`),
+    mutationFn: (id: string) => adminRestaurantApi.delete(id),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/restaurant-orgs?includeArchived=true"] });
-      queryClient.invalidateQueries({ queryKey: ["/api/admin/stats"] });
+      queryClient.invalidateQueries({ queryKey: adminRestaurantKeys.list() });
+      queryClient.invalidateQueries({ queryKey: adminDashboardKeys.stats() });
       toast({ title: "Organization deleted", description: "The organization has been permanently deleted." });
       setDeleteTarget(undefined);
     },
@@ -294,11 +298,11 @@ export default function AdminRestaurants() {
   });
 
   const bulkArchiveMutation = useMutation({
-    mutationFn: (ids: string[]) => Promise.all(ids.map(id => apiRequest("PATCH", `/api/restaurant-orgs/${id}/archive`))),
+    mutationFn: (ids: string[]) => Promise.all(ids.map(id => adminRestaurantApi.archive(id))),
     onSuccess: (_, ids) => {
-      queryClient.invalidateQueries({ queryKey: ["/api/restaurant-orgs?includeArchived=true"] });
-      queryClient.invalidateQueries({ queryKey: ["/api/relationships"] });
-      queryClient.invalidateQueries({ queryKey: ["/api/admin/stats"] });
+      queryClient.invalidateQueries({ queryKey: adminRestaurantKeys.list() });
+      queryClient.invalidateQueries({ queryKey: relationshipKeys.all() });
+      queryClient.invalidateQueries({ queryKey: adminDashboardKeys.stats() });
       setSelectedIds(new Set());
       toast({ title: "Organizations archived", description: `${ids.length} organization${ids.length !== 1 ? "s" : ""} archived successfully.` });
     },
@@ -308,10 +312,10 @@ export default function AdminRestaurants() {
   });
 
   const bulkRestoreMutation = useMutation({
-    mutationFn: (ids: string[]) => Promise.all(ids.map(id => apiRequest("PATCH", `/api/restaurant-orgs/${id}/restore`))),
+    mutationFn: (ids: string[]) => Promise.all(ids.map(id => adminRestaurantApi.restore(id))),
     onSuccess: (_, ids) => {
-      queryClient.invalidateQueries({ queryKey: ["/api/restaurant-orgs?includeArchived=true"] });
-      queryClient.invalidateQueries({ queryKey: ["/api/admin/stats"] });
+      queryClient.invalidateQueries({ queryKey: adminRestaurantKeys.list() });
+      queryClient.invalidateQueries({ queryKey: adminDashboardKeys.stats() });
       setSelectedIds(new Set());
       toast({ title: "Organizations restored", description: `${ids.length} organization${ids.length !== 1 ? "s" : ""} restored successfully.` });
     },
@@ -321,10 +325,10 @@ export default function AdminRestaurants() {
   });
 
   const bulkDeleteMutation = useMutation({
-    mutationFn: (ids: string[]) => Promise.all(ids.map(id => apiRequest("DELETE", `/api/restaurant-orgs/${id}`))),
+    mutationFn: (ids: string[]) => Promise.all(ids.map(id => adminRestaurantApi.delete(id))),
     onSuccess: (_, ids) => {
-      queryClient.invalidateQueries({ queryKey: ["/api/restaurant-orgs?includeArchived=true"] });
-      queryClient.invalidateQueries({ queryKey: ["/api/admin/stats"] });
+      queryClient.invalidateQueries({ queryKey: adminRestaurantKeys.list() });
+      queryClient.invalidateQueries({ queryKey: adminDashboardKeys.stats() });
       setSelectedIds(new Set());
       setBulkDeleteOpen(false);
       toast({ title: "Organizations deleted", description: `${ids.length} organization${ids.length !== 1 ? "s" : ""} permanently deleted.` });

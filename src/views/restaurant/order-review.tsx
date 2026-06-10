@@ -1,4 +1,11 @@
 import { useState, useEffect } from "react";
+import { restaurantReviewApi, restaurantReviewKeys, restaurantReviewPaths } from "@/api/restaurant/review";
+import { restaurantOrderPaths } from "@/api/restaurant/orders";
+import { profileKeys } from "@/api/shared/profile";
+import { vendorKeys } from "@/api/vendor/vendors";
+import { vendorOrderKeys } from "@/api/vendor/orders";
+import { restaurantOrgKeys } from "@/api/restaurant/orgs";
+import { restaurantOrderKeys } from "@/api/restaurant/orders";
 import { useParams, useLocation } from "@/lib/wouter-compat";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { useRestaurantAuth } from "@/contexts/restaurant-auth-context";
@@ -100,11 +107,11 @@ export default function RestaurantOrderReview() {
   // ── Fetch order detail ────────────────────────────────────────────────────
 
   const { data, isLoading, isError } = useQuery<OrderDetailResponse>({
-    queryKey: ["/api/restaurant-orgs", restaurantId, "orders", orderId],
+    queryKey: restaurantOrderKeys.detail(restaurantId, orderId),
     enabled: !!restaurantId && !!orderId,
     staleTime: Infinity,
     queryFn: async () => {
-      const res = await fetch(apiUrl(`/api/restaurant-orgs/${restaurantId}/orders/${orderId}`));
+      const res = await fetch(apiUrl(restaurantOrderPaths.detail(restaurantId, orderId)));
       if (!res.ok) {
         const body = await res.json().catch(() => ({}));
         throw new Error(body.message ?? `HTTP ${res.status}`);
@@ -116,7 +123,7 @@ export default function RestaurantOrderReview() {
   // ── Fetch vendor name ─────────────────────────────────────────────────────
 
   const { data: vendor } = useQuery<{ id: string; name: string }>({
-    queryKey: ["/api/vendors", vendorId],
+    queryKey: vendorKeys.detail(vendorId),
     enabled: !!vendorId,
     staleTime: Infinity,
   });
@@ -124,7 +131,7 @@ export default function RestaurantOrderReview() {
   // ── Fetch restaurant name ─────────────────────────────────────────────────
 
   const { data: restaurant } = useQuery<{ id: string; name: string }>({
-    queryKey: ["/api/restaurant-orgs", restaurantId],
+    queryKey: restaurantOrgKeys.detail(restaurantId),
     enabled: !!restaurantId,
     staleTime: Infinity,
   });
@@ -132,22 +139,22 @@ export default function RestaurantOrderReview() {
   // ── Fetch existing fulfillments ───────────────────────────────────────────
 
   const { data: existingFulfillments = [] } = useQuery<LineFulfillment[]>({
-    queryKey: ["/api/restaurant-orgs", restaurantId, "orders", orderId, "review"],
+    queryKey: restaurantReviewKeys.review(restaurantId, orderId),
     enabled: !!restaurantId && !!orderId,
     staleTime: Infinity,
     queryFn: async () => {
-      const res = await fetch(apiUrl(`/api/restaurant-orgs/${restaurantId}/orders/${orderId}/review`));
+      const res = await fetch(apiUrl(restaurantReviewPaths.review(restaurantId, orderId)));
       if (!res.ok) return [];
       return res.json();
     },
   });
 
   const { data: substitutions = [] } = useQuery<Substitution[]>({
-    queryKey: ["/api/restaurant-orgs", restaurantId, "orders", orderId, "substitutions"],
+    queryKey: restaurantReviewKeys.substitutions(restaurantId, orderId),
     enabled: !!restaurantId && !!orderId,
     staleTime: Infinity,
     queryFn: async () => {
-      const res = await fetch(apiUrl(`/api/restaurant-orgs/${restaurantId}/orders/${orderId}/substitutions`));
+      const res = await fetch(apiUrl(restaurantReviewPaths.substitutions(restaurantId, orderId)));
       if (!res.ok) return [];
       return res.json();
     },
@@ -155,19 +162,20 @@ export default function RestaurantOrderReview() {
 
   const substitutionMutation = useMutation({
     mutationFn: async (payload: { substitutionId: string; status: "accepted" | "rejected" }) => {
-      const res = await apiRequest(
-        "PATCH",
-        `/api/restaurant-orgs/${restaurantId}/orders/${orderId}/substitutions/${payload.substitutionId}`,
-        { status: payload.status }
+      const res = await restaurantReviewApi.updateSubstitution(
+        restaurantId,
+        orderId,
+        payload.substitutionId,
+        { status: payload.status },
       );
       return res.json();
     },
     onSuccess: () => {
       queryClient.invalidateQueries({
-        queryKey: ["/api/restaurant-orgs", restaurantId, "orders", orderId, "substitutions"],
+        queryKey: restaurantReviewKeys.substitutions(restaurantId, orderId),
       });
       queryClient.invalidateQueries({
-        queryKey: ["/api/restaurant-orgs", restaurantId, "orders", orderId, "review"],
+        queryKey: restaurantReviewKeys.review(restaurantId, orderId),
       });
       toast({
         title: "Substitution updated",
@@ -205,7 +213,7 @@ export default function RestaurantOrderReview() {
           : null,
         note: draft[li.id]?.note || null,
       }));
-      const res = await apiRequest("POST", `/api/restaurant-orgs/${restaurantId}/orders/${orderId}/review`, {
+      const res = await restaurantReviewApi.submit(restaurantId, orderId, {
         items,
         reportIssue: issueMode,
       });
@@ -213,23 +221,23 @@ export default function RestaurantOrderReview() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({
-        queryKey: ["/api/restaurant-orgs", restaurantId, "orders", orderId, "review"],
+        queryKey: restaurantReviewKeys.review(restaurantId, orderId),
       });
       queryClient.invalidateQueries({
-        queryKey: ["/api/restaurant-orgs", restaurantId, "submitted-orders", vendorId],
+        queryKey: restaurantOrderKeys.submittedList(restaurantId, vendorId),
       });
       queryClient.invalidateQueries({
-        queryKey: ["/api/restaurant-orgs", restaurantId, "orders", orderId],
+        queryKey: restaurantOrderKeys.detail(restaurantId, orderId),
       });
-      queryClient.invalidateQueries({ queryKey: ["/api/restaurant-orgs", restaurantId, "submitted-orders"] });
-      queryClient.invalidateQueries({ queryKey: ["/api/vendors", vendorId, "orders"] });
-      queryClient.invalidateQueries({ queryKey: ["/api/restaurant-orgs", restaurantId, "vendors", vendorId] });
+      queryClient.invalidateQueries({ queryKey: restaurantOrderKeys.submittedAll(restaurantId) });
+      queryClient.invalidateQueries({ queryKey: vendorOrderKeys.list(vendorId) });
+      queryClient.invalidateQueries({ queryKey: restaurantOrgKeys.vendor(restaurantId, vendorId) });
       queryClient.invalidateQueries({
-        queryKey: ["/api/restaurant-orgs", restaurantId, "submitted-orders", vendorId],
+        queryKey: restaurantOrderKeys.submittedList(restaurantId, vendorId),
       });
-      void queryClient.refetchQueries({ queryKey: ["/api/restaurant-orgs", restaurantId, "submitted-orders", vendorId] });
-      void queryClient.refetchQueries({ queryKey: ["/api/vendors", vendorId, "orders"] });
-      void queryClient.invalidateQueries({ queryKey: ["/api/notifications"] });
+      void queryClient.refetchQueries({ queryKey: restaurantOrderKeys.submittedList(restaurantId, vendorId) });
+      void queryClient.refetchQueries({ queryKey: vendorOrderKeys.list(vendorId) });
+      void queryClient.invalidateQueries({ queryKey: profileKeys.notifications() });
       toast({
         title: issueMode ? "Issue reported" : "Review submitted",
         description: issueMode
@@ -240,8 +248,8 @@ export default function RestaurantOrderReview() {
     },
     onError: (err: Error) => {
       if (err.message.includes("already been approved")) {
-        void queryClient.refetchQueries({ queryKey: ["/api/restaurant-orgs", restaurantId, "submitted-orders", vendorId] });
-        void queryClient.refetchQueries({ queryKey: ["/api/vendors", vendorId, "orders"] });
+        void queryClient.refetchQueries({ queryKey: restaurantOrderKeys.submittedList(restaurantId, vendorId) });
+        void queryClient.refetchQueries({ queryKey: vendorOrderKeys.list(vendorId) });
         toast({ title: "Review saved", description: "This order was successfully reviewed." });
         navigate(`/restaurant/vendor/${vendorId}`, { replace: true });
       } else {

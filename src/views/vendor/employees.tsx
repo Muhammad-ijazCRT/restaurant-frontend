@@ -1,4 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
+import { vendorEmployeeApi } from "@/api/vendor/employees";
+import { vendorKeys } from "@/api/vendor/vendors";
+import { vendorEmployeeKeys } from "@/api/vendor/employees";
 import { useLocation } from "@/lib/wouter-compat";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -124,13 +127,13 @@ function EmployeeDialog({
         ...(data.password ? { loginPassword: data.password } : {}),
       };
       if (isEditing) {
-        await apiRequest("PATCH", `/api/vendors/${vendorId}/employees/${employee.id}`, payload);
+        await vendorEmployeeApi.update(vendorId, employee.id, payload);
         return;
       }
-      await apiRequest("POST", `/api/vendors/${vendorId}/employees`, payload);
+      await vendorEmployeeApi.create(vendorId, payload);
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/vendors", vendorId, "employees"] });
+      queryClient.invalidateQueries({ queryKey: vendorEmployeeKeys.list(vendorId) });
       toast({ title: isEditing ? "Employee updated" : "Employee added" });
       onOpenChange(false);
     },
@@ -300,11 +303,11 @@ export default function VendorEmployees() {
   }, [vendorId, navigate]);
 
   const { data: vendor } = useQuery<Vendor>({
-    queryKey: ["/api/vendors", vendorId],
+    queryKey: vendorKeys.detail(vendorId),
     enabled: !!vendorId,
   });
   const { data: employees = [], isLoading } = useQuery<VendorEmployeeRecord[]>({
-    queryKey: ["/api/vendors", vendorId, "employees"],
+    queryKey: vendorEmployeeKeys.list(vendorId),
     enabled: !!vendorId,
   });
 
@@ -325,10 +328,10 @@ export default function VendorEmployees() {
 
   const deleteMutation = useMutation({
     mutationFn: async (employeeId: string) => {
-      await apiRequest("DELETE", `/api/vendors/${vendorId}/employees/${employeeId}`);
+      await vendorEmployeeApi.delete(vendorId, employeeId);
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/vendors", vendorId, "employees"] });
+      queryClient.invalidateQueries({ queryKey: vendorEmployeeKeys.list(vendorId) });
       setDeletingEmployee(null);
       toast({ title: "Employee deleted" });
     },

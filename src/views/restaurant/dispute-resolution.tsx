@@ -1,4 +1,11 @@
 import { useState, useEffect } from "react";
+import { restaurantReviewApi, restaurantReviewKeys, restaurantReviewPaths } from "@/api/restaurant/review";
+import { restaurantOrderPaths } from "@/api/restaurant/orders";
+import { adminDashboardKeys } from "@/api/admin/dashboard";
+import { vendorKeys } from "@/api/vendor/vendors";
+import { restaurantOrgKeys } from "@/api/restaurant/orgs";
+import { vendorOrderKeys } from "@/api/vendor/orders";
+import { restaurantOrderKeys } from "@/api/restaurant/orders";
 import { useParams, useLocation } from "@/lib/wouter-compat";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { useRestaurantAuth } from "@/contexts/restaurant-auth-context";
@@ -91,11 +98,11 @@ export default function RestaurantDisputeResolution() {
   // ── Fetch order detail ────────────────────────────────────────────────────
 
   const { data, isLoading, isError } = useQuery<OrderDetailResponse>({
-    queryKey: ["/api/restaurant-orgs", restaurantId, "orders", orderId],
+    queryKey: restaurantOrderKeys.detail(restaurantId, orderId),
     enabled: !!restaurantId && !!orderId,
     staleTime: Infinity,
     queryFn: async () => {
-      const res = await fetch(apiUrl(`/api/restaurant-orgs/${restaurantId}/orders/${orderId}`));
+      const res = await fetch(apiUrl(restaurantOrderPaths.detail(restaurantId, orderId)));
       if (!res.ok) {
         const body = await res.json().catch(() => ({}));
         throw new Error(body.message ?? `HTTP ${res.status}`);
@@ -107,7 +114,7 @@ export default function RestaurantDisputeResolution() {
   // ── Fetch vendor name ─────────────────────────────────────────────────────
 
   const { data: vendor } = useQuery<{ id: string; name: string }>({
-    queryKey: ["/api/vendors", vendorId],
+    queryKey: vendorKeys.detail(vendorId),
     enabled: !!vendorId,
     staleTime: Infinity,
   });
@@ -115,7 +122,7 @@ export default function RestaurantDisputeResolution() {
   // ── Fetch restaurant name ─────────────────────────────────────────────────
 
   const { data: restaurant } = useQuery<{ id: string; name: string }>({
-    queryKey: ["/api/restaurant-orgs", restaurantId],
+    queryKey: restaurantOrgKeys.detail(restaurantId),
     enabled: !!restaurantId,
     staleTime: Infinity,
   });
@@ -123,11 +130,11 @@ export default function RestaurantDisputeResolution() {
   // ── Fetch existing fulfillments (prefill) ─────────────────────────────────
 
   const { data: existingFulfillments = [] } = useQuery<LineFulfillment[]>({
-    queryKey: ["/api/restaurant-orgs", restaurantId, "orders", orderId, "review"],
+    queryKey: restaurantReviewKeys.review(restaurantId, orderId),
     enabled: !!restaurantId && !!orderId,
     staleTime: Infinity,
     queryFn: async () => {
-      const res = await fetch(apiUrl(`/api/restaurant-orgs/${restaurantId}/orders/${orderId}/review`));
+      const res = await fetch(apiUrl(restaurantReviewPaths.review(restaurantId, orderId)));
       if (!res.ok) return [];
       return res.json();
     },
@@ -167,27 +174,23 @@ export default function RestaurantDisputeResolution() {
           : null,
         note: draft[li.id]?.note || null,
       }));
-      const res = await apiRequest(
-        "PATCH",
-        `/api/restaurant-orgs/${restaurantId}/orders/${orderId}/resubmit-review`,
-        { items }
-      );
+      const res = await restaurantReviewApi.resubmit(restaurantId, orderId, { items });
       return res.json();
     },
     onSuccess: () => {
       queryClient.invalidateQueries({
-        queryKey: ["/api/restaurant-orgs", restaurantId, "orders", orderId, "review"],
+        queryKey: restaurantReviewKeys.review(restaurantId, orderId),
       });
       queryClient.invalidateQueries({
-        queryKey: ["/api/restaurant-orgs", restaurantId, "submitted-orders", vendorId],
+        queryKey: restaurantOrderKeys.submittedList(restaurantId, vendorId),
       });
       queryClient.invalidateQueries({
-        queryKey: ["/api/restaurant-orgs", restaurantId, "orders", orderId],
+        queryKey: restaurantOrderKeys.detail(restaurantId, orderId),
       });
       queryClient.invalidateQueries({
-        queryKey: ["/api/vendors", vendorId, "orders"],
+        queryKey: vendorOrderKeys.list(vendorId),
       });
-      queryClient.invalidateQueries({ queryKey: ["/api/admin/recent-activity"] });
+      queryClient.invalidateQueries({ queryKey: adminDashboardKeys.recentActivity() });
       toast({
         title: "Revised review submitted",
         description: "Your revised review has been saved and the invoice will update after driver resolution.",

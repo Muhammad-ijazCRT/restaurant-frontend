@@ -1,4 +1,6 @@
 import { useState } from "react";
+import { notesPaths } from "@/api/shared/notes";
+import { notesKeys } from "@/api/shared/notes";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { queryClient, apiRequest } from "@/lib/queryClient";
 import { Button } from "@/components/ui/button";
@@ -33,7 +35,7 @@ export function InternalNotesSection({
   const [draft, setDraft] = useState("");
   const [deletingId, setDeletingId] = useState<string | null>(null);
 
-  const notesKey = ["/api/notes", entityType, entityId];
+  const notesKey = notesKeys.list(entityType, entityId);
 
   const { data: notes = [], isLoading } = useQuery<InternalNote[]>({
     queryKey: notesKey,
@@ -42,7 +44,7 @@ export function InternalNotesSection({
 
   const addMutation = useMutation({
     mutationFn: async (body: string) => {
-      await apiRequest("POST", `/api/notes/${entityType}/${entityId}`, { body });
+      await apiRequest("POST", notesPaths.create(entityType, entityId), { body });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: notesKey });
@@ -56,7 +58,7 @@ export function InternalNotesSection({
 
   const deleteMutation = useMutation({
     mutationFn: async (id: string) => {
-      await apiRequest("DELETE", `/api/notes/${id}`);
+      await apiRequest("DELETE", notesPaths.delete(id));
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: notesKey });

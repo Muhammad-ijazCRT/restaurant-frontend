@@ -1,4 +1,6 @@
 import { useRef, useState } from "react";
+import { attachmentPaths } from "@/api/shared/attachments";
+import { attachmentKeys } from "@/api/shared/attachments";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { queryClient, apiRequest } from "@/lib/queryClient";
 import { apiUrl } from "@/lib/api";
@@ -59,7 +61,7 @@ export function AttachmentsSection({
   const [uploading, setUploading] = useState(false);
   const [viewingId, setViewingId] = useState<string | null>(null);
 
-  const attachmentsKey = ["/api/attachments", entityType, entityId];
+  const attachmentsKey = attachmentKeys.list(entityType, entityId);
 
   const { data: attachments = [], isLoading } = useQuery<AttachmentMeta[]>({
     queryKey: attachmentsKey,
@@ -68,7 +70,7 @@ export function AttachmentsSection({
 
   const deleteMutation = useMutation({
     mutationFn: async (id: string) => {
-      await apiRequest("DELETE", `/api/attachments/${id}`);
+      await apiRequest("DELETE", attachmentPaths.delete(id));
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: attachmentsKey });
@@ -100,7 +102,7 @@ export function AttachmentsSection({
     reader.onload = async () => {
       try {
         const base64 = (reader.result as string).split(",")[1];
-        await apiRequest("POST", `/api/attachments/${entityType}/${entityId}`, {
+        await apiRequest("POST", attachmentPaths.create(entityType, entityId), {
           fileName: file.name,
           fileType: file.type || "application/octet-stream",
           fileSize: file.size,
@@ -124,7 +126,7 @@ export function AttachmentsSection({
   async function handleView(attachment: AttachmentMeta) {
     setViewingId(attachment.id);
     try {
-      const response = await fetch(apiUrl(`/api/attachments/${attachment.id}/view`));
+      const response = await fetch(apiUrl(attachmentPaths.view(attachment.id)));
       if (!response.ok) throw new Error(`Server returned ${response.status}`);
 
       const blob = await response.blob();
@@ -154,7 +156,7 @@ export function AttachmentsSection({
 
   function handleDownload(attachment: AttachmentMeta) {
     const a = document.createElement("a");
-    a.href = `/api/attachments/${attachment.id}/download`;
+    a.href = attachmentPaths.download(attachment.id);
     a.download = attachment.fileName;
     document.body.appendChild(a);
     a.click();

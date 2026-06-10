@@ -1,4 +1,6 @@
 import { useEffect } from "react";
+import { relationshipKeys } from "@/api/shared/relationships";
+import { adminVendorKeys } from "@/api/admin/vendors";
 import { Link, useLocation } from "@/lib/wouter-compat";
 import { useQuery } from "@tanstack/react-query";
 import { useRestaurantAuth } from "@/contexts/restaurant-auth-context";
@@ -26,11 +28,11 @@ export default function RestaurantPlaceOrder() {
   }, [restaurantId, navigate]);
 
   const { data: relationships = [], isLoading } = useQuery<VendorRestaurantRelationship[]>({
-    queryKey: ["/api/relationships"],
+    queryKey: relationshipKeys.all(),
     enabled: !!restaurantId,
   });
   const { data: vendors = [] } = useQuery<Vendor[]>({
-    queryKey: ["/api/vendors"],
+    queryKey: adminVendorKeys.list(false),
     enabled: !!restaurantId,
   });
 

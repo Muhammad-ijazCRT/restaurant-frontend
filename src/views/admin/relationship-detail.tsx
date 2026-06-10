@@ -1,4 +1,8 @@
 import { useState } from "react";
+import { vendorKeys } from "@/api/vendor/vendors";
+import { relationshipApi } from "@/api/shared/relationships";
+import { adminDashboardKeys } from "@/api/admin/dashboard";
+import { relationshipKeys } from "@/api/shared/relationships";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { Link, useParams, useLocation } from "@/lib/wouter-compat";
 import type { VendorRestaurantRelationship, Vendor, RestaurantOrg, Invoice } from "@shared/schema";
@@ -123,14 +127,14 @@ export default function RelationshipDetail() {
     isError: relError,
     refetch,
   } = useQuery<VendorRestaurantRelationship>({
-    queryKey: ["/api/relationships", id],
+    queryKey: relationshipKeys.detail(id),
   });
 
   const {
     data: vendor,
     isLoading: vendorLoading,
   } = useQuery<Vendor>({
-    queryKey: ["/api/vendors", relationship?.vendorId],
+    queryKey: vendorKeys.detail(relationship!.vendorId),
     enabled: !!relationship?.vendorId,
   });
 
@@ -138,7 +142,7 @@ export default function RelationshipDetail() {
     data: restaurant,
     isLoading: restaurantLoading,
   } = useQuery<RestaurantOrg>({
-    queryKey: ["/api/restaurant-orgs", relationship?.restaurantOrgId],
+    queryKey: restaurantOrgKeys.detail(relationship?.restaurantOrgId!),
     enabled: !!relationship?.restaurantOrgId,
   });
 
@@ -146,7 +150,7 @@ export default function RelationshipDetail() {
     data: relationshipOrders = [],
     isLoading: ordersLoading,
   } = useQuery<RelationshipOrder[]>({
-    queryKey: ["/api/admin/relationships", id, "orders"],
+    queryKey: relationshipKeys.adminOrders(id),
     enabled: !!id,
     staleTime: 0,
     gcTime: 0,
@@ -155,11 +159,11 @@ export default function RelationshipDetail() {
 
   const toggleMutation = useMutation({
     mutationFn: ({ status }: { status: string }) =>
-      apiRequest("PATCH", `/api/relationships/${id}`, { status }),
+      relationshipApi.update(id, { status }),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/relationships", id] });
-      queryClient.invalidateQueries({ queryKey: ["/api/relationships"] });
-      queryClient.invalidateQueries({ queryKey: ["/api/admin/stats"] });
+      queryClient.invalidateQueries({ queryKey: relationshipKeys.detail(id) });
+      queryClient.invalidateQueries({ queryKey: relationshipKeys.all() });
+      queryClient.invalidateQueries({ queryKey: adminDashboardKeys.stats() });
       toast({ title: "Status updated", description: "The relationship status has been updated." });
     },
     onError: (error: Error) => {

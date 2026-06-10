@@ -1,4 +1,8 @@
 import { useQuery } from "@tanstack/react-query";
+import { adminDashboardKeys } from "@/api/admin/dashboard";
+import { restaurantOrgKeys } from "@/api/restaurant/orgs";
+import { adminRestaurantKeys } from "@/api/admin/restaurants";
+import { adminVendorKeys } from "@/api/admin/vendors";
 import { Link } from "@/lib/wouter-compat";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -363,27 +367,27 @@ export default function AdminDashboard() {
     isError: statsError,
     refetch: refetchStats,
   } = useQuery<DashboardStats>({
-    queryKey: ["/api/admin/stats"],
+    queryKey: adminDashboardKeys.stats(),
   });
 
   const {
     data: activity,
     isLoading: activityLoading,
   } = useQuery<RecentActivity>({
-    queryKey: ["/api/admin/recent-activity"],
+    queryKey: adminDashboardKeys.recentActivity(),
   });
 
   const { data: vendors = [], isLoading: vendorsLoading } = useQuery<RecentVendor[]>({
-    queryKey: ["/api/vendors"],
+    queryKey: adminVendorKeys.list(false),
   });
   const { data: vendorCompleteness = {}, isLoading: vendorCompletenessLoading } = useQuery<CompletenessMap>({
-    queryKey: ["/api/vendors/completeness"],
+    queryKey: adminVendorKeys.completeness(),
   });
   const { data: orgs = [], isLoading: orgsLoading } = useQuery<RecentRestaurantOrg[]>({
-    queryKey: ["/api/restaurant-orgs"],
+    queryKey: restaurantOrgKeys.list(),
   });
   const { data: orgCompleteness = {}, isLoading: orgCompletenessLoading } = useQuery<CompletenessMap>({
-    queryKey: ["/api/restaurant-orgs/completeness"],
+    queryKey: adminRestaurantKeys.completeness(),
   });
 
   const attentionLoading = vendorsLoading || vendorCompletenessLoading || orgsLoading || orgCompletenessLoading;

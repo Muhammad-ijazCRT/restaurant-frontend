@@ -1,4 +1,8 @@
 import { useParams, useLocation } from "@/lib/wouter-compat";
+import { restaurantOrderKeys } from "@/api/restaurant/orders";
+import { vendorOrderPaths } from "@/api/vendor/orders";
+import { vendorOrderApi } from "@/api/vendor/orders";
+import { vendorOrderKeys } from "@/api/vendor/orders";
 import { apiUrl } from "@/lib/api";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { useVendorAuth } from "@/contexts/vendor-auth-context";
@@ -84,11 +88,11 @@ export default function VendorOrderDetail() {
   const { toast } = useToast();
 
   const { data, isLoading, isError, error } = useQuery<VendorOrderDetailResponse>({
-    queryKey: ["/api/vendors", vendorId, "orders", orderId],
+    queryKey: vendorOrderKeys.detail(vendorId, orderId),
     enabled: !!vendorId && !!orderId,
     staleTime: Infinity,
     queryFn: async () => {
-      const res = await fetch(apiUrl(`/api/vendors/${vendorId}/orders/${orderId}`));
+      const res = await fetch(apiUrl(vendorOrderPaths.detail(vendorId, orderId)));
       if (!res.ok) {
         const body = await res.json().catch(() => ({}));
         throw new Error(body.message ?? `HTTP ${res.status}`);
@@ -104,15 +108,15 @@ export default function VendorOrderDetail() {
 
   const deliverMutation = useMutation({
     mutationFn: async (note?: string) => {
-      const res = await apiRequest("PATCH", `/api/vendors/${vendorId}/orders/${orderId}/deliver`, { note });
+      const res = await vendorOrderApi.deliver(vendorId, orderId, { note });
       return res.json() as Promise<{ restaurantOrgId: string; vendorId: string }>;
     },
     onSuccess: (updatedOrder) => {
-      queryClient.invalidateQueries({ queryKey: ["/api/vendors", vendorId, "orders", orderId] });
-      queryClient.invalidateQueries({ queryKey: ["/api/vendors", vendorId, "orders"] });
+      queryClient.invalidateQueries({ queryKey: vendorOrderKeys.detail(vendorId, orderId) });
+      queryClient.invalidateQueries({ queryKey: vendorOrderKeys.list(vendorId) });
       if (updatedOrder?.restaurantOrgId) {
         queryClient.invalidateQueries({
-          queryKey: ["/api/restaurant-orgs", updatedOrder.restaurantOrgId, "submitted-orders", vendorId],
+          queryKey: restaurantOrderKeys.submittedList(updatedOrder.restaurantOrgId, vendorId),
         });
       }
       toast({ title: "Order marked as delivered", description: "The restaurant will now see this order for review." });
@@ -124,11 +128,11 @@ export default function VendorOrderDetail() {
 
   const approvePickingMutation = useMutation({
     mutationFn: async () => {
-      const res = await apiRequest("PATCH", `/api/vendors/${vendorId}/orders/${orderId}/approve-picking`);
+      const res = await vendorOrderApi.approvePicking(vendorId, orderId);
       return res.json();
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/vendors", vendorId, "orders", orderId] });
+      queryClient.invalidateQueries({ queryKey: vendorOrderKeys.detail(vendorId, orderId) });
       toast({ title: "Picking approved", description: "Order is ready for delivery" });
     },
     onError: (err: Error) => {
@@ -151,14 +155,14 @@ export default function VendorOrderDetail() {
           note: vals.note || "",
         };
       });
-      const res = await apiRequest("PATCH", `/api/vendors/${vendorId}/orders/${orderId}/picking`, {
+      const res = await vendorOrderApi.picking(vendorId, orderId, {
         items,
         submitForReview,
       });
       return res.json();
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/vendors", vendorId, "orders", orderId] });
+      queryClient.invalidateQueries({ queryKey: vendorOrderKeys.detail(vendorId, orderId) });
       toast({ title: "Picking updated successfully" });
     },
     onError: (err: Error) => {

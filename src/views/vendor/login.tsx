@@ -1,3 +1,4 @@
+import { authPaths } from "@/api/shared/auth";
 import PortalLoginForm from "@/components/shared/portal-login-form";
 import { useVendorAuth } from "@/contexts/vendor-auth-context";
 
@@ -10,7 +11,7 @@ export default function VendorLogin() {
       heading="🛒 Vendor Login"
       subtitle="Vendor admin, manager, warehouse, and driver team access"
       emailPlaceholder="vendor@example.com"
-      apiEndpoint="/api/vendor/login"
+      apiEndpoint={authPaths.vendorLogin}
       expectedRoles={["vendor_admin", "manager", "warehouse_worker", "driver", "sales_representative"]}
       defaultDashboardPath="/vendor/portal"
       registerHref="/vendor/register"

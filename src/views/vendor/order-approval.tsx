@@ -1,4 +1,6 @@
 import { useParams, useLocation } from "@/lib/wouter-compat";
+import { vendorOrderPaths } from "@/api/vendor/orders";
+import { vendorOrderKeys } from "@/api/vendor/orders";
 import { apiUrl } from "@/lib/api";
 import { useQuery } from "@tanstack/react-query";
 import { useVendorAuth } from "@/contexts/vendor-auth-context";
@@ -81,11 +83,11 @@ export default function VendorOrderApproval() {
   // ── Fetch order detail ────────────────────────────────────────────────────
 
   const { data, isLoading, isError } = useQuery<VendorOrderDetailResponse>({
-    queryKey: ["/api/vendors", vendorId, "orders", orderId],
+    queryKey: vendorOrderKeys.detail(vendorId, orderId),
     enabled: !!vendorId && !!orderId,
     staleTime: Infinity,
     queryFn: async () => {
-      const res = await fetch(apiUrl(`/api/vendors/${vendorId}/orders/${orderId}`));
+      const res = await fetch(apiUrl(vendorOrderPaths.detail(vendorId, orderId)));
       if (!res.ok) {
         const body = await res.json().catch(() => ({}));
         throw new Error(body.message ?? `HTTP ${res.status}`);
@@ -97,11 +99,11 @@ export default function VendorOrderApproval() {
   // ── Fetch fulfillments (restaurant/driver resolution details) ────────────
 
   const { data: fulfillments = [] } = useQuery<LineFulfillment[]>({
-    queryKey: ["/api/vendors", vendorId, "orders", orderId, "fulfillments"],
+    queryKey: vendorOrderKeys.fulfillments(vendorId, orderId),
     enabled: !!vendorId && !!orderId,
     staleTime: Infinity,
     queryFn: async () => {
-      const res = await fetch(apiUrl(`/api/vendors/${vendorId}/orders/${orderId}/fulfillments`));
+      const res = await fetch(apiUrl(vendorOrderPaths.fulfillments(vendorId, orderId)));
       if (!res.ok) return [];
       return res.json();
     },

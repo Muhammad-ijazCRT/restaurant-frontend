@@ -1,4 +1,8 @@
 import { useState, useEffect } from "react";
+import { adminVendorApi } from "@/api/admin/vendors";
+import { adminDashboardKeys } from "@/api/admin/dashboard";
+import { relationshipKeys } from "@/api/shared/relationships";
+import { adminVendorKeys } from "@/api/admin/vendors";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { queryClient, apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
@@ -117,10 +121,10 @@ function VendorFormDialog({ open, onOpenChange, vendor }: { open: boolean; onOpe
   }
 
   const createMutation = useMutation({
-    mutationFn: (data: InsertVendor) => apiRequest("POST", "/api/vendors", data),
+    mutationFn: (data: InsertVendor) => adminVendorApi.create(data),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/vendors?includeArchived=true"] });
-      queryClient.invalidateQueries({ queryKey: ["/api/admin/stats"] });
+      queryClient.invalidateQueries({ queryKey: adminVendorKeys.list() });
+      queryClient.invalidateQueries({ queryKey: adminDashboardKeys.stats() });
       toast({ title: "Vendor created", description: "The vendor has been added and a welcome email with login details was sent." });
       onOpenChange(false);
     },
@@ -128,10 +132,10 @@ function VendorFormDialog({ open, onOpenChange, vendor }: { open: boolean; onOpe
   });
 
   const updateMutation = useMutation({
-    mutationFn: (data: Partial<InsertVendor>) => apiRequest("PATCH", `/api/vendors/${vendor!.id}`, data),
+    mutationFn: (data: Partial<InsertVendor>) => adminVendorApi.update(vendor!.id, data),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/vendors?includeArchived=true"] });
-      queryClient.invalidateQueries({ queryKey: ["/api/admin/stats"] });
+      queryClient.invalidateQueries({ queryKey: adminVendorKeys.list() });
+      queryClient.invalidateQueries({ queryKey: adminDashboardKeys.stats() });
       toast({ title: "Vendor updated", description: "The vendor has been updated successfully." });
       onOpenChange(false);
     },
@@ -247,19 +251,19 @@ export default function AdminVendors() {
   const { toast } = useToast();
 
   const { data: allVendors = [], isLoading, isError, error, refetch } = useQuery<Vendor[]>({
-    queryKey: ["/api/vendors?includeArchived=true"],
+    queryKey: adminVendorKeys.list(),
   });
 
   const { data: completeness = {} } = useQuery<CompletenessMap>({
-    queryKey: ["/api/vendors/completeness"],
+    queryKey: adminVendorKeys.completeness(),
   });
 
   const archiveMutation = useMutation({
-    mutationFn: (id: string) => apiRequest("PATCH", `/api/vendors/${id}/archive`),
+    mutationFn: (id: string) => adminVendorApi.archive(id),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/vendors?includeArchived=true"] });
-      queryClient.invalidateQueries({ queryKey: ["/api/relationships"] });
-      queryClient.invalidateQueries({ queryKey: ["/api/admin/stats"] });
+      queryClient.invalidateQueries({ queryKey: adminVendorKeys.list() });
+      queryClient.invalidateQueries({ queryKey: relationshipKeys.all() });
+      queryClient.invalidateQueries({ queryKey: adminDashboardKeys.stats() });
       toast({ title: "Vendor archived", description: "The vendor has been archived." });
       setArchiveTarget(undefined);
     },
@@ -269,10 +273,10 @@ export default function AdminVendors() {
   });
 
   const restoreMutation = useMutation({
-    mutationFn: (id: string) => apiRequest("PATCH", `/api/vendors/${id}/restore`),
+    mutationFn: (id: string) => adminVendorApi.restore(id),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/vendors?includeArchived=true"] });
-      queryClient.invalidateQueries({ queryKey: ["/api/admin/stats"] });
+      queryClient.invalidateQueries({ queryKey: adminVendorKeys.list() });
+      queryClient.invalidateQueries({ queryKey: adminDashboardKeys.stats() });
       toast({ title: "Vendor restored", description: "The vendor has been restored to active." });
     },
     onError: (error: Error) => {
@@ -281,10 +285,10 @@ export default function AdminVendors() {
   });
 
   const deleteMutation = useMutation({
-    mutationFn: (id: string) => apiRequest("DELETE", `/api/vendors/${id}`),
+    mutationFn: (id: string) => adminVendorApi.delete(id),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/vendors?includeArchived=true"] });
-      queryClient.invalidateQueries({ queryKey: ["/api/admin/stats"] });
+      queryClient.invalidateQueries({ queryKey: adminVendorKeys.list() });
+      queryClient.invalidateQueries({ queryKey: adminDashboardKeys.stats() });
       toast({ title: "Vendor deleted", description: "The vendor has been permanently deleted." });
       setDeleteTarget(undefined);
     },
@@ -294,11 +298,11 @@ export default function AdminVendors() {
   });
 
   const bulkArchiveMutation = useMutation({
-    mutationFn: (ids: string[]) => Promise.all(ids.map(id => apiRequest("PATCH", `/api/vendors/${id}/archive`))),
+    mutationFn: (ids: string[]) => Promise.all(ids.map(id => adminVendorApi.archive(id))),
     onSuccess: (_, ids) => {
-      queryClient.invalidateQueries({ queryKey: ["/api/vendors?includeArchived=true"] });
-      queryClient.invalidateQueries({ queryKey: ["/api/relationships"] });
-      queryClient.invalidateQueries({ queryKey: ["/api/admin/stats"] });
+      queryClient.invalidateQueries({ queryKey: adminVendorKeys.list() });
+      queryClient.invalidateQueries({ queryKey: relationshipKeys.all() });
+      queryClient.invalidateQueries({ queryKey: adminDashboardKeys.stats() });
       setSelectedIds(new Set());
       toast({ title: "Vendors archived", description: `${ids.length} vendor${ids.length !== 1 ? "s" : ""} archived successfully.` });
     },
@@ -308,10 +312,10 @@ export default function AdminVendors() {
   });
 
   const bulkRestoreMutation = useMutation({
-    mutationFn: (ids: string[]) => Promise.all(ids.map(id => apiRequest("PATCH", `/api/vendors/${id}/restore`))),
+    mutationFn: (ids: string[]) => Promise.all(ids.map(id => adminVendorApi.restore(id))),
     onSuccess: (_, ids) => {
-      queryClient.invalidateQueries({ queryKey: ["/api/vendors?includeArchived=true"] });
-      queryClient.invalidateQueries({ queryKey: ["/api/admin/stats"] });
+      queryClient.invalidateQueries({ queryKey: adminVendorKeys.list() });
+      queryClient.invalidateQueries({ queryKey: adminDashboardKeys.stats() });
       setSelectedIds(new Set());
       toast({ title: "Vendors restored", description: `${ids.length} vendor${ids.length !== 1 ? "s" : ""} restored successfully.` });
     },
@@ -321,10 +325,10 @@ export default function AdminVendors() {
   });
 
   const bulkDeleteMutation = useMutation({
-    mutationFn: (ids: string[]) => Promise.all(ids.map(id => apiRequest("DELETE", `/api/vendors/${id}`))),
+    mutationFn: (ids: string[]) => Promise.all(ids.map(id => adminVendorApi.delete(id))),
     onSuccess: (_, ids) => {
-      queryClient.invalidateQueries({ queryKey: ["/api/vendors?includeArchived=true"] });
-      queryClient.invalidateQueries({ queryKey: ["/api/admin/stats"] });
+      queryClient.invalidateQueries({ queryKey: adminVendorKeys.list() });
+      queryClient.invalidateQueries({ queryKey: adminDashboardKeys.stats() });
       setSelectedIds(new Set());
       setBulkDeleteOpen(false);
       toast({ title: "Vendors deleted", description: `${ids.length} vendor${ids.length !== 1 ? "s" : ""} permanently deleted.` });

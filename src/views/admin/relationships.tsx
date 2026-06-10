@@ -1,4 +1,9 @@
 import { useState } from "react";
+import { relationshipApi } from "@/api/shared/relationships";
+import { adminDashboardKeys } from "@/api/admin/dashboard";
+import { relationshipKeys } from "@/api/shared/relationships";
+import { restaurantOrgKeys } from "@/api/restaurant/orgs";
+import { adminVendorKeys } from "@/api/admin/vendors";
 import { Link } from "@/lib/wouter-compat";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { queryClient, apiRequest } from "@/lib/queryClient";
@@ -57,10 +62,10 @@ function CreateRelationshipDialog({
 
   const createMutation = useMutation({
     mutationFn: (data: { vendorId: string; restaurantOrgId: string; status: string }) =>
-      apiRequest("POST", "/api/relationships", data),
+      relationshipApi.create(data),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/relationships"] });
-      queryClient.invalidateQueries({ queryKey: ["/api/admin/stats"] });
+      queryClient.invalidateQueries({ queryKey: relationshipKeys.all() });
+      queryClient.invalidateQueries({ queryKey: adminDashboardKeys.stats() });
       toast({ title: "Relationship created", description: "Partnership emails were sent to both the vendor and restaurant." });
       onOpenChange(false);
       setVendorId("");
@@ -204,10 +209,10 @@ export default function AdminRelationships() {
 
   const toggleStatusMutation = useMutation({
     mutationFn: ({ id, status }: { id: string; status: string }) =>
-      apiRequest("PATCH", `/api/relationships/${id}`, { status }),
+      relationshipApi.update(id, { status }),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/relationships"] });
-      queryClient.invalidateQueries({ queryKey: ["/api/admin/stats"] });
+      queryClient.invalidateQueries({ queryKey: relationshipKeys.all() });
+      queryClient.invalidateQueries({ queryKey: adminDashboardKeys.stats() });
       toast({ title: "Relationship updated", description: "The relationship status has been updated." });
     },
     onError: (error: Error) => {
@@ -216,22 +221,22 @@ export default function AdminRelationships() {
   });
 
   const { data: relationships = [], isLoading, isError, error, refetch } = useQuery<VendorRestaurantRelationship[]>({
-    queryKey: ["/api/relationships"],
+    queryKey: relationshipKeys.all(),
   });
 
   const { data: vendors = [] } = useQuery<Vendor[]>({
-    queryKey: ["/api/vendors"],
+    queryKey: adminVendorKeys.list(false),
   });
 
   const { data: restaurants = [] } = useQuery<RestaurantOrg[]>({
-    queryKey: ["/api/restaurant-orgs"],
+    queryKey: restaurantOrgKeys.list(),
   });
 
   const deleteMutation = useMutation({
-    mutationFn: (id: string) => apiRequest("DELETE", `/api/relationships/${id}`),
+    mutationFn: (id: string) => relationshipApi.delete(id),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/relationships"] });
-      queryClient.invalidateQueries({ queryKey: ["/api/admin/stats"] });
+      queryClient.invalidateQueries({ queryKey: relationshipKeys.all() });
+      queryClient.invalidateQueries({ queryKey: adminDashboardKeys.stats() });
       toast({ title: "Relationship removed", description: "The vendor-restaurant relationship has been removed." });
       setDeleteTarget(undefined);
     },

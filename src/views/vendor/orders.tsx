@@ -6,6 +6,7 @@ import {
   type ComponentType,
 } from "react";
 import { useLocation, useSearch } from "@/lib/wouter-compat";
+import { vendorOrderApi, vendorOrderKeys } from "@/api/vendor/orders";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { useVendorAuth } from "@/contexts/vendor-auth-context";
 import { useVendorPortalNav } from "@/contexts/vendor-portal-nav-context";
@@ -665,7 +666,7 @@ export default function VendorOrders() {
   }, [focusSection]);
 
   const { data: vendorOrders = [], isLoading } = useQuery<VendorOrderEntry[]>({
-    queryKey: ["/api/vendors", vendorId!, "orders"],
+    queryKey: vendorOrderKeys.list(vendorId!),
     enabled: !!vendorId,
   });
 
@@ -691,13 +692,13 @@ export default function VendorOrders() {
           note: item.note ?? "",
         };
       });
-      await apiRequest("PATCH", `/api/vendors/${vendorId}/orders/${orderId}/picking`, {
+      await vendorOrderApi.picking(vendorId, orderId, {
         items,
         submitForReview,
       });
     },
     onSuccess: (_data, variables) => {
-      queryClient.invalidateQueries({ queryKey: ["/api/vendors", vendorId, "orders"] });
+      queryClient.invalidateQueries({ queryKey: vendorOrderKeys.list(vendorId) });
       toast({
         title: variables.submitForReview ? "Picking submitted for review" : "Picking saved",
       });

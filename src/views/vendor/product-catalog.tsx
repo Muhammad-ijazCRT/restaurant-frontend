@@ -1,4 +1,7 @@
 import { useEffect, useMemo, useRef, useState, type ChangeEvent } from "react";
+import { vendorProductApi } from "@/api/vendor/products";
+import { vendorKeys } from "@/api/vendor/vendors";
+import { vendorProductKeys } from "@/api/vendor/products";
 import { useLocation } from "@/lib/wouter-compat";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -92,17 +95,17 @@ function ProductFormDialog({
   });
 
   const invalidateProducts = () => {
-    queryClient.invalidateQueries({ queryKey: ["/api/vendors", vendorId, "products"] });
-    queryClient.invalidateQueries({ queryKey: ["/api/vendors", vendorId, "products?includeArchived=true"] });
+    queryClient.invalidateQueries({ queryKey: vendorProductKeys.list(vendorId) });
+    queryClient.invalidateQueries({ queryKey: vendorProductKeys.list(vendorId, true) });
   };
 
   const mutation = useMutation({
     mutationFn: async (data: ProductFormValues) => {
       if (isEditing) {
-        await apiRequest("PATCH", `/api/vendors/${vendorId}/products/${editProduct.id}`, data);
+        await vendorProductApi.update(vendorId, editProduct.id, data);
         return;
       }
-      await apiRequest("POST", `/api/vendors/${vendorId}/products`, data);
+      await vendorProductApi.create(vendorId, data);
     },
     onSuccess: () => {
       invalidateProducts();
@@ -239,10 +242,10 @@ export default function VendorProductCatalog() {
   }, [vendorId, navigate]);
 
   const productsQueryKey = showArchived
-    ? ["/api/vendors", vendorId, "products?includeArchived=true"]
-    : ["/api/vendors", vendorId, "products"];
+    ? vendorProductKeys.list(vendorId, true)
+    : vendorProductKeys.list(vendorId);
 
-  const { data: vendor } = useQuery<Vendor>({ queryKey: ["/api/vendors", vendorId], enabled: !!vendorId });
+  const { data: vendor } = useQuery<Vendor>({ queryKey: vendorKeys.detail(vendorId), enabled: !!vendorId });
   const { data: products = [], isLoading } = useQuery<Product[]>({ queryKey: productsQueryKey, enabled: !!vendorId });
 
   const filteredProducts = useMemo(() => {
@@ -259,11 +262,11 @@ export default function VendorProductCatalog() {
 
   const archiveMutation = useMutation({
     mutationFn: async (productId: string) => {
-      await apiRequest("PATCH", `/api/vendors/${vendorId}/products/${productId}/archive`);
+      await vendorProductApi.archive(vendorId, productId);
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/vendors", vendorId, "products"] });
-      queryClient.invalidateQueries({ queryKey: ["/api/vendors", vendorId, "products?includeArchived=true"] });
+      queryClient.invalidateQueries({ queryKey: vendorProductKeys.list(vendorId) });
+      queryClient.invalidateQueries({ queryKey: vendorProductKeys.list(vendorId, true) });
       setDeletingProduct(null);
       toast({ title: "Product deleted from active catalog" });
     },
@@ -272,12 +275,12 @@ export default function VendorProductCatalog() {
 
   const importMutation = useMutation({
     mutationFn: async (rows: Array<Record<string, string>>) => {
-      const res = await apiRequest("POST", `/api/vendors/${vendorId}/products/import`, { rows });
+      const res = await vendorProductApi.import(vendorId, rows);
       return res.json();
     },
     onSuccess: (result: any) => {
-      queryClient.invalidateQueries({ queryKey: ["/api/vendors", vendorId, "products"] });
-      queryClient.invalidateQueries({ queryKey: ["/api/vendors", vendorId, "products?includeArchived=true"] });
+      queryClient.invalidateQueries({ queryKey: vendorProductKeys.list(vendorId) });
+      queryClient.invalidateQueries({ queryKey: vendorProductKeys.list(vendorId, true) });
       toast({ title: "CSV imported", description: `${result.summary?.imported ?? 0} products imported.` });
     },
     onError: (err: Error) => toast({ title: "Import failed", description: err.message, variant: "destructive" }),

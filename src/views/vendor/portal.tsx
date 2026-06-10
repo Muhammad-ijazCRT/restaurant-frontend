@@ -7,6 +7,12 @@ import {
   type ComponentType,
 } from "react";
 import { useVendorPortalNav } from "@/contexts/vendor-portal-nav-context";
+import { vendorProductApi } from "@/api/vendor/products";
+import { relationshipKeys } from "@/api/shared/relationships";
+import { restaurantOrgKeys } from "@/api/restaurant/orgs";
+import { vendorKeys } from "@/api/vendor/vendors";
+import { vendorOrderKeys } from "@/api/vendor/orders";
+import { vendorProductKeys } from "@/api/vendor/products";
 import { isDisputedOrder } from "@/lib/order-status-utils";
 import {
   isWarehouseActiveOrder,
@@ -252,14 +258,14 @@ function ProductFormDialog({
 
   const createMutation = useMutation({
     mutationFn: async (data: ProductFormValues) => {
-      await apiRequest("POST", `/api/vendors/${vendorId}/products`, data);
+      await vendorProductApi.create(vendorId, data);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({
-        queryKey: ["/api/vendors", vendorId, "products"],
+        queryKey: vendorProductKeys.list(vendorId),
       });
       queryClient.invalidateQueries({
-        queryKey: ["/api/vendors", vendorId, "products?includeArchived=true"],
+        queryKey: vendorProductKeys.list(vendorId, true),
       });
       toast({ title: "Product created" });
       onOpenChange(false);
@@ -269,18 +275,14 @@ function ProductFormDialog({
 
   const updateMutation = useMutation({
     mutationFn: async (data: ProductFormValues) => {
-      await apiRequest(
-        "PATCH",
-        `/api/vendors/${vendorId}/products/${editProduct!.id}`,
-        data,
-      );
+      await vendorProductApi.update(vendorId, editProduct!.id, data);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({
-        queryKey: ["/api/vendors", vendorId, "products"],
+        queryKey: vendorProductKeys.list(vendorId),
       });
       queryClient.invalidateQueries({
-        queryKey: ["/api/vendors", vendorId, "products?includeArchived=true"],
+        queryKey: vendorProductKeys.list(vendorId, true),
       });
       toast({ title: "Product updated" });
       onOpenChange(false);
@@ -506,7 +508,7 @@ function CsvImportDialog({
   const [fileName, setFileName] = useState("");
 
   const { data: existingProducts = [] } = useQuery<Product[]>({
-    queryKey: ["/api/vendors", vendorId, "products?includeArchived=true"],
+    queryKey: vendorProductKeys.list(vendorId, true),
     enabled: open,
   });
 
@@ -520,21 +522,17 @@ function CsvImportDialog({
         price: string;
       }>,
     ) => {
-      const res = await apiRequest(
-        "POST",
-        `/api/vendors/${vendorId}/products/import`,
-        { rows },
-      );
+      const res = await vendorProductApi.import(vendorId, rows);
       return (await res.json()) as ImportResult;
     },
     onSuccess: (data) => {
       setImportResult(data);
       setStep("done");
       queryClient.invalidateQueries({
-        queryKey: ["/api/vendors", vendorId, "products"],
+        queryKey: vendorProductKeys.list(vendorId),
       });
       queryClient.invalidateQueries({
-        queryKey: ["/api/vendors", vendorId, "products?includeArchived=true"],
+        queryKey: vendorProductKeys.list(vendorId, true),
       });
     },
     onError: (err: Error) => {
@@ -1133,25 +1131,25 @@ export default function VendorPortal() {
   }, [portalNav, scrollToSection]);
 
   const { data: vendor, isLoading: vendorLoading } = useQuery<Vendor>({
-    queryKey: ["/api/vendors", vendorId],
+    queryKey: vendorKeys.detail(vendorId),
     enabled: !!vendorId,
   });
 
   const { data: allRelationships = [] } = useQuery<
     VendorRestaurantRelationship[]
   >({
-    queryKey: ["/api/relationships"],
+    queryKey: relationshipKeys.all(),
     enabled: !!vendorId,
   });
 
   const { data: allRestaurants = [] } = useQuery<RestaurantOrg[]>({
-    queryKey: ["/api/restaurant-orgs"],
+    queryKey: restaurantOrgKeys.list(),
     enabled: !!vendorId,
   });
 
   const productsQueryKey = showArchived
-    ? ["/api/vendors", vendorId!, "products?includeArchived=true"]
-    : ["/api/vendors", vendorId!, "products"];
+    ? vendorProductKeys.list(vendorId!, true)
+    : vendorProductKeys.list(vendorId!);
 
   const { data: products = [], isLoading: productsLoading } = useQuery<
     Product[]
@@ -1174,7 +1172,7 @@ export default function VendorPortal() {
   const { data: rawVendorOrders = [], isLoading: ordersLoading } = useQuery<
     VendorOrderEntry[]
   >({
-    queryKey: ["/api/vendors", vendorId!, "orders"],
+    queryKey: vendorOrderKeys.list(vendorId!),
     enabled: !!vendorId,
   });
 
@@ -1294,17 +1292,14 @@ export default function VendorPortal() {
 
   const archiveMutation = useMutation({
     mutationFn: async (productId: string) => {
-      await apiRequest(
-        "PATCH",
-        `/api/vendors/${vendorId}/products/${productId}/archive`,
-      );
+      await vendorProductApi.archive(vendorId, productId);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({
-        queryKey: ["/api/vendors", vendorId!, "products"],
+        queryKey: vendorProductKeys.list(vendorId!),
       });
       queryClient.invalidateQueries({
-        queryKey: ["/api/vendors", vendorId!, "products?includeArchived=true"],
+        queryKey: vendorProductKeys.list(vendorId!, true),
       });
       setArchivingProduct(null);
       toast({ title: "Product archived" });

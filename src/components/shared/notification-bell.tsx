@@ -1,4 +1,6 @@
 import { useMemo } from "react";
+import { profilePaths } from "@/api/shared/profile";
+import { profileKeys } from "@/api/shared/profile";
 import { useLocation } from "@/lib/wouter-compat";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Bell, ClipboardList } from "lucide-react";
@@ -136,7 +138,7 @@ export function NotificationBell() {
     unreadCount?: number;
     clearedAt?: string | null;
   }>({
-    queryKey: ["/api/notifications"],
+    queryKey: profileKeys.notifications(),
     staleTime: 1000 * 30,
     refetchInterval: 1000 * 60,
     refetchOnMount: "always",
@@ -145,11 +147,11 @@ export function NotificationBell() {
 
   const clearMutation = useMutation({
     mutationFn: async () => {
-      const res = await apiRequest("POST", "/api/notifications/clear");
+      const res = await apiRequest("POST", profilePaths.notificationClear);
       return res.json() as Promise<{ clearedAt: string; unreadCount: number }>;
     },
     onSuccess: (result) => {
-      queryClient.setQueryData(["/api/notifications"], (prev: typeof data) => {
+      queryClient.setQueryData(profileKeys.notifications(), (prev: typeof data) => {
         if (!prev) return prev;
         return {
           ...prev,

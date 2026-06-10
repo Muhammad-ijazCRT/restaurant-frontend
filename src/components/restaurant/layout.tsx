@@ -2,6 +2,8 @@ import { Link, useLocation } from "@/lib/wouter-compat";
 import { useQuery } from "@tanstack/react-query";
 import { useEffect } from "react";
 import { useRestaurantAuth } from "@/contexts/restaurant-auth-context";
+import { restaurantOrderKeys } from "@/api/restaurant/orders";
+import { restaurantOrgKeys } from "@/api/restaurant/orgs";
 import type { RestaurantOrg } from "@shared/schema";
 import { ChevronRight, UtensilsCrossed } from "lucide-react";
 import { NotificationBell } from "@/components/shared/notification-bell";
@@ -23,12 +25,12 @@ export default function RestaurantLayout({ children }: { children: React.ReactNo
   const navItems = getRestaurantNavItems(role);
   const [location, navigate] = useLocation();
   const { data: restaurant } = useQuery<RestaurantOrg>({
-    queryKey: ["/api/restaurant-orgs", restaurantId],
+    queryKey: restaurantOrgKeys.detail(restaurantId),
     enabled: !!restaurantId,
   });
 
   const { data: ordersAttentionCount = 0 } = useQuery({
-    queryKey: ["/api/restaurant-orgs", restaurantId, "orders"],
+    queryKey: restaurantOrderKeys.list(restaurantId),
     enabled: !!restaurantId,
     select: (data) => countNeedsReviewOrders(normalizeOrderEntries(data)),
   });

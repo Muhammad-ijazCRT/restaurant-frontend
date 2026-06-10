@@ -1,4 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
+import { restaurantEmployeeApi } from "@/api/restaurant/employees";
+import { restaurantOrgKeys } from "@/api/restaurant/orgs";
+import { restaurantEmployeeKeys } from "@/api/restaurant/employees";
 import { useLocation } from "@/lib/wouter-compat";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -115,17 +118,13 @@ function EmployeeDialog({
         ...(data.password ? { loginPassword: data.password } : {}),
       };
       if (isEditing) {
-        await apiRequest(
-          "PATCH",
-          `/api/restaurant-orgs/${restaurantId}/employees/${employee.id}`,
-          payload,
-        );
+        await restaurantEmployeeApi.update(restaurantId, employee.id, payload);
         return;
       }
-      await apiRequest("POST", `/api/restaurant-orgs/${restaurantId}/employees`, payload);
+      await restaurantEmployeeApi.create(restaurantId, payload);
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/restaurant-orgs", restaurantId, "employees"] });
+      queryClient.invalidateQueries({ queryKey: restaurantEmployeeKeys.list(restaurantId) });
       toast({ title: isEditing ? "Employee updated" : "Employee added" });
       onOpenChange(false);
     },
@@ -292,11 +291,11 @@ export default function RestaurantEmployees() {
   }, [restaurantId, navigate]);
 
   const { data: restaurant } = useQuery<RestaurantOrg>({
-    queryKey: ["/api/restaurant-orgs", restaurantId],
+    queryKey: restaurantOrgKeys.detail(restaurantId),
     enabled: !!restaurantId,
   });
   const { data: employees = [], isLoading } = useQuery<RestaurantEmployee[]>({
-    queryKey: ["/api/restaurant-orgs", restaurantId, "employees"],
+    queryKey: restaurantEmployeeKeys.list(restaurantId),
     enabled: !!restaurantId,
   });
 
@@ -317,10 +316,10 @@ export default function RestaurantEmployees() {
 
   const deleteMutation = useMutation({
     mutationFn: async (employeeId: string) => {
-      await apiRequest("DELETE", `/api/restaurant-orgs/${restaurantId}/employees/${employeeId}`);
+      await restaurantEmployeeApi.delete(restaurantId, employeeId);
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/restaurant-orgs", restaurantId, "employees"] });
+      queryClient.invalidateQueries({ queryKey: restaurantEmployeeKeys.list(restaurantId) });
       setDeletingEmployee(null);
       toast({ title: "Employee deleted" });
     },

@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { vendorEmployeeApi, vendorEmployeeKeys } from "@/api/vendor/employees";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { Link2 } from "lucide-react";
 import type { VendorEmployee } from "@shared/schema";
@@ -48,7 +49,7 @@ export default function VendorEmployeeAssignmentsDialog({
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
 
   const { data, isLoading, isError } = useQuery<AssignmentsResponse>({
-    queryKey: ["/api/vendors", vendorId, "employees", employee?.id, "assignments"],
+    queryKey: vendorEmployeeKeys.assignments(vendorId, employee!.id),
     enabled: open && !!employee?.id,
   });
 
@@ -59,16 +60,12 @@ export default function VendorEmployeeAssignmentsDialog({
 
   const saveMutation = useMutation({
     mutationFn: async () => {
-      await apiRequest(
-        "PATCH",
-        `/api/vendors/${vendorId}/employees/${employee!.id}/assignments`,
-        { relationshipIds: selectedIds },
-      );
+      await vendorEmployeeApi.updateAssignments(vendorId, employee!.id, { relationshipIds: selectedIds });
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/vendors", vendorId, "employees"] });
+      queryClient.invalidateQueries({ queryKey: vendorEmployeeKeys.list(vendorId) });
       queryClient.invalidateQueries({
-        queryKey: ["/api/vendors", vendorId, "employees", employee?.id, "assignments"],
+        queryKey: vendorEmployeeKeys.assignments(vendorId, employee!.id),
       });
       toast({ title: "Assignments saved" });
       onOpenChange(false);

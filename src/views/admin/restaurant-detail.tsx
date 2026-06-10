@@ -1,4 +1,8 @@
 import { useState } from "react";
+import { relationshipApi } from "@/api/shared/relationships";
+import { relationshipKeys } from "@/api/shared/relationships";
+import { adminVendorKeys } from "@/api/admin/vendors";
+import { adminRestaurantKeys } from "@/api/admin/restaurants";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { Link, useParams } from "@/lib/wouter-compat";
 import type { RestaurantOrg, VendorRestaurantRelationship, Vendor } from "@shared/schema";
@@ -67,14 +71,14 @@ function LinkVendorDialog({
     mutationFn: async (vendorIds: string[]) => {
       await Promise.all(
         vendorIds.map(vendorId =>
-          apiRequest("POST", "/api/relationships", { vendorId, restaurantOrgId, status: "active" })
+          relationshipApi.create({ vendorId, restaurantOrgId, status: "active" })
         )
       );
     },
     onSuccess: (_, vendorIds) => {
-      queryClient.invalidateQueries({ queryKey: ["/api/relationships"] });
-      queryClient.invalidateQueries({ queryKey: ["/api/vendors/completeness"] });
-      queryClient.invalidateQueries({ queryKey: ["/api/restaurant-orgs/completeness"] });
+      queryClient.invalidateQueries({ queryKey: relationshipKeys.all() });
+      queryClient.invalidateQueries({ queryKey: adminVendorKeys.completeness() });
+      queryClient.invalidateQueries({ queryKey: adminRestaurantKeys.completeness() });
       toast({
         title: `${vendorIds.length} vendor${vendorIds.length !== 1 ? "s" : ""} linked`,
         description: "The linked vendors list has been updated.",
@@ -166,12 +170,12 @@ export default function RestaurantDetail() {
 
   const updateRelationshipMutation = useMutation({
     mutationFn: async ({ relId, status }: { relId: string; status: string }) => {
-      await apiRequest("PATCH", `/api/relationships/${relId}`, { status });
+      await relationshipApi.update(relId, { status });
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/relationships"] });
-      queryClient.invalidateQueries({ queryKey: ["/api/vendors/completeness"] });
-      queryClient.invalidateQueries({ queryKey: ["/api/restaurant-orgs/completeness"] });
+      queryClient.invalidateQueries({ queryKey: relationshipKeys.all() });
+      queryClient.invalidateQueries({ queryKey: adminVendorKeys.completeness() });
+      queryClient.invalidateQueries({ queryKey: adminRestaurantKeys.completeness() });
       toast({ title: "Relationship updated", description: "Status changed successfully." });
     },
     onError: (err: Error) => {
@@ -181,12 +185,12 @@ export default function RestaurantDetail() {
 
   const deleteRelationshipMutation = useMutation({
     mutationFn: async (relId: string) => {
-      await apiRequest("DELETE", `/api/relationships/${relId}`);
+      await relationshipApi.delete(relId);
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/relationships"] });
-      queryClient.invalidateQueries({ queryKey: ["/api/vendors/completeness"] });
-      queryClient.invalidateQueries({ queryKey: ["/api/restaurant-orgs/completeness"] });
+      queryClient.invalidateQueries({ queryKey: relationshipKeys.all() });
+      queryClient.invalidateQueries({ queryKey: adminVendorKeys.completeness() });
+      queryClient.invalidateQueries({ queryKey: adminRestaurantKeys.completeness() });
       toast({ title: "Relationship removed", description: "The link has been deleted." });
       setRemovingRelationship(null);
     },
@@ -196,15 +200,15 @@ export default function RestaurantDetail() {
   });
 
   const { data: org, isLoading: orgLoading, isError: orgError } = useQuery<RestaurantOrg>({
-    queryKey: ["/api/restaurant-orgs", id],
+    queryKey: adminRestaurantKeys.detail(id),
   });
 
   const { data: allRelationships = [] } = useQuery<VendorRestaurantRelationship[]>({
-    queryKey: ["/api/relationships"],
+    queryKey: relationshipKeys.all(),
   });
 
   const { data: allVendors = [] } = useQuery<Vendor[]>({
-    queryKey: ["/api/vendors"],
+    queryKey: adminVendorKeys.list(false),
   });
 
   const orgRelationships = allRelationships.filter(r => r.restaurantOrgId === id);

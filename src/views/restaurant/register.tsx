@@ -1,3 +1,4 @@
+import { authPaths } from "@/api/shared/auth";
 import PortalRegisterForm from "@/components/shared/portal-register-form";
 import { useRestaurantAuth } from "@/contexts/restaurant-auth-context";
 
@@ -11,7 +12,7 @@ export default function RestaurantRegister() {
       subtitle="Create your restaurant account to place and manage orders"
       nameLabel="Restaurant Name"
       namePlaceholder="The Golden Fork"
-      apiEndpoint="/api/restaurant/register"
+      apiEndpoint={authPaths.restaurantRegister}
       expectedRoles={["restaurant"]}
       defaultDashboardPath="/restaurant/portal"
       loginHref="/restaurant/login"

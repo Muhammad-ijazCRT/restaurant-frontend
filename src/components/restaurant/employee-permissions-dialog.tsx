@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { restaurantEmployeeApi, restaurantEmployeeKeys } from "@/api/restaurant/employees";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { Shield } from "lucide-react";
 import type { RestaurantEmployee } from "@shared/schema";
@@ -48,7 +49,7 @@ export default function RestaurantEmployeePermissionsDialog({
   const [selectedExtras, setSelectedExtras] = useState<string[]>([]);
 
   const { data, isLoading, isError } = useQuery<PermissionsResponse>({
-    queryKey: ["/api/restaurant-orgs", restaurantId, "employees", employee?.id, "permissions"],
+    queryKey: restaurantEmployeeKeys.permissions(restaurantId, employee!.id),
     enabled: open && !!employee?.id,
   });
 
@@ -64,16 +65,14 @@ export default function RestaurantEmployeePermissionsDialog({
 
   const saveMutation = useMutation({
     mutationFn: async () => {
-      await apiRequest(
-        "PATCH",
-        `/api/restaurant-orgs/${restaurantId}/employees/${employee!.id}/permissions`,
-        { extraPermissions: selectedExtras },
-      );
+      await restaurantEmployeeApi.updatePermissions(restaurantId, employee!.id, {
+        extraPermissions: selectedExtras,
+      });
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/restaurant-orgs", restaurantId, "employees"] });
+      queryClient.invalidateQueries({ queryKey: restaurantEmployeeKeys.list(restaurantId) });
       queryClient.invalidateQueries({
-        queryKey: ["/api/restaurant-orgs", restaurantId, "employees", employee?.id, "permissions"],
+        queryKey: restaurantEmployeeKeys.permissions(restaurantId, employee!.id),
       });
       toast({ title: "Permissions saved" });
       onOpenChange(false);

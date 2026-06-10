@@ -1,4 +1,5 @@
 import { useMemo } from "react";
+import { profileKeys } from "@/api/shared/profile";
 import { Link, useLocation } from "@/lib/wouter-compat";
 import { LogOut, Settings, User } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -55,7 +56,7 @@ export function ProfileMenu({
   const [, navigate] = useLocation();
 
   const { data: profile } = useQuery<{ name?: string; image?: string; email?: string } | null>({
-    queryKey: ["/api/profile"],
+    queryKey: profileKeys.profile(),
     queryFn: getQueryFn({ on401: "returnNull" }),
     staleTime: 1000 * 60 * 5, // 5 minutes
     retry: false,

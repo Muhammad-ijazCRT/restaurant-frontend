@@ -1,4 +1,14 @@
 import { useState, useRef, useMemo, useEffect } from "react";
+import { vendorProductApi } from "@/api/vendor/products";
+import { adminVendorApi } from "@/api/admin/vendors";
+import { adminDashboardKeys } from "@/api/admin/dashboard";
+import { relationshipApi, relationshipKeys } from "@/api/shared/relationships";
+import { restaurantOrgKeys } from "@/api/restaurant/orgs";
+import { adminVendorKeys } from "@/api/admin/vendors";
+import { vendorKeys } from "@/api/vendor/vendors";
+import { vendorProductKeys } from "@/api/vendor/products";
+import { notesKeys } from "@/api/shared/notes";
+import { attachmentKeys } from "@/api/shared/attachments";
 import { PRODUCT_CSV_TEMPLATE_FILENAME, PRODUCT_CSV_TEMPLATE_URL } from "@/lib/product-csv-template";
 import { useParams, useSearch, useLocation, Link } from "@/lib/wouter-compat";
 import { useQuery, useMutation } from "@tanstack/react-query";
@@ -176,7 +186,7 @@ function StepVendorInfo({
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
   const { data: existingVendor } = useQuery<Vendor>({
-    queryKey: ["/api/vendors", vendorId],
+    queryKey: vendorKeys.detail(vendorId),
     enabled: isEditing,
   });
 
@@ -246,12 +256,12 @@ function StepVendorInfo({
         status: data.status,
         loginPassword: data.password || undefined,
       };
-      const res = await apiRequest("POST", "/api/vendors", payload);
+      const res = await adminVendorApi.create(payload);
       return res.json() as Promise<Vendor>;
     },
     onSuccess: (vendor) => {
-      queryClient.invalidateQueries({ queryKey: ["/api/vendors?includeArchived=true"] });
-      queryClient.invalidateQueries({ queryKey: ["/api/admin/stats"] });
+      queryClient.invalidateQueries({ queryKey: adminVendorKeys.list() });
+      queryClient.invalidateQueries({ queryKey: adminDashboardKeys.stats() });
       onCreated(vendor.id);
     },
     onError: handleError,
@@ -269,11 +279,11 @@ function StepVendorInfo({
       if (data.password) {
         payload.loginPassword = data.password;
       }
-      return apiRequest("PATCH", `/api/vendors/${vendorId}`, payload);
+      return adminVendorApi.update(vendorId, payload);
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/vendors?includeArchived=true"] });
-      queryClient.invalidateQueries({ queryKey: ["/api/vendors", vendorId] });
+      queryClient.invalidateQueries({ queryKey: adminVendorKeys.list() });
+      queryClient.invalidateQueries({ queryKey: vendorKeys.detail(vendorId) });
       toast({ title: "Vendor updated" });
       onUpdated?.();
     },
@@ -468,9 +478,9 @@ function AddProductDialog({
 
   const mutation = useMutation({
     mutationFn: (data: ProductFormValues) =>
-      apiRequest("POST", `/api/vendors/${vendorId}/products`, data),
+      vendorProductApi.create(vendorId, data),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/vendors", vendorId, "products"] });
+      queryClient.invalidateQueries({ queryKey: vendorProductKeys.list(vendorId) });
       form.reset();
       toast({ title: "Product added" });
       onOpenChange(false);
@@ -579,17 +589,17 @@ function CsvImportDialog({
   const [fileName, setFileName] = useState("");
 
   const { data: existingProducts = [] } = useQuery<Product[]>({
-    queryKey: ["/api/vendors", vendorId, "products"],
+    queryKey: vendorProductKeys.list(vendorId),
     enabled: open,
   });
 
   const importMutation = useMutation({
     mutationFn: async (rows: object[]) => {
-      const res = await apiRequest("POST", `/api/vendors/${vendorId}/products/import`, { rows });
+      const res = await vendorProductApi.import(vendorId, rows);
       return res.json() as Promise<{ summary: { imported: number } }>;
     },
     onSuccess: (data) => {
-      queryClient.invalidateQueries({ queryKey: ["/api/vendors", vendorId, "products"] });
+      queryClient.invalidateQueries({ queryKey: vendorProductKeys.list(vendorId) });
       toast({
         title: "Import complete",
         description: `${data.summary.imported} product${data.summary.imported !== 1 ? "s" : ""} imported.`,
@@ -815,7 +825,7 @@ function StepProducts({
   const [csvOpen, setCsvOpen] = useState(false);
 
   const { data: products = [], isLoading } = useQuery<Product[]>({
-    queryKey: ["/api/vendors", vendorId, "products"],
+    queryKey: vendorProductKeys.list(vendorId),
   });
 
   return (
@@ -958,11 +968,11 @@ function StepLinkRestaurants({
   const [isPending, setIsPending] = useState(false);
 
   const { data: allOrgs = [], isLoading: orgsLoading } = useQuery<RestaurantOrg[]>({
-    queryKey: ["/api/restaurant-orgs"],
+    queryKey: restaurantOrgKeys.list(),
   });
 
   const { data: allRelationships = [], isLoading: relsLoading } = useQuery<VendorRestaurantRelationship[]>({
-    queryKey: ["/api/relationships"],
+    queryKey: relationshipKeys.all(),
   });
 
   const activeOrgs = useMemo(
@@ -1017,14 +1027,14 @@ function StepLinkRestaurants({
     try {
       await Promise.all(
         toCreate.map(restaurantOrgId =>
-          apiRequest("POST", "/api/relationships", {
+          relationshipApi.create({
             vendorId,
             restaurantOrgId,
             status: "active",
           })
         )
       );
-      queryClient.invalidateQueries({ queryKey: ["/api/relationships"] });
+      queryClient.invalidateQueries({ queryKey: relationshipKeys.all() });
       toast({
         title: `${toCreate.length} restaurant${toCreate.length !== 1 ? "s" : ""} linked`,
       });
@@ -1166,18 +1176,18 @@ function StepReview({
   onPrev: () => void;
 }) {
   const [, navigate] = useLocation();
-  const { data: vendor } = useQuery<Vendor>({ queryKey: ["/api/vendors", vendorId] });
+  const { data: vendor } = useQuery<Vendor>({ queryKey: vendorKeys.detail(vendorId) });
   const { data: products = [] } = useQuery<Product[]>({
-    queryKey: ["/api/vendors", vendorId, "products"],
+    queryKey: vendorProductKeys.list(vendorId),
   });
   const { data: attachments = [] } = useQuery<AttachmentMeta[]>({
-    queryKey: ["/api/attachments", "vendor", vendorId],
+    queryKey: attachmentKeys.list("vendor", vendorId),
   });
   const { data: notes = [] } = useQuery<InternalNote[]>({
-    queryKey: ["/api/notes", "vendor", vendorId],
+    queryKey: notesKeys.list("vendor", vendorId),
   });
   const { data: allRelationships = [] } = useQuery<VendorRestaurantRelationship[]>({
-    queryKey: ["/api/relationships"],
+    queryKey: relationshipKeys.all(),
   });
   const linkedRestaurantCount = allRelationships.filter(
     r => r.vendorId === vendorId && r.status !== "archived"

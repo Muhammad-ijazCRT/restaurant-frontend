@@ -1,4 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
+import { restaurantOrgKeys } from "@/api/restaurant/orgs";
 import { Link, useParams } from "@/lib/wouter-compat";
 import type { Vendor, Product, RestaurantOrg } from "@shared/schema";
 import { Card, CardContent } from "@/components/ui/card";
@@ -41,11 +42,11 @@ export default function RestaurantCatalog() {
   const vendorId = params.vendorId;
 
   const { data: org, isLoading: orgLoading } = useQuery<RestaurantOrg>({
-    queryKey: ["/api/restaurant-orgs", restaurantId],
+    queryKey: restaurantOrgKeys.detail(restaurantId),
   });
 
   const { data: catalog, isLoading: catalogLoading, isError: catalogError, error } = useQuery<CatalogResponse>({
-    queryKey: ["/api/restaurant-orgs", restaurantId, "catalog", vendorId],
+    queryKey: restaurantOrgKeys.catalog(restaurantId, vendorId),
   });
 
   const isLoading = orgLoading || catalogLoading;

@@ -1,4 +1,5 @@
 import { useEffect, useState, type FormEvent } from "react";
+import { profileKeys } from "@/api/shared/profile";
 import { Link, useLocation } from "@/lib/wouter-compat";
 import AuthLayout from "@/components/shared/auth-layout";
 import { showAuthFlash } from "@/components/shared/auth-flash";
@@ -114,7 +115,7 @@ export default function PortalLoginForm({
       if (ok && data.status === "success" && data.token && data.user) {
         const role = data.user.role || expectedRoles[0];
         setAuthSession(data.token, role, data.user);
-        void queryClient.invalidateQueries({ queryKey: ["/api/notifications"] });
+        void queryClient.invalidateQueries({ queryKey: profileKeys.notifications() });
 
         const entityId = resolvePortalEntityId(data.user, role);
         onLoginSuccess?.(role, entityId);

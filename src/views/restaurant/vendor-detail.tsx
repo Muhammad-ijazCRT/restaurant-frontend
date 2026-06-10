@@ -1,4 +1,14 @@
 import { useState, useEffect } from "react";
+import { restaurantOrderApi } from "@/api/restaurant/orders";
+import { profileKeys } from "@/api/shared/profile";
+import { adminDashboardKeys } from "@/api/admin/dashboard";
+import { restaurantReviewApi, restaurantReviewKeys, restaurantReviewPaths } from "@/api/restaurant/review";
+import { relationshipApi, relationshipKeys } from "@/api/shared/relationships";
+import { vendorKeys } from "@/api/vendor/vendors";
+import { restaurantOrgKeys } from "@/api/restaurant/orgs";
+import { vendorOrderKeys } from "@/api/vendor/orders";
+import { vendorProductKeys } from "@/api/vendor/products";
+import { restaurantOrderKeys } from "@/api/restaurant/orders";
 import { Link, useLocation, useParams } from "@/lib/wouter-compat";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { useRestaurantAuth } from "@/contexts/restaurant-auth-context";
@@ -78,12 +88,12 @@ function DeliveredOrderReview({
   restaurantId: string;
   readOnly?: boolean;
 }) {
-  const submittedOrdersQueryKey = ["/api/restaurant-orgs", restaurantId, "submitted-orders", order.vendorId];
+  const submittedOrdersQueryKey = restaurantOrderKeys.submittedList(restaurantId, order.vendorId);
 
   const { data: existingFulfillments = [] } = useQuery<LineFulfillment[]>({
-    queryKey: ["/api/restaurant-orgs", restaurantId, "orders", order.id, "review"],
+    queryKey: restaurantReviewKeys.review(restaurantId, order.id),
     queryFn: async () => {
-      const res = await fetch(apiUrl(`/api/restaurant-orgs/${restaurantId}/orders/${order.id}/review`));
+      const res = await fetch(apiUrl(restaurantReviewPaths.review(restaurantId, order.id)));
       if (!res.ok) return [];
       return res.json();
     },
@@ -114,16 +124,16 @@ function DeliveredOrderReview({
           : null,
         note: draft[li.id]?.note || null,
       }));
-      const res = await apiRequest("POST", `/api/restaurant-orgs/${restaurantId}/orders/${order.id}/review`, { items });
+      const res = await restaurantReviewApi.submit(restaurantId, order.id, { items });
       return res.json();
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/restaurant-orgs", restaurantId, "orders", order.id, "review"] });
+      queryClient.invalidateQueries({ queryKey: restaurantReviewKeys.review(restaurantId, order.id) });
       queryClient.invalidateQueries({ queryKey: submittedOrdersQueryKey });
       // Invalidate VP orders so the order moves from Delivered → Needs Vendor Approval
       // immediately when both portals are open in the same browser session.
-      queryClient.invalidateQueries({ queryKey: ["/api/vendors", order.vendorId, "orders"] });
-      void queryClient.invalidateQueries({ queryKey: ["/api/notifications"] });
+      queryClient.invalidateQueries({ queryKey: vendorOrderKeys.list(order.vendorId) });
+      void queryClient.invalidateQueries({ queryKey: profileKeys.notifications() });
     },
   });
 
@@ -302,32 +312,32 @@ export default function RestaurantVendorDetail() {
   // ── Data fetching ──────────────────────────────────────────────────────────
 
   const { data: restaurant } = useQuery<RestaurantOrg>({
-    queryKey: ["/api/restaurant-orgs", restaurantId],
+    queryKey: restaurantOrgKeys.detail(restaurantId),
     enabled: !!restaurantId,
   });
 
   const { data: allRelationships = [], isLoading: relLoading } = useQuery<VendorRestaurantRelationship[]>({
-    queryKey: ["/api/relationships"],
+    queryKey: relationshipKeys.all(),
     enabled: !!restaurantId,
   });
 
   const { data: vendor, isLoading: vendorLoading } = useQuery<Vendor>({
-    queryKey: ["/api/vendors", vendorId],
+    queryKey: vendorKeys.detail(vendorId),
     enabled: !!vendorId,
   });
 
   const { data: products = [], isLoading: productsLoading } = useQuery<Product[]>({
-    queryKey: ["/api/vendors", vendorId, "products"],
+    queryKey: vendorProductKeys.list(vendorId),
     enabled: !!vendorId,
   });
 
   const { data: draftData, isLoading: draftLoading } = useQuery<DraftResponse>({
-    queryKey: ["/api/restaurant-orgs", restaurantId, "draft-order", vendorId],
+    queryKey: restaurantOrderKeys.draft(restaurantId, vendorId),
     enabled: !!restaurantId && !!vendorId,
   });
 
   const { data: submittedOrdersData = [], isLoading: submittedLoading } = useQuery<SubmittedOrderEntry[]>({
-    queryKey: ["/api/restaurant-orgs", restaurantId, "submitted-orders", vendorId],
+    queryKey: restaurantOrderKeys.submittedList(restaurantId, vendorId),
     enabled: !!restaurantId && !!vendorId,
   });
 
@@ -336,7 +346,7 @@ export default function RestaurantVendorDetail() {
   )?.id;
 
   const { data: orderSheetData = [] } = useQuery<OrderSheetEntry[]>({
-    queryKey: ["/api/relationships", sheetRelationshipId, "order-sheet"],
+    queryKey: relationshipKeys.orderSheet(sheetRelationshipId),
     enabled: !!sheetRelationshipId,
   });
 
@@ -382,9 +392,9 @@ export default function RestaurantVendorDetail() {
 
   // ── Mutations ─────────────────────────────────────────────────────────────
 
-  const draftQueryKey = ["/api/restaurant-orgs", restaurantId, "draft-order", vendorId];
-  const submittedQueryKey = ["/api/restaurant-orgs", restaurantId, "submitted-orders", vendorId];
-  const orderSheetQueryKey = ["/api/relationships", sheetRelationshipId, "order-sheet"];
+  const draftQueryKey = restaurantOrderKeys.draft(restaurantId, vendorId);
+  const submittedQueryKey = restaurantOrderKeys.submittedList(restaurantId, vendorId);
+  const orderSheetQueryKey = relationshipKeys.orderSheet(sheetRelationshipId);
 
   useEffect(() => {
     if (!sheetRelationshipId) return;
@@ -413,7 +423,7 @@ export default function RestaurantVendorDetail() {
   const bulkAddMutation = useMutation({
     mutationFn: async (productIds: string[]) => {
       await Promise.all(
-        productIds.map(id => apiRequest("POST", `/api/relationships/${sheetRelationshipId}/order-sheet`, { productId: id }))
+        productIds.map(id => relationshipApi.addOrderSheetItem(sheetRelationshipId, { productId: id }))
       );
       return productIds;
     },
@@ -435,7 +445,7 @@ export default function RestaurantVendorDetail() {
   const bulkRemoveMutation = useMutation({
     mutationFn: async (productIds: string[]) => {
       await Promise.all(
-        productIds.map(id => apiRequest("DELETE", `/api/relationships/${sheetRelationshipId}/order-sheet/${id}`))
+        productIds.map(id => relationshipApi.removeOrderSheetItem(sheetRelationshipId, id))
       );
       return productIds;
     },
@@ -455,7 +465,7 @@ export default function RestaurantVendorDetail() {
   const submitOrderMutation = useMutation({
     mutationFn: async () => {
       if (!existingDraft) throw new Error("No draft order to submit.");
-      const res = await apiRequest("PATCH", `/api/restaurant-orgs/${restaurantId}/orders/${existingDraft.id}`, { status: "submitted" });
+      const res = await restaurantOrderApi.update(restaurantId, existingDraft.id, { status: "submitted" });
       return res.json() as Promise<{ order: Order; lineItems: OrderLineItem[] }>;
     },
     onSuccess: (data) => {
@@ -464,7 +474,7 @@ export default function RestaurantVendorDetail() {
         submittedQueryKey,
         (prev: { order: Order; lineItems: OrderLineItem[] }[] = []) => [data, ...prev],
       );
-      queryClient.invalidateQueries({ queryKey: ["/api/vendors", vendorId, "orders"] });
+      queryClient.invalidateQueries({ queryKey: vendorOrderKeys.list(vendorId) });
       setConfirmSubmit(false);
       toast({ title: "Order submitted", description: "Your order has been submitted to the vendor." });
     },
@@ -480,7 +490,7 @@ export default function RestaurantVendorDetail() {
 
   const deleteDraftMutation = useMutation({
     mutationFn: async (orderId: string) => {
-      await apiRequest("DELETE", `/api/restaurant-orgs/${restaurantId}/orders/${orderId}`);
+      await restaurantOrderApi.delete(restaurantId, orderId);
     },
     onSuccess: () => {
       queryClient.setQueryData(draftQueryKey, null);
@@ -499,15 +509,15 @@ export default function RestaurantVendorDetail() {
 
   const payOrderMutation = useMutation({
     mutationFn: async (orderId: string) => {
-      const res = await apiRequest("PATCH", `/api/restaurant-orgs/${restaurantId}/orders/${orderId}/pay`);
+      const res = await restaurantOrderApi.pay(restaurantId, orderId);
       return res.json();
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: submittedQueryKey });
       // Sync VP so the order leaves "Invoiced" and moves to "History" there too
-      queryClient.invalidateQueries({ queryKey: ["/api/vendors", vendorId, "orders"] });
+      queryClient.invalidateQueries({ queryKey: vendorOrderKeys.list(vendorId) });
       // Refresh admin dashboard recent activity to show the payment entry
-      queryClient.invalidateQueries({ queryKey: ["/api/admin/recent-activity"] });
+      queryClient.invalidateQueries({ queryKey: adminDashboardKeys.recentActivity() });
       toast({ title: "Order marked as paid", description: "The invoice has been marked as paid." });
     },
     onError: (err: any) => {

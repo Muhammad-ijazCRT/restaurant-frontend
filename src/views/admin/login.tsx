@@ -1,3 +1,4 @@
+import { authPaths } from "@/api/shared/auth";
 import PortalLoginForm from "@/components/shared/portal-login-form";
 
 export default function SuperAdminLogin() {
@@ -7,7 +8,7 @@ export default function SuperAdminLogin() {
       heading="👑 Super Admin Login"
       subtitle="Manage the entire system"
       emailPlaceholder="admin@example.com"
-      apiEndpoint="/api/super-admin/login"
+      apiEndpoint={authPaths.superAdminLogin}
       expectedRoles={["super_admin"]}
       defaultDashboardPath="/super-admin/dashboard"
       registerHref="/super-admin/register"

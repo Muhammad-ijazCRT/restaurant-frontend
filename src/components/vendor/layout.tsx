@@ -3,6 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useVendorAuth } from "@/contexts/vendor-auth-context";
 import { useVendorPortalNav } from "@/contexts/vendor-portal-nav-context";
 import { VENDOR_SECTION_IDS, type VendorSectionId } from "@/lib/vendor-portal-sections";
+import { vendorKeys } from "@/api/vendor/vendors";
 import type { Vendor } from "@shared/schema";
 import { useEffect, useMemo } from "react";
 import { Building2 } from "lucide-react";
@@ -36,7 +37,7 @@ export default function VendorLayout({ children }: { children: React.ReactNode }
   }, [role, location, navigate]);
 
   const { data: vendor } = useQuery<Vendor>({
-    queryKey: ["/api/vendors", vendorId],
+    queryKey: vendorKeys.detail(vendorId),
     enabled: !!vendorId,
   });
 

@@ -1,3 +1,4 @@
+import { authPaths } from "@/api/shared/auth";
 import PortalRegisterForm from "@/components/shared/portal-register-form";
 import { useVendorAuth } from "@/contexts/vendor-auth-context";
 
@@ -11,7 +12,7 @@ export default function VendorRegister() {
       subtitle="Create your vendor account to manage orders and catalog"
       nameLabel="Company Name"
       namePlaceholder="Acme Foods Inc."
-      apiEndpoint="/api/vendor/register"
+      apiEndpoint={authPaths.vendorRegister}
       expectedRoles={["vendor_admin", "manager", "warehouse_worker", "driver"]}
       defaultDashboardPath="/vendor/portal"
       loginHref="/vendor/login"
