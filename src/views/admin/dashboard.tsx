@@ -163,7 +163,7 @@ function MetricPair({
           </Button>
         </Link>
       </div>
-      <div className="grid grid-cols-2 gap-3">
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
         <div className="rounded-md bg-muted/40 p-3" data-testid={`metric-${label.toLowerCase().replace(/\s/g, "-")}-active`}>
           <p className="text-2xl font-semibold text-foreground">{activeCount}</p>
           <p className="text-xs text-muted-foreground mt-0.5">{activeLabel}</p>
@@ -184,7 +184,7 @@ function MetricSkeleton() {
         <Skeleton className="h-8 w-8 rounded-md" />
         <Skeleton className="h-4 w-28" />
       </div>
-      <div className="grid grid-cols-2 gap-3">
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
         <Skeleton className="h-16 rounded-md" />
         <Skeleton className="h-16 rounded-md" />
       </div>

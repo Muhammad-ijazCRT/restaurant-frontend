@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Open_Sans } from "next/font/google";
 import { Providers } from "./providers";
 import "./globals.css";
@@ -13,8 +13,16 @@ const openSans = Open_Sans({
 
 export const dynamic = "force-dynamic";
 
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+};
+
 export const metadata: Metadata = {
-  title: "Russian Restaurant Portal",
+  title: {
+    default: "RodexOS",
+    template: "%s | RodexOS",
+  },
   description: "Vendor, restaurant, and admin portal for food service operations",
 };
 

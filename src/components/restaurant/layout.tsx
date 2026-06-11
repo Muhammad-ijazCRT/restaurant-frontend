@@ -15,7 +15,7 @@ import {
   getRestaurantPortalLabels,
   isRestaurantRouteAllowed,
 } from "@/lib/restaurant-portal-labels";
-import { PortalPageContainer } from "@/components/shared/portal-page-container";
+import { PortalShell } from "@/components/shared/portal-shell";
 import { PortalSidebarBrand } from "@/components/shared/rodex-brand";
 import { countNeedsReviewOrders, normalizeOrderEntries } from "@/lib/restaurant-orders";
 
@@ -42,9 +42,12 @@ export default function RestaurantLayout({ children }: { children: React.ReactNo
     navigate("/restaurant/portal");
   }, [role, location, navigate]);
 
-  const activeItem = navItems.find(
-    (item) => location === item.href || location.startsWith(`${item.href}/`),
-  ) ?? (location.startsWith("/restaurant/vendor/") ? navItems.find((item) => item.id === "place-order") : undefined);
+  const activeItem =
+    navItems.find(
+      (item) => location === item.href || location.startsWith(`${item.href}/`),
+    ) ?? (location.startsWith("/restaurant/vendor/")
+      ? navItems.find((item) => item.id === "place-order")
+      : undefined);
 
   const pageTitle =
     location.startsWith("/restaurant/settings")
@@ -54,12 +57,12 @@ export default function RestaurantLayout({ children }: { children: React.ReactNo
         : activeItem?.label ?? "Dashboard";
 
   return (
-    <div className="flex h-full overflow-hidden bg-background" data-testid="restaurant-layout">
-      <aside className="flex h-full w-[280px] shrink-0 flex-col border-r border-sidebar-border bg-sidebar">
-        <div className="flex h-14 items-center border-b border-sidebar-border px-5">
-          <PortalSidebarBrand subtitle={portalLabels.sidebarTitle} href="/restaurant/portal" />
-        </div>
-        <nav className="flex-1 overflow-y-auto px-3 py-4">
+    <PortalShell
+      testId="restaurant-layout"
+      sidebarWidthClass="lg:w-[280px]"
+      brand={<PortalSidebarBrand subtitle={portalLabels.sidebarTitle} href="/restaurant/portal" />}
+      nav={
+        <>
           {navItems.map((item) => {
             const Icon = item.icon;
             const isActive =
@@ -87,38 +90,40 @@ export default function RestaurantLayout({ children }: { children: React.ReactNo
               </Link>
             );
           })}
-        </nav>
-        <div className="mt-auto border-t border-sidebar-border px-6 py-4">
+        </>
+      }
+      footer={
+        <>
           <p className="text-sm font-medium text-foreground">{restaurant?.name ?? "Loading..."}</p>
           <p className="text-xs text-muted-foreground">{portalLabels.footerRole}</p>
+        </>
+      }
+      headerTitle={
+        <div className="flex min-w-0 items-center gap-1.5">
+          <UtensilsCrossed className="hidden h-4 w-4 shrink-0 text-emerald-600 sm:block" />
+          <span className="hidden truncate text-muted-foreground sm:inline">
+            {restaurant?.name ?? "Restaurant"}
+          </span>
+          <ChevronRight className="hidden h-3.5 w-3.5 shrink-0 text-muted-foreground sm:block" />
+          <span className="truncate font-semibold text-foreground">{pageTitle}</span>
         </div>
-      </aside>
-
-      <div className="flex min-w-0 flex-1 flex-col">
-        <header className="flex h-12 shrink-0 items-center justify-between border-b bg-background px-8">
-          <div className="flex min-w-0 items-center gap-1.5 text-sm">
-            <UtensilsCrossed className="h-4 w-4 shrink-0 text-emerald-600" />
-            <span className="truncate text-muted-foreground">{restaurant?.name ?? "Restaurant"}</span>
-            <ChevronRight className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
-            <span className="truncate font-semibold text-foreground">{pageTitle}</span>
-          </div>
-          <div className="flex items-center gap-2">
-            <NotificationBell />
-            <ProfileMenu
-              user={user}
-              roleLabel={portalLabels.roleLabel}
-              onLogout={logout}
-              profileHref="/restaurant/profile"
-              settingsHref={
-                canAccessRestaurantSettings(role) ? "/restaurant/settings" : undefined
-              }
-            />
-          </div>
-        </header>
-        <main className="min-h-0 flex-1 overflow-y-auto bg-muted/40">
-          <PortalPageContainer>{children}</PortalPageContainer>
-        </main>
-      </div>
-    </div>
+      }
+      headerActions={
+        <>
+          <NotificationBell />
+          <ProfileMenu
+            user={user}
+            roleLabel={portalLabels.roleLabel}
+            onLogout={logout}
+            profileHref="/restaurant/profile"
+            settingsHref={
+              canAccessRestaurantSettings(role) ? "/restaurant/settings" : undefined
+            }
+          />
+        </>
+      }
+    >
+      {children}
+    </PortalShell>
   );
 }

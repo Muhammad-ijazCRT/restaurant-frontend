@@ -262,13 +262,13 @@ export default function RestaurantOrderComposer() {
   if (!vendor || !relationship) return null;
 
   return (
-    <div className="flex w-full gap-6 items-start">
+    <div className="portal-stack-split">
 
         {/* ── Left panel: product list ──────────────────────────────────────── */}
-        <div className="flex-1 min-w-0 border rounded-lg bg-card overflow-hidden">
+        <div className="portal-stack-main border rounded-lg bg-card overflow-hidden">
           {/* Panel header */}
-          <div className="px-5 py-3.5 border-b flex items-center justify-between gap-3">
-            <div className="flex items-center gap-2 min-w-0">
+          <div className="portal-toolbar px-4 sm:px-5 py-3.5 border-b">
+            <div className="flex flex-wrap items-center gap-2 min-w-0">
               <Building2 className="h-4 w-4 text-muted-foreground shrink-0" />
               <span className="text-sm font-semibold text-foreground shrink-0" data-testid="text-composer-vendor-name">
                 {vendor.name}
@@ -295,7 +295,7 @@ export default function RestaurantOrderComposer() {
                 <span className="text-xs text-muted-foreground">· Product Catalog</span>
               )}
             </div>
-            <div className="relative w-48 shrink-0">
+            <div className="relative w-full sm:w-48 shrink-0">
               <Search className="absolute left-2 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground pointer-events-none" />
               <Input
                 placeholder="Search products…"
@@ -412,7 +412,7 @@ export default function RestaurantOrderComposer() {
         </div>
 
         {/* ── Right panel: order summary ────────────────────────────────────── */}
-        <div className="w-72 shrink-0 sticky top-4 space-y-4">
+        <div className="portal-stack-sidebar">
           {/* Order summary card */}
           <div className="border rounded-lg bg-card overflow-hidden" data-testid="order-summary-panel">
             <div className="px-4 py-3 border-b bg-muted/20 flex items-center gap-2">

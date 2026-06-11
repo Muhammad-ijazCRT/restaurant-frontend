@@ -375,7 +375,7 @@ function ProductFormDialog({
                 </FormItem>
               )}
             />
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
               <FormField
                 control={form.control}
                 name="unitType"
@@ -922,7 +922,7 @@ function CsvImportDialog({
 
         {step === "done" && importResult && (
           <div className="space-y-4 py-2">
-            <div className="grid grid-cols-3 gap-3">
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
               <div className="border rounded-lg p-3 text-center">
                 <p className="text-2xl font-bold">
                   {importResult.summary.total}
@@ -1421,7 +1421,7 @@ export default function VendorPortal() {
     return (
       <div className="space-y-4">
         <Skeleton className="h-8 w-64" />
-        <div className="grid grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
           {[...Array(3)].map((_, i) => (
             <Skeleton key={i} className="h-24" />
           ))}
@@ -3296,10 +3296,10 @@ export default function VendorPortal() {
               {/* Search & Filter Bar */}
               {products.length > 0 && (
                 <div
-                  className="px-4 py-2.5 border-b bg-muted/20 flex flex-wrap items-center gap-2"
+                  className="portal-filter-bar px-4 py-2.5 border-b bg-muted/20"
                   data-testid="product-filter-bar"
                 >
-                  <div className="relative flex-1 min-w-[160px] max-w-xs">
+                  <div className="relative flex-1 min-w-0 sm:min-w-[160px] sm:max-w-xs">
                     <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground pointer-events-none" />
                     <Input
                       placeholder="Search name or SKU…"
@@ -3325,7 +3325,7 @@ export default function VendorPortal() {
                     }
                   >
                     <SelectTrigger
-                      className="h-8 text-sm w-[140px]"
+                      className="h-8 w-full text-sm sm:w-[140px]"
                       data-testid="select-filter-status"
                     >
                       <SelectValue />
@@ -3343,7 +3343,7 @@ export default function VendorPortal() {
                     }
                   >
                     <SelectTrigger
-                      className="h-8 text-sm w-[150px]"
+                      className="h-8 w-full text-sm sm:w-[150px]"
                       data-testid="select-filter-stock"
                     >
                       <SelectValue />

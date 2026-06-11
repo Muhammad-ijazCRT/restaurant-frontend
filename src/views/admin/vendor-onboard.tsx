@@ -338,7 +338,7 @@ function StepVendorInfo({
             </FormItem>
           )} />
 
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <FormField control={form.control} name="email" render={({ field }) => (
               <FormItem>
                 <FormLabel className="flex items-center gap-1.5">
@@ -378,7 +378,7 @@ function StepVendorInfo({
             )} />
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <FormField control={form.control} name="password" render={({ field }) => (
               <FormItem>
                 <FormLabel>Password</FormLabel>
@@ -518,7 +518,7 @@ function AddProductDialog({
                 <FormMessage />
               </FormItem>
             )} />
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
               <FormField control={form.control} name="unitType" render={({ field }) => (
                 <FormItem>
                   <FormLabel>Unit Type</FormLabel>
@@ -1218,7 +1218,7 @@ function StepReview({
               <CheckCircle2 className="h-5 w-5 text-emerald-600" />
             </div>
           </div>
-          <div className="grid grid-cols-2 gap-y-2 gap-x-6 text-sm border-t pt-3">
+          <div className="grid grid-cols-1 gap-y-2 gap-x-6 text-sm border-t pt-3 sm:grid-cols-2">
             <div className="flex items-center gap-2 text-muted-foreground">
               <UserCircle className="h-3.5 w-3.5 shrink-0" />
               <span>{vendor.contactName}</span>
@@ -1235,7 +1235,7 @@ function StepReview({
         </div>
       )}
 
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
         <div className="border rounded-lg p-4 text-center" data-testid="review-card-products">
           <p className="text-2xl font-semibold" data-testid="text-review-product-count">
             {products.length}

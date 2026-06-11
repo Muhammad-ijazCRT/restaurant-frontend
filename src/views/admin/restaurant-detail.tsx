@@ -223,7 +223,7 @@ export default function RestaurantDetail() {
         <Skeleton className="h-6 w-32 mb-6" />
         <Skeleton className="h-8 w-64 mb-2" />
         <Skeleton className="h-4 w-48 mb-8" />
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           <Skeleton className="h-24" />
           <Skeleton className="h-24" />
         </div>

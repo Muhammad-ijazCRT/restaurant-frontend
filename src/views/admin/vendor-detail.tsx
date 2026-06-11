@@ -228,7 +228,7 @@ function ProductFormDialog({
                 <FormMessage />
               </FormItem>
             )} />
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
               <FormField control={form.control} name="unitType" render={({ field }) => (
                 <FormItem>
                   <FormLabel>Unit Type</FormLabel>
@@ -619,7 +619,7 @@ function CsvImportDialog({
 
         {step === "done" && importResult && (
           <div className="space-y-4 py-2">
-            <div className="grid grid-cols-3 gap-3">
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
               <div className="border rounded-lg p-3 text-center">
                 <p className="text-2xl font-semibold" data-testid="text-total-rows">{importResult.summary.total}</p>
                 <p className="text-xs text-muted-foreground">Total Rows</p>
@@ -1064,7 +1064,7 @@ export default function VendorDetail() {
         <Skeleton className="h-6 w-32 mb-6" />
         <Skeleton className="h-8 w-64 mb-2" />
         <Skeleton className="h-4 w-48 mb-8" />
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           <Skeleton className="h-24" />
           <Skeleton className="h-24" />
         </div>
@@ -1251,8 +1251,8 @@ export default function VendorDetail() {
           ) : (
             <>
               {/* Search & Filter Bar */}
-              <div className="px-4 py-2.5 border-b bg-muted/20 flex flex-wrap items-center gap-2" data-testid="product-filter-bar">
-                <div className="relative flex-1 min-w-[160px] max-w-xs">
+              <div className="portal-filter-bar px-4 py-2.5 border-b bg-muted/20" data-testid="product-filter-bar">
+                <div className="relative flex-1 min-w-0 sm:min-w-[160px] sm:max-w-xs">
                   <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground pointer-events-none" />
                   <Input
                     placeholder="Search name or SKU…"
@@ -1272,7 +1272,7 @@ export default function VendorDetail() {
                   )}
                 </div>
                 <Select value={statusFilter} onValueChange={v => setStatusFilter(v as typeof statusFilter)}>
-                  <SelectTrigger className="h-8 text-sm w-[140px]" data-testid="select-filter-status">
+                  <SelectTrigger className="h-8 w-full text-sm sm:w-[140px]" data-testid="select-filter-status">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
@@ -1282,7 +1282,7 @@ export default function VendorDetail() {
                   </SelectContent>
                 </Select>
                 <Select value={stockFilter} onValueChange={v => setStockFilter(v as typeof stockFilter)}>
-                  <SelectTrigger className="h-8 text-sm w-[150px]" data-testid="select-filter-stock">
+                  <SelectTrigger className="h-8 w-full text-sm sm:w-[150px]" data-testid="select-filter-stock">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>

@@ -559,7 +559,7 @@ export default function AdminOrderDetail() {
           {/* ── Parties ─────────────────────────────────────────────────────── */}
           <div className="border rounded-lg bg-card overflow-hidden" data-testid="section-parties">
             <SectionHeading icon={Link2} title="Order Parties" />
-            <div className="px-5 py-4 grid grid-cols-2 gap-6">
+            <div className="px-5 py-4 grid grid-cols-1 gap-6 sm:grid-cols-2">
               <div>
                 <div className="flex items-center gap-1.5 mb-2">
                   <Building2 className="h-3.5 w-3.5 text-blue-500" />

@@ -1,6 +1,6 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { Link } from "@/lib/wouter-compat";
-import { ArrowRight, Store, Package } from "lucide-react";
+import { ArrowRight, Menu, Store, Package, X } from "lucide-react";
 import { RodexBrandLink } from "@/components/shared/rodex-brand";
 import "@/styles/landing.css";
 
@@ -100,6 +100,7 @@ function DashboardMockup() {
 
 export default function LandingPage() {
   useScrollReveal();
+  const [mobileNavOpen, setMobileNavOpen] = useState(false);
 
   useEffect(() => {
     document.title = "RodexOS — Streamline Restaurant–Vendor Operations";
@@ -120,10 +121,22 @@ export default function LandingPage() {
       <header className="rodex-header rodex-header-anim">
         <div className="landing-container rodex-header-inner">
           <RodexBrandLink className="rodex-brand" iconClassName="rodex-brand-icon" textClassName="rodex-brand-text" />
-          <nav className="rodex-nav rodex-nav-anim" aria-label="Main navigation">
-            <a href="#about" className="rodex-nav-link">About</a>
-            <a href="#contact" className="rodex-nav-link">Contact</a>
-            <a href="#portals" className="rodex-btn rodex-btn-sm">Login</a>
+          <button
+            type="button"
+            className="rodex-nav-toggle"
+            aria-expanded={mobileNavOpen}
+            aria-label={mobileNavOpen ? "Close menu" : "Open menu"}
+            onClick={() => setMobileNavOpen((open) => !open)}
+          >
+            {mobileNavOpen ? <X aria-hidden="true" /> : <Menu aria-hidden="true" />}
+          </button>
+          <nav
+            className={`rodex-nav rodex-nav-anim${mobileNavOpen ? " is-open" : ""}`}
+            aria-label="Main navigation"
+          >
+            <a href="#about" className="rodex-nav-link" onClick={() => setMobileNavOpen(false)}>About</a>
+            <a href="#contact" className="rodex-nav-link" onClick={() => setMobileNavOpen(false)}>Contact</a>
+            <a href="#portals" className="rodex-btn rodex-btn-sm" onClick={() => setMobileNavOpen(false)}>Login</a>
           </nav>
         </div>
       </header>

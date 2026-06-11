@@ -181,7 +181,7 @@ function VendorFormDialog({ open, onOpenChange, vendor }: { open: boolean; onOpe
                 <FormMessage />
               </FormItem>
             )} />
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
               <FormField control={form.control} name="email" render={({ field }) => (
                 <FormItem>
                   <FormLabel className="flex items-center gap-1.5"><Mail className="h-3.5 w-3.5 text-muted-foreground" />Email</FormLabel>
@@ -446,9 +446,9 @@ export default function AdminVendors() {
             </button>
           ))}
         </div>
-        <div className="flex items-center gap-3 ml-auto w-full sm:w-auto">
+        <div className="flex flex-wrap items-center gap-2 sm:gap-3 sm:ml-auto w-full sm:w-auto">
           <Select value={sort} onValueChange={v => setSort(v as SortOrder)}>
-            <SelectTrigger className="w-[130px] shrink-0" data-testid="select-sort-vendors">
+            <SelectTrigger className="w-full sm:w-[130px] shrink-0" data-testid="select-sort-vendors">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
@@ -458,7 +458,7 @@ export default function AdminVendors() {
             </SelectContent>
           </Select>
           <Select value={onboardingFilter} onValueChange={v => setOnboardingFilter(v as "all" | "complete" | "incomplete")}>
-            <SelectTrigger className="w-[150px] shrink-0" data-testid="select-onboarding-filter-vendors">
+            <SelectTrigger className="w-full sm:w-[150px] shrink-0" data-testid="select-onboarding-filter-vendors">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>

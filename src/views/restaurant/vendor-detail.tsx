@@ -1784,8 +1784,8 @@ export default function RestaurantVendorDetail() {
           {catalogExpanded && (<>
             {/* Search & filter bar — only when not in order mode (ordering mode uses all products) */}
             {visibleProducts.length > 0 && (
-              <div className="px-4 py-2.5 border-b bg-muted/20 flex flex-wrap items-center gap-2" data-testid="catalog-filter-bar">
-                <div className="relative flex-1 min-w-[160px] max-w-xs">
+              <div className="portal-filter-bar px-4 py-2.5 border-b bg-muted/20" data-testid="catalog-filter-bar">
+                <div className="relative flex-1 min-w-0 sm:min-w-[160px] sm:max-w-xs">
                   <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground pointer-events-none" />
                   <Input
                     placeholder="Search name or SKU…"
@@ -1805,7 +1805,7 @@ export default function RestaurantVendorDetail() {
                   )}
                 </div>
                 <Select value={statusFilter} onValueChange={v => setStatusFilter(v as typeof statusFilter)}>
-                  <SelectTrigger className="h-8 text-sm w-[150px]" data-testid="select-filter-status">
+                  <SelectTrigger className="h-8 w-full text-sm sm:w-[150px]" data-testid="select-filter-status">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>

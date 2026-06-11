@@ -292,3 +292,35 @@
     inset: -1px;
   }
 }
+
+@layer components {
+  .portal-stack-split {
+    @apply flex w-full min-w-0 flex-col gap-4 lg:flex-row lg:items-start lg:gap-6;
+  }
+
+  .portal-stack-main {
+    @apply min-w-0 flex-1 overflow-hidden;
+  }
+
+  .portal-stack-sidebar {
+    @apply w-full shrink-0 space-y-4 lg:w-72 lg:sticky lg:top-4;
+  }
+
+  .portal-toolbar {
+    @apply flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between;
+  }
+
+  .portal-filter-bar {
+    @apply flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center;
+  }
+
+  .portal-filter-control {
+    @apply w-full sm:w-auto;
+  }
+}
+
+@layer utilities {
+  .portal-mobile-full {
+    @apply -mx-3 w-[calc(100%+1.5rem)] sm:mx-0 sm:w-full;
+  }
+}

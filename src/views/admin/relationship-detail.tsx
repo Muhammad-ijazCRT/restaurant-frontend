@@ -359,7 +359,7 @@ export default function RelationshipDetail() {
 
             {/* Summary stats */}
             {!ordersLoading && relationshipOrders.length > 0 && (
-              <div className="grid grid-cols-3 gap-3" data-testid="section-activity-stats">
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-3" data-testid="section-activity-stats">
                 <div className="border rounded-lg p-3 bg-card text-center">
                   <p className="text-2xl font-bold text-foreground" data-testid="stat-total-orders">{relationshipOrders.length}</p>
                   <p className="text-xs text-muted-foreground mt-0.5">Total Orders</p>

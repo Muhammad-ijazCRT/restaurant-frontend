@@ -154,7 +154,7 @@ export function NotificationBell() {
       const res = await apiRequest("POST", profilePaths.notificationClear);
       return res.json() as Promise<{ clearedAt: string; unreadCount: number }>;
     },
-    onSuccess: (result) => {
+    onSuccess: async (result) => {
       queryClient.setQueryData(profileKeys.notifications(), (prev: typeof data) => {
         if (!prev) return prev;
         return {
@@ -163,12 +163,27 @@ export function NotificationBell() {
           clearedAt: result.clearedAt ?? new Date().toISOString(),
         };
       });
+      await queryClient.invalidateQueries({ queryKey: profileKeys.notifications() });
     },
   });
 
   const notifications = data?.notifications ?? [];
   const total = data?.total ?? 0;
-  const unreadCount = data?.unreadCount ?? total;
+  const clearedAt = data?.clearedAt ?? null;
+  const unreadCount = useMemo(() => {
+    if (clearedAt) {
+      const clearedTime = new Date(clearedAt).getTime();
+      if (!Number.isNaN(clearedTime)) {
+        return notifications.filter((log) => {
+          const rawDate = (log as { createdAt?: string; created_at?: string }).createdAt
+            ?? (log as { created_at?: string }).created_at;
+          const createdTime = parsePortalDate(rawDate)?.getTime();
+          return createdTime != null && createdTime > clearedTime;
+        }).length;
+      }
+    }
+    return typeof data?.unreadCount === "number" ? data.unreadCount : 0;
+  }, [notifications, clearedAt, data?.unreadCount]);
   const displayCount = unreadCount > 999 ? "999+" : String(unreadCount);
   const items = useMemo(() => {
     return notifications
@@ -204,7 +219,7 @@ export function NotificationBell() {
         </Button>
       </DropdownMenuTrigger>
 
-      <DropdownMenuContent align="end" className="w-[360px] overflow-hidden rounded-2xl border border-border bg-popover p-0 shadow-lg">
+      <DropdownMenuContent align="end" className="w-[min(360px,calc(100vw-2rem))] overflow-hidden rounded-2xl border border-border bg-popover p-0 shadow-lg">
         <div className="flex items-start justify-between gap-3 border-b border-muted/30 p-4">
           <div>
             <DropdownMenuLabel className="text-sm font-semibold">Notifications</DropdownMenuLabel>

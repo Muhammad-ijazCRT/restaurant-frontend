@@ -9,7 +9,7 @@ import {
 import { clearAuthSession, getUserData } from "@/lib/portal-auth";
 import { NotificationBell } from "@/components/shared/notification-bell";
 import { ProfileMenu } from "@/components/shared/profile-menu";
-import { PortalPageContainer } from "@/components/shared/portal-page-container";
+import { PortalShell } from "@/components/shared/portal-shell";
 import { PortalSidebarBrand } from "@/components/shared/rodex-brand";
 
 const navItems = [
@@ -24,18 +24,25 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   const [location, navigate] = useLocation();
   const user = getUserData();
 
+  const activeItem =
+    navItems.find(
+      (item) =>
+        location === item.path ||
+        (item.path !== "/super-admin/dashboard" && location.startsWith(item.path)),
+    ) ?? navItems[0];
+
   function handleLogout() {
     clearAuthSession();
     navigate("/super-admin/login");
   }
 
   return (
-    <div className="h-full bg-background flex overflow-hidden" data-testid="admin-layout">
-      <aside className="w-[240px] h-full border-r border-sidebar-border bg-sidebar flex flex-col shrink-0">
-        <div className="h-14 flex items-center px-5 border-b border-sidebar-border">
-          <PortalSidebarBrand subtitle="Admin Console" href="/super-admin/dashboard" />
-        </div>
-        <nav className="flex-1 py-3 px-3 space-y-0.5">
+    <PortalShell
+      testId="admin-layout"
+      sidebarWidthClass="lg:w-[240px]"
+      brand={<PortalSidebarBrand subtitle="Admin Console" href="/super-admin/dashboard" />}
+      nav={
+        <>
           {navItems.map((item) => {
             const isActive =
               location === item.path ||
@@ -43,9 +50,9 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
             return (
               <Link key={item.path} href={item.path}>
                 <div
-                  className={`flex items-center gap-2.5 px-3 py-2 rounded-md text-sm cursor-pointer transition-colors ${
+                  className={`mb-0.5 flex cursor-pointer items-center gap-2.5 rounded-md px-3 py-2 text-sm transition-colors ${
                     isActive
-                      ? "bg-sidebar-accent text-sidebar-accent-foreground font-medium"
+                      ? "bg-sidebar-accent font-medium text-sidebar-accent-foreground"
                       : "text-sidebar-foreground/70 hover:bg-sidebar-accent/50 hover:text-sidebar-foreground"
                   }`}
                   data-testid={`nav-${item.label.toLowerCase()}`}
@@ -56,24 +63,31 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
               </Link>
             );
           })}
-        </nav>
-        <div className="px-5 py-3 border-t border-sidebar-border">
+        </>
+      }
+      footer={
+        <>
           <p className="text-xs text-muted-foreground">Controlled Commerce</p>
           <p className="text-xs text-muted-foreground/60">Admin Foundation v1</p>
-        </div>
-      </aside>
-      <div className="fixed right-6 top-4 z-20 flex items-center gap-2">
-        <NotificationBell />
-        <ProfileMenu
-          user={user}          roleLabel="Super Admin"
-          onLogout={handleLogout}
-          profileHref="/super-admin/profile"
-          settingsHref="/super-admin/settings"
-        />
-      </div>
-      <main className="flex-1 min-h-0 overflow-y-auto bg-muted/40">
-        <PortalPageContainer>{children}</PortalPageContainer>
-      </main>
-    </div>
+        </>
+      }
+      headerTitle={
+        <span className="truncate font-semibold text-foreground">{activeItem.label}</span>
+      }
+      headerActions={
+        <>
+          <NotificationBell />
+          <ProfileMenu
+            user={user}
+            roleLabel="Super Admin"
+            onLogout={handleLogout}
+            profileHref="/super-admin/profile"
+            settingsHref="/super-admin/settings"
+          />
+        </>
+      }
+    >
+      {children}
+    </PortalShell>
   );
 }

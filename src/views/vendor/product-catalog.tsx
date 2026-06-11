@@ -156,7 +156,7 @@ function ProductFormDialog({
                 <FormMessage />
               </FormItem>
             )} />
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
               <FormField control={form.control} name="unitType" render={({ field }) => (
                 <FormItem>
                   <FormLabel>Unit Type</FormLabel>
@@ -370,8 +370,8 @@ export default function VendorProductCatalog() {
           </div>
         </div>
 
-        <div className="flex flex-wrap items-center gap-2 border-b bg-muted/20 px-4 py-3">
-          <div className="relative min-w-[220px] flex-1 max-w-sm">
+        <div className="portal-filter-bar border-b bg-muted/20 px-4 py-3">
+          <div className="relative min-w-0 flex-1 sm:min-w-[220px] sm:max-w-sm">
             <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
             <Input className="pl-9" placeholder="Search name or SKU..." value={search} onChange={(event) => setSearch(event.target.value)} data-testid="input-product-search" />
             {search && (
@@ -381,7 +381,7 @@ export default function VendorProductCatalog() {
             )}
           </div>
           <Select value={statusFilter} onValueChange={(value) => setStatusFilter(value as typeof statusFilter)}>
-            <SelectTrigger className="w-[160px]" data-testid="select-filter-status"><SelectValue /></SelectTrigger>
+            <SelectTrigger className="w-full sm:w-[160px]" data-testid="select-filter-status"><SelectValue /></SelectTrigger>
             <SelectContent>
               <SelectItem value="all">All Statuses</SelectItem>
               <SelectItem value="active">In Stock</SelectItem>
@@ -390,7 +390,7 @@ export default function VendorProductCatalog() {
             </SelectContent>
           </Select>
           <Select value={stockFilter} onValueChange={(value) => setStockFilter(value as typeof stockFilter)}>
-            <SelectTrigger className="w-[170px]" data-testid="select-filter-stock"><SelectValue /></SelectTrigger>
+            <SelectTrigger className="w-full sm:w-[170px]" data-testid="select-filter-stock"><SelectValue /></SelectTrigger>
             <SelectContent>
               <SelectItem value="all">All Storage</SelectItem>
               {STOCK_TYPES.map((type) => <SelectItem key={type} value={type}>{type}</SelectItem>)}

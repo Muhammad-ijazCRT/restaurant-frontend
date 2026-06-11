@@ -13,7 +13,7 @@ import {
 } from "@/lib/shipping-portal-labels";
 import { NotificationBell } from "@/components/shared/notification-bell";
 import { PortalRoleSwitcher } from "@/components/shared/portal-role-switcher";
-import { PortalPageContainer } from "@/components/shared/portal-page-container";
+import { PortalShell } from "@/components/shared/portal-shell";
 import { ProfileMenu } from "@/components/shared/profile-menu";
 import { PortalSidebarBrand } from "@/components/shared/rodex-brand";
 
@@ -46,15 +46,17 @@ export default function ShippingLayout({ children }: { children: React.ReactNode
   }
 
   return (
-    <div className="flex h-full overflow-hidden bg-background" data-testid="shipping-layout">
-      <aside className="flex h-full w-[280px] shrink-0 flex-col border-r border-sidebar-border bg-sidebar">
-        <div className="flex h-14 items-center border-b border-sidebar-border px-5">
-          <PortalSidebarBrand
-            subtitle={portalLabels.consoleLabel}
-            href={resolveRoleHomePath(role ?? "")}
-          />
-        </div>
-        <nav className="flex-1 overflow-y-auto px-3 py-4">
+    <PortalShell
+      testId="shipping-layout"
+      sidebarWidthClass="lg:w-[280px]"
+      brand={
+        <PortalSidebarBrand
+          subtitle={portalLabels.consoleLabel}
+          href={resolveRoleHomePath(role ?? "")}
+        />
+      }
+      nav={
+        <>
           {navItems.map((item) => {
             const Icon = item.icon;
             const isActive = location === item.href || location.startsWith(`${item.href}/`);
@@ -73,33 +75,32 @@ export default function ShippingLayout({ children }: { children: React.ReactNode
               </Link>
             );
           })}
-        </nav>
-      </aside>
-      <div className="flex min-w-0 flex-1 flex-col">
-        <header className="flex h-14 shrink-0 items-center justify-between border-b bg-background px-6">
-          <div className="text-sm">
-            <span className="text-muted-foreground">{vendorName}</span>
-            <span className="mx-2 text-muted-foreground">/</span>
-            <span className="font-semibold">{activeItem?.label ?? "Dashboard"}</span>
-          </div>
-          <div className="flex items-center gap-2">
-            <PortalRoleSwitcher />
-            <NotificationBell />
-            <ProfileMenu
-              user={user}
-              roleLabel={portalLabels.profileRoleLabel}
-              onLogout={handleLogout}
-              profileHref="/shipping-company/profile"
-              settingsHref={
-                canAccessShippingSettings(role) ? "/shipping-company/settings" : undefined
-              }
-            />
-          </div>
-        </header>
-        <main className="min-h-0 flex-1 overflow-y-auto bg-muted/40">
-          <PortalPageContainer>{children}</PortalPageContainer>
-        </main>
-      </div>
-    </div>
+        </>
+      }
+      headerTitle={
+        <div className="flex min-w-0 items-center gap-2 text-sm">
+          <span className="hidden truncate text-muted-foreground sm:inline">{vendorName}</span>
+          <span className="hidden text-muted-foreground sm:inline">/</span>
+          <span className="truncate font-semibold">{activeItem?.label ?? "Dashboard"}</span>
+        </div>
+      }
+      headerActions={
+        <>
+          <PortalRoleSwitcher />
+          <NotificationBell />
+          <ProfileMenu
+            user={user}
+            roleLabel={portalLabels.profileRoleLabel}
+            onLogout={handleLogout}
+            profileHref="/shipping-company/profile"
+            settingsHref={
+              canAccessShippingSettings(role) ? "/shipping-company/settings" : undefined
+            }
+          />
+        </>
+      }
+    >
+      {children}
+    </PortalShell>
   );
 }
