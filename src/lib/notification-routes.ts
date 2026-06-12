@@ -95,6 +95,9 @@ function buildContext(log: ActivityLog, role: string): NotificationContext {
 function resolveSuperAdminHref(ctx: NotificationContext): string {
   const { log, orderId } = ctx;
 
+  if (log.entityType === "contact_submission" && log.entityId) {
+    return `/admin/contact-inquiries/${log.entityId}`;
+  }
   if (log.entityType === "order" && orderId) return `/admin/orders/${orderId}`;
   if (log.entityType === "vendor" && log.entityId) return `/admin/vendors/${log.entityId}`;
   if (log.entityType === "restaurant_org" && log.entityId) {

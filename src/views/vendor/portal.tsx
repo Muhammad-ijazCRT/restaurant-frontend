@@ -4,7 +4,6 @@ import {
   useEffect,
   useCallback,
   Fragment,
-  type ComponentType,
 } from "react";
 import { useVendorPortalNav } from "@/contexts/vendor-portal-nav-context";
 import { vendorProductApi } from "@/api/vendor/products";
@@ -121,6 +120,7 @@ import { z } from "zod";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { CutoffSettingsPanel } from "@/components/vendor/cutoff-settings-panel";
+import { PortalDashboardMetricCard } from "@/components/shared/portal-dashboard-metric-card";
 import Papa from "papaparse";
 
 // ─── Constants ────────────────────────────────────────────────────────────────
@@ -999,64 +999,6 @@ function CsvImportDialog({
 
 // ─── Main Vendor Portal Page ──────────────────────────────────────────────────
 
-function DashboardMetricCard({
-  title,
-  value,
-  description,
-  icon: Icon,
-  iconClassName,
-  onClick,
-}: {
-  title: string;
-  value: string | number;
-  description: string;
-  icon: ComponentType<{ className?: string }>;
-  iconClassName: string;
-  onClick?: () => void;
-}) {
-  return (
-    <Card
-      className={`rounded-lg border-border bg-card shadow-sm ${
-        onClick
-          ? "cursor-pointer transition-colors hover:border-primary/40 hover:bg-muted/30 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-          : ""
-      }`}
-      onClick={onClick}
-      onKeyDown={
-        onClick
-          ? (event) => {
-              if (event.key === "Enter" || event.key === " ") {
-                event.preventDefault();
-                onClick();
-              }
-            }
-          : undefined
-      }
-      role={onClick ? "button" : undefined}
-      tabIndex={onClick ? 0 : undefined}
-      data-testid={`card-dashboard-metric-${title.toLowerCase().replace(/\s+/g, "-")}`}
-    >
-      <CardContent className="p-5">
-        <div className="mb-5 flex items-start justify-between gap-4">
-          <p className="text-sm font-medium text-muted-foreground">{title}</p>
-          <div className={`rounded-md p-2 ${iconClassName}`}>
-            <Icon className="h-4 w-4" />
-          </div>
-        </div>
-        <p className="text-3xl font-bold tracking-tight text-foreground">
-          {value}
-        </p>
-        <p className="mt-2 text-sm text-muted-foreground">{description}</p>
-        {onClick ? (
-          <p className="mt-2 text-[11px] font-medium text-primary/80">
-            Click to view details
-          </p>
-        ) : null}
-      </CardContent>
-    </Card>
-  );
-}
-
 export default function VendorPortal() {
   const { vendorId, logout } = useVendorAuth();
   const [, navigate] = useLocation();
@@ -1452,7 +1394,7 @@ export default function VendorPortal() {
   return (
     <div>
       <div id={VENDOR_SECTION_IDS.dashboard} className="scroll-mt-6">
-        <div className="mb-8 flex items-start justify-between gap-4">
+        <div className="mb-5 flex items-start justify-between gap-4 sm:mb-8">
           <div>
             <h1 className="text-xl font-semibold tracking-tight text-foreground">
               Overview
@@ -1488,13 +1430,13 @@ export default function VendorPortal() {
           </div>
         </div>
 
-        <section className="mb-8">
-          <h2 className="mb-4 text-xs font-bold uppercase tracking-wider text-muted-foreground">
+        <section className="mb-5 sm:mb-8">
+          <h2 className="mb-3 text-xs font-bold uppercase tracking-wider text-muted-foreground sm:mb-4">
             Order Activity
           </h2>
-          <div className="grid grid-cols-1 gap-5 md:grid-cols-2 xl:grid-cols-4">
+          <div className="portal-metric-grid md:grid-cols-2 xl:grid-cols-4">
             {!isWarehouseWorker ? (
-              <DashboardMetricCard
+              <PortalDashboardMetricCard
                 title="Active Restaurants"
                 value={vendorRelationships.length}
                 description="Linked restaurants"
@@ -1505,7 +1447,7 @@ export default function VendorPortal() {
             ) : null}
             {isWarehouseWorker ? (
               <>
-                <DashboardMetricCard
+                <PortalDashboardMetricCard
                   title="Active Orders"
                   value={warehouseActiveOrders.length}
                   description="Assigned and in progress"
@@ -1513,7 +1455,7 @@ export default function VendorPortal() {
                   iconClassName="bg-orange-100 text-orange-500"
                   onClick={() => navigate("/vendor/orders?section=submitted")}
                 />
-                <DashboardMetricCard
+                <PortalDashboardMetricCard
                   title="Submitted Orders"
                   value={warehouseSubmittedOrders.length}
                   description="Awaiting manager review"
@@ -1525,7 +1467,7 @@ export default function VendorPortal() {
             ) : null}
             {!isWarehouseWorker && !isSalesRepresentative ? (
               <>
-                <DashboardMetricCard
+                <PortalDashboardMetricCard
                   title="Submitted Orders"
                   value={submittedVpOrders.length}
                   description="Awaiting delivery"
@@ -1533,7 +1475,7 @@ export default function VendorPortal() {
                   iconClassName="bg-blue-100 text-blue-500"
                   onClick={() => navigate("/vendor/orders?section=submitted")}
                 />
-                <DashboardMetricCard
+                <PortalDashboardMetricCard
                   title="Delivered"
                   value={deliveredVpOrders.length}
                   description="Restaurant reviewing"
@@ -1541,7 +1483,7 @@ export default function VendorPortal() {
                   iconClassName="bg-slate-100 text-slate-500"
                   onClick={() => navigate("/vendor/orders?section=delivered")}
                 />
-                <DashboardMetricCard
+                <PortalDashboardMetricCard
                   title="Needs Approval"
                   value={needsApprovalOrders.length}
                   description="Restaurant review or driver resolution"
@@ -1556,11 +1498,11 @@ export default function VendorPortal() {
 
         {!isWarehouseWorker ? (
         <section>
-          <h2 className="mb-4 text-xs font-bold uppercase tracking-wider text-muted-foreground">
+          <h2 className="mb-3 text-xs font-bold uppercase tracking-wider text-muted-foreground sm:mb-4">
             Revenue
           </h2>
-          <div className="grid grid-cols-1 gap-5 md:grid-cols-2 xl:grid-cols-4">
-            <DashboardMetricCard
+          <div className="portal-metric-grid md:grid-cols-2 xl:grid-cols-4">
+            <PortalDashboardMetricCard
               title="Invoiced Orders"
               value={invoicedOrders.length}
               description="Approved, awaiting payment"
@@ -1568,7 +1510,7 @@ export default function VendorPortal() {
               iconClassName="bg-teal-100 text-teal-500"
               onClick={() => navigate("/vendor/orders?section=invoiced")}
             />
-            <DashboardMetricCard
+            <PortalDashboardMetricCard
               title="Paid Revenue"
               value={formatCurrency(String(paidRevenue.toFixed(2)))}
               description="Total collected"
@@ -1576,7 +1518,7 @@ export default function VendorPortal() {
               iconClassName="bg-emerald-100 text-emerald-500"
               onClick={() => navigate("/vendor/orders?section=history")}
             />
-            <DashboardMetricCard
+            <PortalDashboardMetricCard
               title="Unfulfilled Revenue"
               value={formatCurrency(String(unfulfilledRevenue.toFixed(2)))}
               description="Ordered vs. approved gap"

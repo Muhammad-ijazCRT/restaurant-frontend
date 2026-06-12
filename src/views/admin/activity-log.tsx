@@ -57,6 +57,7 @@ const ACTION_META: Record<string, ActionMeta> = {
   restaurant_profile_updated:  { label: "Restaurant profile updated",  icon: Pencil,     color: "text-blue-600 dark:text-blue-400",         badgeVariant: "secondary" },
   vendor_profile_updated:      { label: "Vendor profile updated",      icon: Pencil,     color: "text-blue-600 dark:text-blue-400",         badgeVariant: "secondary" },
   employee_profile_updated:    { label: "Employee profile updated",      icon: Pencil,     color: "text-blue-600 dark:text-blue-400",         badgeVariant: "secondary" },
+  contact_submitted:        { label: "Contact form submitted",          icon: ClipboardList, color: "text-emerald-600 dark:text-emerald-400", badgeVariant: "default" },
 };
 
 const SEARCH_ALIASES: Record<string, string[]> = {
@@ -77,6 +78,7 @@ const ENTITY_ICON: Record<string, typeof Building2> = {
   relationship:   Link2,
   vendor_employee: Building2,
   user:           ClipboardList,
+  contact_submission: ClipboardList,
 };
 
 function buildActivitySearchText(log: ActivityLog): string {

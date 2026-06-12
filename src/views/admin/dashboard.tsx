@@ -107,23 +107,23 @@ function MetricCard({
   testId: string;
 }) {
   return (
-    <div className="border rounded-lg bg-card p-5">
-      <div className="flex items-center justify-between mb-4">
+    <div className="rounded-lg border bg-card p-3 sm:p-5">
+      <div className="mb-2 flex items-center justify-between sm:mb-4">
         <div className="flex items-center gap-2">
-          <div className={`rounded-md p-2 ${iconColor}`}>
-            <Icon className="h-4 w-4" />
+          <div className={`rounded-md p-1.5 sm:p-2 ${iconColor}`}>
+            <Icon className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
           </div>
-          <span className="text-sm font-semibold text-foreground">{label}</span>
+          <span className="text-xs font-semibold text-foreground sm:text-sm">{label}</span>
         </div>
         <Link href={href}>
-          <Button variant="ghost" size="sm" className="h-7 px-2 text-xs text-muted-foreground hover:text-foreground">
-            Manage <ArrowRight className="h-3 w-3 ml-1" />
+          <Button variant="ghost" size="sm" className="h-6 px-2 text-[11px] text-muted-foreground hover:text-foreground sm:h-7 sm:text-xs">
+            Manage <ArrowRight className="ml-1 h-3 w-3" />
           </Button>
         </Link>
       </div>
-      <div className="rounded-md bg-muted/40 p-3" data-testid={testId}>
-        <p className="text-2xl font-semibold text-foreground">{count}</p>
-        <p className="text-xs text-muted-foreground mt-0.5">{countLabel}</p>
+      <div className="rounded-md bg-muted/40 p-2 sm:p-3" data-testid={testId}>
+        <p className="text-xl font-semibold text-foreground sm:text-2xl">{count}</p>
+        <p className="mt-0.5 text-[11px] text-muted-foreground sm:text-xs">{countLabel}</p>
       </div>
     </div>
   );
@@ -149,28 +149,28 @@ function MetricPair({
   href: string;
 }) {
   return (
-    <div className="border rounded-lg bg-card p-5">
-      <div className="flex items-center justify-between mb-4">
+    <div className="rounded-lg border bg-card p-3 sm:p-5">
+      <div className="mb-2 flex items-center justify-between sm:mb-4">
         <div className="flex items-center gap-2">
-          <div className={`rounded-md p-2 ${iconColor}`}>
-            <Icon className="h-4 w-4" />
+          <div className={`rounded-md p-1.5 sm:p-2 ${iconColor}`}>
+            <Icon className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
           </div>
-          <span className="text-sm font-semibold text-foreground">{label}</span>
+          <span className="text-xs font-semibold text-foreground sm:text-sm">{label}</span>
         </div>
         <Link href={href}>
-          <Button variant="ghost" size="sm" className="h-7 px-2 text-xs text-muted-foreground hover:text-foreground">
-            Manage <ArrowRight className="h-3 w-3 ml-1" />
+          <Button variant="ghost" size="sm" className="h-6 px-2 text-[11px] text-muted-foreground hover:text-foreground sm:h-7 sm:text-xs">
+            Manage <ArrowRight className="ml-1 h-3 w-3" />
           </Button>
         </Link>
       </div>
-      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-        <div className="rounded-md bg-muted/40 p-3" data-testid={`metric-${label.toLowerCase().replace(/\s/g, "-")}-active`}>
-          <p className="text-2xl font-semibold text-foreground">{activeCount}</p>
-          <p className="text-xs text-muted-foreground mt-0.5">{activeLabel}</p>
+      <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 sm:gap-3">
+        <div className="rounded-md bg-muted/40 p-2 sm:p-3" data-testid={`metric-${label.toLowerCase().replace(/\s/g, "-")}-active`}>
+          <p className="text-xl font-semibold text-foreground sm:text-2xl">{activeCount}</p>
+          <p className="mt-0.5 text-[11px] text-muted-foreground sm:text-xs">{activeLabel}</p>
         </div>
-        <div className="rounded-md bg-muted/40 p-3" data-testid={`metric-${label.toLowerCase().replace(/\s/g, "-")}-inactive`}>
-          <p className="text-2xl font-semibold text-foreground">{secondCount}</p>
-          <p className="text-xs text-muted-foreground mt-0.5">{secondLabel}</p>
+        <div className="rounded-md bg-muted/40 p-2 sm:p-3" data-testid={`metric-${label.toLowerCase().replace(/\s/g, "-")}-inactive`}>
+          <p className="text-xl font-semibold text-foreground sm:text-2xl">{secondCount}</p>
+          <p className="mt-0.5 text-[11px] text-muted-foreground sm:text-xs">{secondLabel}</p>
         </div>
       </div>
     </div>
@@ -179,14 +179,14 @@ function MetricPair({
 
 function MetricSkeleton() {
   return (
-    <div className="border rounded-lg bg-card p-5">
-      <div className="flex items-center gap-2 mb-4">
-        <Skeleton className="h-8 w-8 rounded-md" />
+    <div className="rounded-lg border bg-card p-3 sm:p-5">
+      <div className="mb-2 flex items-center gap-2 sm:mb-4">
+        <Skeleton className="h-7 w-7 rounded-md sm:h-8 sm:w-8" />
         <Skeleton className="h-4 w-28" />
       </div>
-      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-        <Skeleton className="h-16 rounded-md" />
-        <Skeleton className="h-16 rounded-md" />
+      <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 sm:gap-3">
+        <Skeleton className="h-12 rounded-md sm:h-16" />
+        <Skeleton className="h-12 rounded-md sm:h-16" />
       </div>
     </div>
   );
@@ -422,7 +422,7 @@ export default function AdminDashboard() {
             <TrendingUp className="h-4 w-4 text-muted-foreground" />
             <h2 className="text-sm font-semibold text-foreground uppercase tracking-wide">Metrics</h2>
           </div>
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
             {statsLoading ? (
               <>
                 <MetricSkeleton />

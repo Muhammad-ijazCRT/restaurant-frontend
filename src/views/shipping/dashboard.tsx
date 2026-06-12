@@ -133,7 +133,7 @@ function StatCard({
   return (
     <Card
       className={cn(
-        "rounded-xl border-border/70 shadow-sm transition-colors",
+        "flex h-full flex-col overflow-hidden rounded-xl border-border/70 shadow-sm transition-colors",
         onClick && "cursor-pointer hover:border-primary/40 hover:bg-muted/30 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
       )}
       onClick={onClick}
@@ -151,19 +151,25 @@ function StatCard({
       tabIndex={onClick ? 0 : undefined}
       data-testid={`stat-card-${label.toLowerCase().replace(/\s+/g, "-")}`}
     >
-      <CardContent className="p-5">
-        <div className="flex items-start justify-between gap-3">
+      <CardContent className="flex flex-1 flex-col p-3 sm:p-5">
+        <div className="flex flex-1 items-start justify-between gap-3">
           <div>
-            <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">{label}</p>
-            <p className="mt-2 text-3xl font-bold tabular-nums text-foreground">{value}</p>
-            {hint ? <p className="mt-1 text-xs text-muted-foreground">{hint}</p> : null}
-            {onClick ? <p className="mt-2 text-[11px] font-medium text-primary/80">Click to view details</p> : null}
+            <p className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground sm:text-xs">{label}</p>
+            <p className="mt-1 text-2xl font-bold tabular-nums text-foreground sm:mt-2 sm:text-3xl">{value}</p>
+            {hint ? <p className="mt-0.5 text-[11px] text-muted-foreground sm:mt-1 sm:text-xs">{hint}</p> : null}
           </div>
-          <div className={`rounded-xl p-2.5 ${toneClass}`}>
-            <Icon className="h-5 w-5" />
+          <div className={`rounded-xl p-1.5 sm:p-2.5 ${toneClass}`}>
+            <Icon className="h-4 w-4 sm:h-5 sm:w-5" />
           </div>
         </div>
       </CardContent>
+      {onClick ? (
+        <div className="border-t border-border/70 bg-card px-3 py-3 sm:px-5 sm:py-3.5">
+          <span className="block text-xs font-medium text-blue-600 dark:text-blue-400">
+            Click to view details
+          </span>
+        </div>
+      ) : null}
     </Card>
   );
 }
@@ -453,9 +459,9 @@ export default function ShippingDashboard() {
       </div>
 
       {isLoading ? (
-        <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+        <div className="portal-metric-grid md:grid-cols-2">
           {Array.from({ length: 6 }).map((_, index) => (
-            <Skeleton key={index} className="h-28 rounded-xl" />
+            <Skeleton key={index} className="h-20 rounded-xl sm:h-28" />
           ))}
         </div>
       ) : isError ? (
@@ -466,7 +472,7 @@ export default function ShippingDashboard() {
         </Card>
       ) : (
         <>
-          <div className={`grid gap-4 ${isDriver ? "md:grid-cols-2" : "md:grid-cols-2 xl:grid-cols-3"}`}>
+          <div className="portal-metric-grid md:grid-cols-2 xl:grid-cols-3">
             {statCards.map((card) => (
               <StatCard
                 key={card.bucketId}

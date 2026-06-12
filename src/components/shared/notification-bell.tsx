@@ -83,6 +83,7 @@ const ACTION_LABELS: Record<string, string> = {
   attachment_created: "Attachment added",
   attachment_deleted: "Attachment removed",
   product_reordered: "Product order updated",
+  contact_submitted: "New contact inquiry",
 };
 
 function notificationSubtitle(log: ActivityLog & { displayMessage?: string }): string {

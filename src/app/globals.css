@@ -299,7 +299,7 @@
   }
 
   .portal-stack-main {
-    @apply min-w-0 flex-1 overflow-hidden;
+    @apply min-w-0 flex-1 overflow-x-auto overflow-y-visible lg:overflow-hidden;
   }
 
   .portal-stack-sidebar {
@@ -317,10 +317,59 @@
   .portal-filter-control {
     @apply w-full sm:w-auto;
   }
+
+  .portal-metric-grid {
+    @apply grid grid-cols-1 gap-3 sm:gap-4 md:gap-5 [&>*]:h-full;
+  }
 }
 
 @layer utilities {
   .portal-mobile-full {
     @apply -mx-3 w-[calc(100%+1.5rem)] sm:mx-0 sm:w-full;
+  }
+}
+
+/* Phone/tablet: scroll wide portal content instead of clipping buttons and tables */
+@media (max-width: 1023px) {
+  [data-portal-main] {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior-x: contain;
+  }
+
+  [data-portal-content] .overflow-hidden.rounded-lg,
+  [data-portal-content] .border.rounded-lg.bg-card.overflow-hidden,
+  [data-portal-content] .overflow-hidden.rounded-lg.border {
+    overflow-x: auto;
+    overflow-y: visible;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  [data-portal-content] .border.rounded-lg .flex.items-center.justify-between,
+  [data-portal-content] .overflow-hidden.rounded-lg .flex.items-center.justify-between {
+    overflow-x: auto;
+    max-width: 100%;
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior-x: contain;
+  }
+
+  [data-portal-content] .border.rounded-lg .flex.items-center.justify-between > *,
+  [data-portal-content] .overflow-hidden.rounded-lg .flex.items-center.justify-between > * {
+    flex-shrink: 0;
+  }
+
+  /* Raw HTML tables (not the shadcn Table wrapper) */
+  [data-portal-content] table:not(.caption-bottom) {
+    min-width: 36rem;
+  }
+}
+
+@media (max-width: 1023px) {
+  .landing-page {
+    overflow-x: auto;
+  }
+
+  .auth-page {
+    overflow-x: auto;
   }
 }

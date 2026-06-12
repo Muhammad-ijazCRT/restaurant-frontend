@@ -134,8 +134,8 @@ export default function LandingPage() {
             className={`rodex-nav rodex-nav-anim${mobileNavOpen ? " is-open" : ""}`}
             aria-label="Main navigation"
           >
-            <a href="#about" className="rodex-nav-link" onClick={() => setMobileNavOpen(false)}>About</a>
-            <a href="#contact" className="rodex-nav-link" onClick={() => setMobileNavOpen(false)}>Contact</a>
+            <Link href="/about" className="rodex-nav-link" onClick={() => setMobileNavOpen(false)}>About</Link>
+            <Link href="/contact" className="rodex-nav-link" onClick={() => setMobileNavOpen(false)}>Contact</Link>
             <a href="#portals" className="rodex-btn rodex-btn-sm" onClick={() => setMobileNavOpen(false)}>Login</a>
           </nav>
         </div>
@@ -153,10 +153,10 @@ export default function LandingPage() {
                 RodexOS connects restaurants and vendors on a unified platform to simplify
                 ordering, tracking, invoicing, and payments.
               </p>
-              <a href="#contact" className="rodex-btn rodex-btn-lg rodex-hero-btn-anim">
+              <Link href="/contact" className="rodex-btn rodex-btn-lg rodex-hero-btn-anim">
                 Request Demo
                 <ArrowRight className="rodex-btn-icon rodex-btn-icon-anim" aria-hidden="true" />
-              </a>
+              </Link>
             </div>
             <div className="rodex-hero-visual rodex-hero-visual-anim">
               <DashboardMockup />
@@ -198,76 +198,33 @@ export default function LandingPage() {
           </div>
         </section>
 
-        <section id="about" className="rodex-about">
+        <section className="rodex-about">
           <div className="landing-container rodex-about-inner rodex-reveal">
             <div className="rodex-section-label">About</div>
             <h2>One platform for the full order-to-payment lifecycle</h2>
             <p>
-              RodexOS was built for restaurant operators and vendor teams who need clarity at
-              every step — from placing and fulfilling orders to resolving disputes, issuing
-              invoices, and recording payments. No more scattered spreadsheets or missed
-              deliveries.
+              RodexOS connects restaurants and vendors on a unified platform to simplify
+              ordering, tracking, invoicing, and payments.
             </p>
-            <div className="rodex-about-stats">
-              <div className="rodex-reveal rodex-reveal-delay-1">
-                <strong>Ordering</strong>
-                <span>Place and track orders with linked vendors</span>
-              </div>
-              <div className="rodex-reveal rodex-reveal-delay-2">
-                <strong>Fulfillment</strong>
-                <span>Picking, shipping, and delivery visibility</span>
-              </div>
-              <div className="rodex-reveal rodex-reveal-delay-3">
-                <strong>Finance</strong>
-                <span>Invoicing and payment in one place</span>
-              </div>
-            </div>
+            <Link href="/about" className="rodex-btn rodex-btn-sm">
+              Learn more
+              <ArrowRight className="rodex-btn-icon" aria-hidden="true" />
+            </Link>
           </div>
         </section>
 
-        <section id="contact" className="rodex-contact">
-          <div className="landing-container rodex-contact-inner">
-            <div className="rodex-contact-copy rodex-reveal">
-              <div className="rodex-section-label">Contact</div>
-              <h2>Request a demo or get in touch</h2>
-              <p>
-                Tell us about your restaurant group or vendor operation and we&apos;ll show you
-                how RodexOS fits your workflow.
-              </p>
-              <ul className="rodex-contact-details">
-                <li>
-                  <span>Email</span>
-                  <a href="mailto:hello@rodexos.com">hello@rodexos.com</a>
-                </li>
-                <li>
-                  <span>Phone</span>
-                  <a href="tel:+18005551234">+1 (800) 555-1234</a>
-                </li>
-              </ul>
-            </div>
-            <form
-              className="rodex-contact-form rodex-reveal rodex-reveal-delay-1"
-              onSubmit={(e) => {
-                e.preventDefault();
-              }}
-            >
-              <label>
-                Name
-                <input type="text" name="name" placeholder="Your name" required />
-              </label>
-              <label>
-                Email
-                <input type="email" name="email" placeholder="you@company.com" required />
-              </label>
-              <label>
-                Message
-                <textarea name="message" rows={4} placeholder="How can we help?" required />
-              </label>
-              <button type="submit" className="rodex-btn rodex-btn-lg rodex-btn-full">
-                Send Message
-                <ArrowRight className="rodex-btn-icon" aria-hidden="true" />
-              </button>
-            </form>
+        <section className="rodex-contact">
+          <div className="landing-container rodex-contact-inner rodex-reveal">
+            <div className="rodex-section-label">Contact</div>
+            <h2>Request a demo or get in touch</h2>
+            <p>
+              Tell us about your restaurant group or vendor operation and we&apos;ll show you
+              how RodexOS fits your workflow.
+            </p>
+            <Link href="/contact" className="rodex-btn rodex-btn-lg">
+              Contact us
+              <ArrowRight className="rodex-btn-icon" aria-hidden="true" />
+            </Link>
           </div>
         </section>
       </main>
@@ -276,8 +233,8 @@ export default function LandingPage() {
         <div className="landing-container rodex-footer-inner">
           <RodexBrandLink className="rodex-brand" iconClassName="rodex-brand-icon" textClassName="rodex-brand-text" />
           <nav className="rodex-footer-nav" aria-label="Footer navigation">
-            <a href="#about">About</a>
-            <a href="#contact">Contact</a>
+            <Link href="/about">About</Link>
+            <Link href="/contact">Contact</Link>
             <a href="#portals">Login</a>
           </nav>
           <p>© 2026 RodexOS. All rights reserved.</p>

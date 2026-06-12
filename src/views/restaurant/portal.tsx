@@ -1,3 +1,5 @@
+"use client";
+
 import { useLocation } from "@/lib/wouter-compat";
 import { relationshipKeys } from "@/api/shared/relationships";
 import { restaurantOrderKeys } from "@/api/restaurant/orders";
@@ -6,7 +8,7 @@ import { useRestaurantAuth } from "@/contexts/restaurant-auth-context";
 import type { VendorRestaurantRelationship } from "@shared/schema";
 import { formatCurrency } from "@shared/schema";
 import { Skeleton } from "@/components/ui/skeleton";
-import { RestaurantDashboardMetricCard } from "@/components/restaurant/dashboard-metric-card";
+import { PortalDashboardMetricCard } from "@/components/shared/portal-dashboard-metric-card";
 import {
   buildRestaurantDashboardStats,
   normalizeOrderEntries,
@@ -35,19 +37,19 @@ function RestaurantOverviewDashboard({
 }) {
   return (
     <div data-testid="restaurant-employee-dashboard">
-      <div className="mb-8">
+      <div className="mb-5 sm:mb-8">
         <h1 className="text-xl font-semibold tracking-tight text-foreground">Overview</h1>
         <p className="mt-1 text-sm text-muted-foreground">
           A snapshot of your current order activity and payables.
         </p>
       </div>
 
-      <section className="mb-8">
-        <h2 className="mb-4 text-xs font-bold uppercase tracking-wider text-muted-foreground">
+      <section className="mb-5 sm:mb-8">
+        <h2 className="mb-3 text-xs font-bold uppercase tracking-wider text-muted-foreground sm:mb-4">
           Order Activity
         </h2>
-        <div className="grid grid-cols-1 gap-5 md:grid-cols-2 xl:grid-cols-4">
-          <RestaurantDashboardMetricCard
+        <div className="portal-metric-grid md:grid-cols-2 xl:grid-cols-4">
+          <PortalDashboardMetricCard
             title="Active Vendors"
             value={activeVendorCount}
             description="Linked vendors"
@@ -55,7 +57,7 @@ function RestaurantOverviewDashboard({
             iconClassName="bg-orange-100 text-orange-500"
             onClick={onVendorsClick}
           />
-          <RestaurantDashboardMetricCard
+          <PortalDashboardMetricCard
             title="Submitted Orders"
             value={stats.submittedOrderCount}
             description="Awaiting delivery"
@@ -63,7 +65,7 @@ function RestaurantOverviewDashboard({
             iconClassName="bg-blue-100 text-blue-500"
             onClick={onOrdersClick}
           />
-          <RestaurantDashboardMetricCard
+          <PortalDashboardMetricCard
             title="Needs Review"
             value={stats.needsReviewCount}
             description="Delivered, awaiting review"
@@ -71,7 +73,7 @@ function RestaurantOverviewDashboard({
             iconClassName="bg-orange-100 text-orange-500"
             onClick={onOrdersClick}
           />
-          <RestaurantDashboardMetricCard
+          <PortalDashboardMetricCard
             title="Waiting for Approval"
             value={stats.waitingForApprovalCount}
             description="Review submitted"
@@ -83,11 +85,11 @@ function RestaurantOverviewDashboard({
       </section>
 
       <section>
-        <h2 className="mb-4 text-xs font-bold uppercase tracking-wider text-muted-foreground">
+        <h2 className="mb-3 text-xs font-bold uppercase tracking-wider text-muted-foreground sm:mb-4">
           Payables
         </h2>
-        <div className="grid grid-cols-1 gap-5 md:grid-cols-2 xl:grid-cols-3">
-          <RestaurantDashboardMetricCard
+        <div className="portal-metric-grid md:grid-cols-2 xl:grid-cols-3">
+          <PortalDashboardMetricCard
             title="Open Invoices"
             value={stats.openInvoiceCount}
             description="Approved, awaiting payment"
@@ -95,7 +97,7 @@ function RestaurantOverviewDashboard({
             iconClassName="bg-teal-100 text-teal-500"
             onClick={onOrdersClick}
           />
-          <RestaurantDashboardMetricCard
+          <PortalDashboardMetricCard
             title="Unpaid Total"
             value={formatCurrency(String(stats.unpaidTotal.toFixed(2)))}
             description="Outstanding balance"
@@ -103,7 +105,7 @@ function RestaurantOverviewDashboard({
             iconClassName="bg-rose-100 text-rose-500"
             onClick={onOrdersClick}
           />
-          <RestaurantDashboardMetricCard
+          <PortalDashboardMetricCard
             title="Finalized Invoice Spend"
             value={formatCurrency(String(stats.finalizedInvoiceSpend.toFixed(2)))}
             description="Total paid"

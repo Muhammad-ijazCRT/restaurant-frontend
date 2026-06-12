@@ -124,7 +124,10 @@ export function PortalShell({
             <div className="flex shrink-0 items-center gap-1 sm:gap-2">{headerActions}</div>
           ) : null}
         </header>
-        <main className="min-h-0 flex-1 overflow-y-auto overflow-x-hidden bg-muted/40">
+        <main
+          data-portal-main
+          className="min-h-0 flex-1 overflow-y-auto overflow-x-auto bg-muted/40 [-webkit-overflow-scrolling:touch]"
+        >
           <PortalPageContainer>{children}</PortalPageContainer>
         </main>
       </div>
