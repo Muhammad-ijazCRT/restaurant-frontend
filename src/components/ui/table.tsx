@@ -4,16 +4,24 @@ import { cn } from "@/lib/utils"
 
 const Table = React.forwardRef<
   HTMLTableElement,
-  React.HTMLAttributes<HTMLTableElement>
->(({ className, ...props }, ref) => (
-  <div className="relative w-full max-w-full overflow-x-auto">
+  React.HTMLAttributes<HTMLTableElement> & { unwrapped?: boolean }
+>(({ className, unwrapped = false, ...props }, ref) => {
+  const table = (
     <table
       ref={ref}
       className={cn("w-full min-w-[36rem] caption-bottom text-sm", className)}
       {...props}
     />
-  </div>
-))
+  )
+
+  if (unwrapped) return table
+
+  return (
+    <div className="relative w-full max-w-full overflow-x-auto">
+      {table}
+    </div>
+  )
+})
 Table.displayName = "Table"
 
 const TableHeader = React.forwardRef<

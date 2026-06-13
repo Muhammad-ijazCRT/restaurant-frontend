@@ -1,24 +1,33 @@
 import { CutoffSettingsPanel } from "@/components/vendor/cutoff-settings-panel";
+import { ChangePasswordSection } from "@/components/shared/change-password-section";
 import { useVendorAuth } from "@/contexts/vendor-auth-context";
+import { getUserRole } from "@/lib/portal-auth";
 
 export default function VendorSettings() {
   const { vendorId } = useVendorAuth();
+  const role = getUserRole();
+  const showCutoffSettings = role === "vendor_admin" || role === "vendor" || role === "manager";
 
-  if (!vendorId) return null;
+  if (showCutoffSettings && !vendorId) return null;
 
   return (
-    <div data-testid="page-vendor-settings">
-      <div className="mb-6">
-        <h1 className="text-2xl font-semibold">Settings</h1>
-        <p className="mt-1 text-sm text-muted-foreground">
-          Manage cutoff time and reminder settings for this vendor.
+    <div data-testid="page-vendor-settings" className="mx-auto w-full max-w-2xl space-y-6">
+      <div className="text-center">
+        <h1 className="text-3xl font-bold tracking-tight">Settings</h1>
+        <p className="mt-2 text-sm text-muted-foreground">
+          Manage your account and vendor preferences.
         </p>
       </div>
-      <CutoffSettingsPanel
-        vendorId={vendorId}
-        title="Cutoff Settings"
-        description="Control when orders lock and what reminder message vendors see."
-      />
+
+      <ChangePasswordSection />
+
+      {showCutoffSettings && vendorId ? (
+        <CutoffSettingsPanel
+          vendorId={vendorId}
+          title="Cutoff Settings"
+          description="Control when orders lock and what reminder message vendors see."
+        />
+      ) : null}
     </div>
   );
 }

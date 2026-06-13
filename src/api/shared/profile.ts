@@ -6,6 +6,7 @@ export const profileKeys = {
 
 export const profilePaths = {
   profile: "/api/profile",
+  changePassword: "/api/profile/password",
   notifications: "/api/notifications",
   notificationClear: "/api/notifications/clear",
 } as const;

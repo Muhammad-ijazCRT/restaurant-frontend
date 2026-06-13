@@ -705,6 +705,45 @@ body.landing-scroll,
   border-top: 1px solid var(--rodex-border);
 }
 
+.landing-page .rodex-landing-about-split {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 3rem;
+  align-items: center;
+}
+
+.landing-page .rodex-landing-about-media img {
+  width: 100%;
+  height: 360px;
+  object-fit: cover;
+  border-radius: 20px;
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.1);
+}
+
+.landing-page .rodex-landing-about-copy h2 {
+  font-size: clamp(1.6rem, 3vw, 2.2rem);
+  font-weight: 800;
+  letter-spacing: -0.03em;
+  margin: 0 0 1rem;
+  max-width: 36rem;
+}
+
+.landing-page .rodex-landing-about-copy p {
+  color: var(--rodex-muted);
+  max-width: 40rem;
+  margin: 0 0 1.75rem;
+}
+
+@media (max-width: 900px) {
+  .landing-page .rodex-landing-about-split {
+    grid-template-columns: 1fr;
+  }
+
+  .landing-page .rodex-landing-about-media img {
+    height: 280px;
+  }
+}
+
 .landing-page .rodex-section-label {
   font-size: 0.8rem;
   font-weight: 700;
@@ -971,5 +1010,1058 @@ body.landing-scroll,
 
   .landing-page .rodex-footer-nav {
     justify-content: center;
+  }
+}
+
+/* ── About page (professional marketing layout) ───────────────────────────── */
+
+.landing-page .rodex-btn-outline {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  background: #fff;
+  color: var(--rodex-black);
+  border: 1px solid var(--rodex-border);
+  border-radius: 999px;
+  font-weight: 600;
+  text-decoration: none;
+  cursor: pointer;
+  transition: background 0.2s ease, border-color 0.2s ease, transform 0.2s ease;
+  font-family: inherit;
+}
+
+.landing-page .rodex-btn-outline:hover {
+  border-color: var(--rodex-orange);
+  color: var(--rodex-orange);
+  transform: translateY(-2px);
+}
+
+.landing-page .rodex-about-hero {
+  padding: 4rem 0 5rem;
+  background: linear-gradient(180deg, #fff 0%, #fafafa 100%);
+}
+
+.landing-page .rodex-about-hero-grid {
+  display: grid;
+  grid-template-columns: 1fr 1.05fr;
+  gap: 3rem;
+  align-items: center;
+}
+
+.landing-page .rodex-about-hero-copy h1 {
+  font-size: clamp(2rem, 4vw, 3rem);
+  line-height: 1.12;
+  font-weight: 800;
+  letter-spacing: -0.03em;
+  margin: 0 0 1.25rem;
+  max-width: 34rem;
+}
+
+.landing-page .rodex-about-hero-copy p {
+  color: var(--rodex-muted);
+  font-size: 1.02rem;
+  margin: 0 0 2rem;
+  max-width: 36rem;
+}
+
+.landing-page .rodex-about-hero-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.85rem;
+}
+
+.landing-page .rodex-about-hero-visual {
+  position: relative;
+}
+
+.landing-page .rodex-about-hero-image {
+  width: 100%;
+  height: 420px;
+  object-fit: cover;
+  border-radius: 20px;
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.12);
+}
+
+.landing-page .rodex-about-hero-card {
+  position: absolute;
+  left: -1.5rem;
+  bottom: -1.5rem;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.75rem;
+  background: #fff;
+  border: 1px solid var(--rodex-border);
+  border-radius: 16px;
+  padding: 1rem;
+  box-shadow: 0 18px 40px rgba(0, 0, 0, 0.08);
+  max-width: 320px;
+}
+
+.landing-page .rodex-about-hero-card-item {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--rodex-black);
+}
+
+.landing-page .rodex-about-hero-card-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2rem;
+  height: 2rem;
+  border-radius: 999px;
+  background: rgba(240, 90, 40, 0.1);
+  color: var(--rodex-orange);
+  flex-shrink: 0;
+}
+
+.landing-page .rodex-about-hero-card-icon svg {
+  width: 1rem;
+  height: 1rem;
+}
+
+.landing-page .rodex-about-section {
+  padding: 5rem 0;
+}
+
+.landing-page .rodex-about-section-muted {
+  background: #fafafa;
+}
+
+.landing-page .rodex-about-section-head {
+  text-align: center;
+  max-width: 44rem;
+  margin: 0 auto 3rem;
+}
+
+.landing-page .rodex-about-section-head h2 {
+  font-size: clamp(1.75rem, 3vw, 2.35rem);
+  font-weight: 800;
+  letter-spacing: -0.03em;
+  margin: 0 0 0.85rem;
+}
+
+.landing-page .rodex-about-section-head p {
+  color: var(--rodex-muted);
+  margin: 0;
+}
+
+.landing-page .rodex-about-split {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 3rem;
+  align-items: center;
+}
+
+.landing-page .rodex-about-split-media {
+  position: relative;
+}
+
+.landing-page .rodex-about-split-media > img {
+  width: 100%;
+  height: 460px;
+  object-fit: cover;
+  border-radius: 20px;
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.1);
+}
+
+.landing-page .rodex-about-goal-card {
+  position: absolute;
+  left: 1.25rem;
+  right: 1.25rem;
+  bottom: -1.25rem;
+  background: #fff;
+  border: 1px solid var(--rodex-border);
+  border-radius: 16px;
+  padding: 1.25rem 1.35rem;
+  box-shadow: 0 16px 36px rgba(0, 0, 0, 0.08);
+}
+
+.landing-page .rodex-about-goal-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.25rem;
+  height: 2.25rem;
+  border-radius: 999px;
+  background: rgba(34, 197, 94, 0.12);
+  color: #15803d;
+  margin-bottom: 0.65rem;
+}
+
+.landing-page .rodex-about-goal-icon svg {
+  width: 1.1rem;
+  height: 1.1rem;
+}
+
+.landing-page .rodex-about-goal-card strong {
+  display: block;
+  font-size: 1rem;
+  margin-bottom: 0.35rem;
+}
+
+.landing-page .rodex-about-goal-card p {
+  margin: 0;
+  color: var(--rodex-muted);
+  font-size: 0.92rem;
+}
+
+.landing-page .rodex-about-split-copy h2 {
+  font-size: clamp(1.75rem, 3vw, 2.35rem);
+  font-weight: 800;
+  letter-spacing: -0.03em;
+  margin: 0 0 1rem;
+}
+
+.landing-page .rodex-about-split-copy > p {
+  color: var(--rodex-muted);
+  margin: 0 0 1.75rem;
+}
+
+.landing-page .rodex-about-feature-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1rem;
+}
+
+.landing-page .rodex-about-feature-item {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.landing-page .rodex-about-feature-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.35rem;
+  height: 2.35rem;
+  border-radius: 12px;
+  background: rgba(240, 90, 40, 0.1);
+  color: var(--rodex-orange);
+  margin-bottom: 0.15rem;
+}
+
+.landing-page .rodex-about-feature-icon svg {
+  width: 1.15rem;
+  height: 1.15rem;
+}
+
+.landing-page .rodex-about-feature-item strong {
+  font-size: 0.98rem;
+}
+
+.landing-page .rodex-about-feature-item span:last-child {
+  color: var(--rodex-muted);
+  font-size: 0.88rem;
+  line-height: 1.5;
+}
+
+.landing-page .rodex-about-role-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 1.25rem;
+}
+
+.landing-page .rodex-about-role-card {
+  background: #fff;
+  border: 1px solid var(--rodex-border);
+  border-radius: 16px;
+  padding: 1.5rem;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.landing-page .rodex-about-role-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 16px 36px rgba(0, 0, 0, 0.06);
+}
+
+.landing-page .rodex-about-role-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 3rem;
+  height: 3rem;
+  border-radius: 999px;
+  background: rgba(240, 90, 40, 0.1);
+  color: var(--rodex-orange);
+  margin-bottom: 1rem;
+}
+
+.landing-page .rodex-about-role-icon svg {
+  width: 1.35rem;
+  height: 1.35rem;
+}
+
+.landing-page .rodex-about-role-card h3 {
+  margin: 0 0 0.65rem;
+  font-size: 1.05rem;
+}
+
+.landing-page .rodex-about-role-card p {
+  margin: 0;
+  color: var(--rodex-muted);
+  font-size: 0.92rem;
+}
+
+.landing-page .rodex-about-journey {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 1rem;
+}
+
+.landing-page .rodex-about-journey-step {
+  position: relative;
+  background: #fff;
+  border: 1px solid var(--rodex-border);
+  border-radius: 16px;
+  padding: 1.25rem 1rem 1rem;
+  text-align: center;
+}
+
+.landing-page .rodex-about-journey-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 3rem;
+  height: 3rem;
+  border-radius: 999px;
+  background: #111;
+  color: #fff;
+  margin-bottom: 0.75rem;
+}
+
+.landing-page .rodex-about-journey-icon svg {
+  width: 1.25rem;
+  height: 1.25rem;
+}
+
+.landing-page .rodex-about-journey-number {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.5rem;
+  height: 1.5rem;
+  border-radius: 999px;
+  background: rgba(240, 90, 40, 0.12);
+  color: var(--rodex-orange);
+  font-size: 0.75rem;
+  font-weight: 700;
+  margin-bottom: 0.5rem;
+}
+
+.landing-page .rodex-about-journey-step p {
+  margin: 0;
+  font-size: 0.88rem;
+  color: var(--rodex-black);
+  line-height: 1.45;
+}
+
+.landing-page .rodex-about-partner-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 1rem;
+}
+
+.landing-page .rodex-about-partner-card {
+  position: relative;
+  overflow: hidden;
+  border-radius: 16px;
+  min-height: 280px;
+}
+
+.landing-page .rodex-about-partner-card img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  min-height: 280px;
+  transition: transform 0.4s ease;
+}
+
+.landing-page .rodex-about-partner-card:hover img {
+  transform: scale(1.05);
+}
+
+.landing-page .rodex-about-partner-overlay {
+  position: absolute;
+  inset: auto 0 0 0;
+  padding: 1.25rem;
+  background: linear-gradient(180deg, transparent, rgba(17, 17, 17, 0.88));
+  color: #fff;
+}
+
+.landing-page .rodex-about-partner-overlay h3 {
+  margin: 0 0 0.35rem;
+  font-size: 1.05rem;
+}
+
+.landing-page .rodex-about-partner-overlay p {
+  margin: 0;
+  font-size: 0.85rem;
+  color: rgba(255, 255, 255, 0.88);
+}
+
+.landing-page .rodex-about-stats-bar {
+  background: #111;
+  color: #fff;
+  padding: 3.5rem 0;
+}
+
+.landing-page .rodex-about-stats-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 1.5rem;
+}
+
+.landing-page .rodex-about-stat {
+  text-align: center;
+}
+
+.landing-page .rodex-about-stat-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.5rem;
+  height: 2.5rem;
+  border-radius: 999px;
+  background: rgba(240, 90, 40, 0.15);
+  color: var(--rodex-orange);
+  margin-bottom: 0.75rem;
+}
+
+.landing-page .rodex-about-stat-icon svg {
+  width: 1.15rem;
+  height: 1.15rem;
+}
+
+.landing-page .rodex-about-stat strong {
+  display: block;
+  font-size: clamp(1.6rem, 3vw, 2rem);
+  margin-bottom: 0.35rem;
+}
+
+.landing-page .rodex-about-stat span:last-child {
+  color: rgba(255, 255, 255, 0.78);
+  font-size: 0.92rem;
+}
+
+.landing-page .rodex-about-benefits-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.85rem 1.5rem;
+}
+
+.landing-page .rodex-about-benefit {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.65rem;
+  background: #fff;
+  border: 1px solid var(--rodex-border);
+  border-radius: 12px;
+  padding: 0.95rem 1rem;
+}
+
+.landing-page .rodex-about-benefit svg {
+  width: 1.1rem;
+  height: 1.1rem;
+  color: var(--rodex-orange);
+  flex-shrink: 0;
+  margin-top: 0.1rem;
+}
+
+.landing-page .rodex-about-benefit span {
+  font-size: 0.95rem;
+  font-weight: 500;
+}
+
+.landing-page .rodex-about-vision-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1.5rem;
+}
+
+.landing-page .rodex-about-vision-card {
+  background: #fff;
+  border: 1px solid var(--rodex-border);
+  border-radius: 18px;
+  padding: 2rem;
+}
+
+.landing-page .rodex-about-vision-card h2 {
+  font-size: clamp(1.35rem, 2.5vw, 1.85rem);
+  font-weight: 800;
+  letter-spacing: -0.03em;
+  margin: 0 0 0.85rem;
+}
+
+.landing-page .rodex-about-vision-card p {
+  margin: 0;
+  color: var(--rodex-muted);
+}
+
+.landing-page .rodex-about-cta {
+  padding: 5rem 0 6rem;
+  background: linear-gradient(180deg, #fff 0%, #fafafa 100%);
+}
+
+.landing-page .rodex-about-cta-grid {
+  display: grid;
+  grid-template-columns: 0.95fr 1fr 1fr;
+  gap: 2rem;
+  align-items: center;
+}
+
+.landing-page .rodex-about-cta-visual img {
+  width: 100%;
+  height: 360px;
+  object-fit: cover;
+  border-radius: 20px;
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.1);
+}
+
+.landing-page .rodex-about-cta-copy h2 {
+  font-size: clamp(1.6rem, 3vw, 2.1rem);
+  font-weight: 800;
+  letter-spacing: -0.03em;
+  margin: 0 0 0.85rem;
+}
+
+.landing-page .rodex-about-cta-copy p {
+  color: var(--rodex-muted);
+  margin: 0 0 1.5rem;
+}
+
+.landing-page .rodex-about-cta-features {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1rem;
+}
+
+.landing-page .rodex-about-cta-feature {
+  display: flex;
+  gap: 0.75rem;
+  align-items: flex-start;
+  background: #fff;
+  border: 1px solid var(--rodex-border);
+  border-radius: 14px;
+  padding: 1rem;
+}
+
+.landing-page .rodex-about-cta-feature-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.25rem;
+  height: 2.25rem;
+  border-radius: 10px;
+  background: rgba(240, 90, 40, 0.1);
+  color: var(--rodex-orange);
+  flex-shrink: 0;
+}
+
+.landing-page .rodex-about-cta-feature-icon svg {
+  width: 1rem;
+  height: 1rem;
+}
+
+.landing-page .rodex-about-cta-feature strong {
+  display: block;
+  font-size: 0.92rem;
+  margin-bottom: 0.2rem;
+}
+
+.landing-page .rodex-about-cta-feature p {
+  margin: 0;
+  color: var(--rodex-muted);
+  font-size: 0.82rem;
+  line-height: 1.45;
+}
+
+@media (max-width: 1100px) {
+  .landing-page .rodex-about-hero-grid,
+  .landing-page .rodex-about-split,
+  .landing-page .rodex-about-cta-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .landing-page .rodex-about-role-grid,
+  .landing-page .rodex-about-partner-grid,
+  .landing-page .rodex-about-stats-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .landing-page .rodex-about-journey {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .landing-page .rodex-about-hero-card {
+    position: static;
+    margin-top: 1rem;
+    max-width: none;
+  }
+
+  .landing-page .rodex-about-goal-card {
+    position: static;
+    margin-top: 1rem;
+  }
+
+  .landing-page .rodex-about-split-media > img {
+    height: 340px;
+  }
+}
+
+@media (max-width: 700px) {
+  .landing-page .rodex-about-role-grid,
+  .landing-page .rodex-about-partner-grid,
+  .landing-page .rodex-about-stats-grid,
+  .landing-page .rodex-about-journey,
+  .landing-page .rodex-about-feature-grid,
+  .landing-page .rodex-about-benefits-grid,
+  .landing-page .rodex-about-vision-grid,
+  .landing-page .rodex-about-cta-features {
+    grid-template-columns: 1fr;
+  }
+
+  .landing-page .rodex-about-hero-image,
+  .landing-page .rodex-about-cta-visual img {
+    height: 280px;
+  }
+
+  .landing-page .rodex-about-section {
+    padding: 3.5rem 0;
+  }
+}
+
+@media (max-width: 900px) {
+  .landing-page .rodex-landing-contact-split {
+    grid-template-columns: 1fr;
+  }
+
+  .landing-page .rodex-landing-contact-media img {
+    height: 280px;
+  }
+}
+
+.landing-page .rodex-landing-contact-split {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 3rem;
+  align-items: center;
+}
+
+.landing-page .rodex-landing-contact-media img {
+  width: 100%;
+  height: 360px;
+  object-fit: cover;
+  border-radius: 20px;
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.1);
+}
+
+.landing-page .rodex-landing-contact-copy h2 {
+  font-size: clamp(1.6rem, 3vw, 2.2rem);
+  font-weight: 800;
+  letter-spacing: -0.03em;
+  margin: 0 0 1rem;
+  max-width: 36rem;
+}
+
+.landing-page .rodex-landing-contact-copy p {
+  color: var(--rodex-muted);
+  max-width: 40rem;
+  margin: 0 0 1.75rem;
+}
+
+/* ── Contact page ─────────────────────────────────────────────────────────── */
+
+.landing-page .rodex-contact-hero {
+  padding: 4rem 0 5rem;
+  background: #fff;
+}
+
+.landing-page .rodex-contact-hero-grid {
+  display: grid;
+  grid-template-columns: 1fr 1.15fr;
+  gap: 2.5rem;
+  align-items: center;
+}
+
+.landing-page .rodex-contact-hero-copy h1 {
+  font-size: clamp(2rem, 4vw, 2.8rem);
+  font-weight: 800;
+  letter-spacing: -0.03em;
+  margin: 0 0 1rem;
+}
+
+.landing-page .rodex-contact-hero-copy p {
+  color: var(--rodex-muted);
+  margin: 0;
+  max-width: 28rem;
+  font-size: 1.02rem;
+  line-height: 1.65;
+}
+
+.landing-page .rodex-contact-hero-visual {
+  position: relative;
+}
+
+.landing-page .rodex-contact-hero-visual img {
+  width: 100%;
+  height: 420px;
+  object-fit: cover;
+  object-position: center center;
+  border-radius: 20px;
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.1);
+}
+
+.landing-page .rodex-contact-hero-card {
+  position: absolute;
+  right: 1.25rem;
+  top: 50%;
+  transform: translateY(-50%);
+  width: min(100% - 2.5rem, 280px);
+  background: #fff;
+  border: 1px solid var(--rodex-border);
+  border-radius: 18px;
+  padding: 1.35rem;
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.12);
+}
+
+.landing-page .rodex-contact-hero-card h2 {
+  margin: 0 0 1rem;
+  font-size: 1.15rem;
+}
+
+.landing-page .rodex-contact-hero-card ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.landing-page .rodex-contact-hero-card li {
+  display: flex;
+  gap: 0.75rem;
+  align-items: flex-start;
+}
+
+.landing-page .rodex-contact-hero-card li svg {
+  width: 1.1rem;
+  height: 1.1rem;
+  color: var(--rodex-orange);
+  flex-shrink: 0;
+  margin-top: 0.15rem;
+}
+
+.landing-page .rodex-contact-hero-card li strong {
+  display: block;
+  font-size: 0.82rem;
+  color: var(--rodex-muted);
+  margin-bottom: 0.15rem;
+}
+
+.landing-page .rodex-contact-hero-card li a {
+  color: var(--rodex-black);
+  text-decoration: none;
+  font-weight: 600;
+}
+
+.landing-page .rodex-contact-hero-card li a:hover {
+  color: var(--rodex-orange);
+}
+
+.landing-page .rodex-contact-main {
+  padding: 5rem 0;
+  background: #fff;
+}
+
+.landing-page .rodex-contact-main-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 3rem;
+  align-items: start;
+}
+
+.landing-page .rodex-contact-form-wrap h2,
+.landing-page .rodex-contact-help h2 {
+  font-size: clamp(1.5rem, 3vw, 2rem);
+  font-weight: 800;
+  letter-spacing: -0.03em;
+  margin: 0 0 0.75rem;
+}
+
+.landing-page .rodex-contact-form-wrap > p,
+.landing-page .rodex-contact-help > p {
+  color: var(--rodex-muted);
+  margin: 0 0 1.25rem;
+}
+
+.landing-page .rodex-contact-help-list {
+  margin: 0 0 1rem;
+  padding-left: 1.1rem;
+  color: var(--rodex-black);
+}
+
+.landing-page .rodex-contact-help-list li {
+  margin-bottom: 0.45rem;
+}
+
+.landing-page .rodex-contact-help-note {
+  font-weight: 600;
+  margin-bottom: 1.75rem !important;
+}
+
+.landing-page .rodex-contact-help h3 {
+  margin: 0 0 1rem;
+  font-size: 1.05rem;
+}
+
+.landing-page .rodex-contact-category-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.85rem;
+}
+
+.landing-page .rodex-contact-category-card {
+  background: #fafafa;
+  border: 1px solid var(--rodex-border);
+  border-radius: 14px;
+  padding: 1rem;
+}
+
+.landing-page .rodex-contact-category-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.25rem;
+  height: 2.25rem;
+  border-radius: 10px;
+  background: rgba(240, 90, 40, 0.1);
+  color: var(--rodex-orange);
+  margin-bottom: 0.65rem;
+}
+
+.landing-page .rodex-contact-category-icon svg {
+  width: 1.1rem;
+  height: 1.1rem;
+}
+
+.landing-page .rodex-contact-category-card strong {
+  display: block;
+  margin-bottom: 0.25rem;
+  font-size: 0.95rem;
+}
+
+.landing-page .rodex-contact-category-card p {
+  margin: 0;
+  color: var(--rodex-muted);
+  font-size: 0.85rem;
+  line-height: 1.45;
+}
+
+.landing-page .rodex-contact-info-bar {
+  background: #111;
+  color: #fff;
+  padding: 4rem 0;
+}
+
+.landing-page .rodex-contact-info-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 2rem;
+  align-items: center;
+}
+
+.landing-page .rodex-contact-info-bar h2 {
+  margin: 0 0 1.25rem;
+  font-size: clamp(1.5rem, 3vw, 2rem);
+}
+
+.landing-page .rodex-contact-info-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.landing-page .rodex-contact-info-list li {
+  display: flex;
+  gap: 0.75rem;
+  align-items: flex-start;
+}
+
+.landing-page .rodex-contact-info-list svg {
+  width: 1.15rem;
+  height: 1.15rem;
+  color: var(--rodex-orange);
+  flex-shrink: 0;
+  margin-top: 0.15rem;
+}
+
+.landing-page .rodex-contact-info-list strong {
+  display: block;
+  font-size: 0.82rem;
+  color: rgba(255, 255, 255, 0.72);
+  margin-bottom: 0.15rem;
+}
+
+.landing-page .rodex-contact-info-list a {
+  color: #fff;
+  text-decoration: none;
+}
+
+.landing-page .rodex-contact-info-list a:hover {
+  color: var(--rodex-orange);
+}
+
+.landing-page .rodex-contact-info-visual img {
+  width: 100%;
+  height: 320px;
+  object-fit: cover;
+  border-radius: 18px;
+}
+
+.landing-page .rodex-contact-partner {
+  padding: 5rem 0;
+  background: #fafafa;
+}
+
+.landing-page .rodex-contact-partner-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 3rem;
+  align-items: center;
+}
+
+.landing-page .rodex-contact-partner-copy h2 {
+  font-size: clamp(1.5rem, 3vw, 2rem);
+  font-weight: 800;
+  letter-spacing: -0.03em;
+  margin: 0 0 0.85rem;
+}
+
+.landing-page .rodex-contact-partner-copy p {
+  color: var(--rodex-muted);
+  margin: 0 0 1rem;
+}
+
+.landing-page .rodex-contact-partner-media img {
+  width: 100%;
+  height: 360px;
+  object-fit: cover;
+  border-radius: 20px;
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.1);
+}
+
+.landing-page .rodex-contact-services {
+  padding: 5rem 0;
+}
+
+.landing-page .rodex-contact-services h2 {
+  font-size: clamp(1.5rem, 3vw, 2rem);
+  font-weight: 800;
+  letter-spacing: -0.03em;
+  margin: 0 0 1.5rem;
+}
+
+.landing-page .rodex-contact-services-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.85rem;
+}
+
+.landing-page .rodex-contact-service-item {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  background: #fff;
+  border: 1px solid var(--rodex-border);
+  border-radius: 12px;
+  padding: 0.95rem 1rem;
+}
+
+.landing-page .rodex-contact-service-item svg {
+  width: 1rem;
+  height: 1rem;
+  color: var(--rodex-orange);
+  flex-shrink: 0;
+}
+
+.landing-page .rodex-contact-cta {
+  padding: 0 0 5rem;
+}
+
+.landing-page .rodex-contact-cta-inner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  background: #111;
+  color: #fff;
+  border-radius: 18px;
+  padding: 1.25rem 1.5rem;
+}
+
+.landing-page .rodex-contact-cta-copy {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  font-weight: 600;
+}
+
+.landing-page .rodex-contact-cta-copy svg {
+  width: 1.25rem;
+  height: 1.25rem;
+  color: var(--rodex-orange);
+}
+
+@media (max-width: 1100px) {
+  .landing-page .rodex-contact-hero-grid,
+  .landing-page .rodex-contact-main-grid,
+  .landing-page .rodex-contact-info-grid,
+  .landing-page .rodex-contact-partner-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .landing-page .rodex-contact-hero-card {
+    position: static;
+    transform: none;
+    width: 100%;
+    margin-top: 1rem;
+  }
+
+  .landing-page .rodex-contact-services-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 700px) {
+  .landing-page .rodex-contact-category-grid,
+  .landing-page .rodex-contact-services-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .landing-page .rodex-contact-cta-inner {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .landing-page .rodex-contact-hero-visual img,
+  .landing-page .rodex-contact-partner-media img,
+  .landing-page .rodex-contact-info-visual img {
+    height: 260px;
+  }
+
+  .landing-page .rodex-contact-main,
+  .landing-page .rodex-contact-partner,
+  .landing-page .rodex-contact-services {
+    padding: 3.5rem 0;
   }
 }

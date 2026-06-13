@@ -4,6 +4,8 @@ import { ArrowRight, Menu, Store, Package, X } from "lucide-react";
 import { RodexBrandLink } from "@/components/shared/rodex-brand";
 import "@/styles/landing.css";
 
+const LANDING_ABOUT_IMAGE = "/images/about/hero-restaurant.jpg";
+
 function useScrollReveal() {
   useEffect(() => {
     const nodes = document.querySelectorAll(".landing-page .rodex-reveal");
@@ -199,32 +201,44 @@ export default function LandingPage() {
         </section>
 
         <section className="rodex-about">
-          <div className="landing-container rodex-about-inner rodex-reveal">
-            <div className="rodex-section-label">About</div>
-            <h2>One platform for the full order-to-payment lifecycle</h2>
-            <p>
-              RodexOS connects restaurants and vendors on a unified platform to simplify
-              ordering, tracking, invoicing, and payments.
-            </p>
-            <Link href="/about" className="rodex-btn rodex-btn-sm">
-              Learn more
-              <ArrowRight className="rodex-btn-icon" aria-hidden="true" />
-            </Link>
+          <div className="landing-container rodex-landing-about-split rodex-reveal">
+            <div className="rodex-landing-about-media">
+              <img src={LANDING_ABOUT_IMAGE} alt="Restaurant supply platform" />
+            </div>
+            <div className="rodex-landing-about-copy">
+              <div className="rodex-section-label">About</div>
+              <h2>One platform for restaurants, vendors, warehouses, and drivers</h2>
+              <p>
+                Our mission is to modernize the restaurant supply chain with real-time tracking,
+                centralized communication, and role-based tools for every step — from placing an
+                order to confirming delivery.
+              </p>
+              <Link href="/about" className="rodex-btn rodex-btn-lg">
+                Learn More
+                <ArrowRight className="rodex-btn-icon" aria-hidden="true" />
+              </Link>
+            </div>
           </div>
         </section>
 
         <section className="rodex-contact">
-          <div className="landing-container rodex-contact-inner rodex-reveal">
-            <div className="rodex-section-label">Contact</div>
-            <h2>Request a demo or get in touch</h2>
-            <p>
-              Tell us about your restaurant group or vendor operation and we&apos;ll show you
-              how RodexOS fits your workflow.
-            </p>
-            <Link href="/contact" className="rodex-btn rodex-btn-lg">
-              Contact us
-              <ArrowRight className="rodex-btn-icon" aria-hidden="true" />
-            </Link>
+          <div className="landing-container rodex-landing-contact-split rodex-reveal">
+            <div className="rodex-landing-contact-copy">
+              <div className="rodex-section-label">Contact</div>
+              <h2>We would love to hear from you</h2>
+              <p>
+                Whether you are a restaurant owner, vendor, warehouse operator, or delivery
+                driver, our team is ready to assist you with onboarding, support, and
+                partnership opportunities.
+              </p>
+              <Link href="/contact" className="rodex-btn rodex-btn-lg">
+                Contact Us
+                <ArrowRight className="rodex-btn-icon" aria-hidden="true" />
+              </Link>
+            </div>
+            <div className="rodex-landing-contact-media">
+              <img src="/images/contact/hero-support.jpg" alt="Contact our support team" />
+            </div>
           </div>
         </section>
       </main>

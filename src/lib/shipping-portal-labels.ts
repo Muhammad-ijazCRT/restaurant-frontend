@@ -11,6 +11,7 @@ const DRIVER_ALLOWED_ROUTE_PREFIXES = [
   "/shipping-company/dashboard",
   "/shipping-company/orders",
   "/shipping-company/profile",
+  "/shipping-company/settings",
 ];
 
 export function getShippingPortalLabels(role: string | null) {
@@ -82,7 +83,11 @@ export function getShippingNavItems(role: string | null): ShippingNavItem[] {
 }
 
 export function canAccessShippingSettings(role: string | null): boolean {
-  return role === "vendor_admin" || role === "manager";
+  return (
+    role === "vendor_admin" ||
+    role === "manager" ||
+    role === "driver"
+  );
 }
 
 export function isShippingRouteAllowed(role: string | null, path: string): boolean {

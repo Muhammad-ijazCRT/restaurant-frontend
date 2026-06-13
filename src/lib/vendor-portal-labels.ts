@@ -30,6 +30,7 @@ const SALES_REP_ALLOWED_ROUTE_PREFIXES = [
   "/vendor/orders",
   "/vendor/products",
   "/vendor/profile",
+  "/vendor/settings",
 ];
 
 const WAREHOUSE_ALLOWED_ROUTE_PREFIXES = [
@@ -37,6 +38,7 @@ const WAREHOUSE_ALLOWED_ROUTE_PREFIXES = [
   "/vendor/orders",
   "/vendor/products",
   "/vendor/profile",
+  "/vendor/settings",
 ];
 
 export function getVendorPortalLabels(role: string | null): VendorPortalLabels {
@@ -118,7 +120,14 @@ export function getVendorSidebarLinks(role: string | null): VendorSidebarLink[] 
 }
 
 export function canAccessVendorSettings(role: string | null): boolean {
-  return role === "vendor_admin" || role === "vendor" || role === "manager";
+  return (
+    role === "vendor_admin" ||
+    role === "vendor" ||
+    role === "manager" ||
+    role === "sales_representative" ||
+    role === "warehouse_worker" ||
+    role === "warehouse"
+  );
 }
 
 export function canManageVendorProducts(role: string | null): boolean {

@@ -44,6 +44,10 @@ import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from "@/components/ui/table";
 import {
+  PaginatedSlice,
+  PortalTableScroll,
+} from "@/components/shared/list-pagination";
+import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
 import {
@@ -182,100 +186,104 @@ function DeliveredOrderReview({
 
   return (
     <div className="border-t" data-testid={`section-review-form-${order.id}`}>
-      <div className="overflow-x-auto">
-        <Table>
-          <TableHeader>
-            <TableRow className="hover:bg-transparent">
-              <TableHead className="font-medium pl-10">Product</TableHead>
-              <TableHead className="font-medium text-right w-16">Ordered</TableHead>
-              <TableHead className="font-medium text-right w-16">Vendor</TableHead>
-              <TableHead className="font-medium min-w-[100px]">Vendor Note</TableHead>
-              <TableHead className="font-medium text-right w-20">Unit Price</TableHead>
-              <TableHead className="font-medium text-right w-24">Received Qty</TableHead>
-              <TableHead className="font-medium text-right w-20">Line Total</TableHead>
-              <TableHead className="font-medium min-w-[140px]">Note</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {lineItems.map(li => {
-              const product = productMap.get(li.productId);
-              const fulfillment = fulfillmentMap.get(li.id);
-              const vendorQty = getVendorAdjustedQty(fulfillment, li.quantity);
-              const expectedQty = getEffectiveLineQty(fulfillment, li.quantity, order);
-              const liDraft = draft[li.id] ?? { receivedQty: String(expectedQty), note: "" };
-              const receivedQtyNum =
-                liDraft.receivedQty !== "" ? parseInt(liDraft.receivedQty, 10) : expectedQty;
-              const lineTotal = parseFloat(li.unitPriceAtTimeOfOrder) * receivedQtyNum;
-              const hasDiscrepancy = receivedQtyNum !== expectedQty;
-              return (
-                <TableRow key={li.id} data-testid={`row-review-item-${li.id}`}>
-                  <TableCell className="pl-10">
-                    <div className="flex items-center gap-2">
-                      <div className={`rounded-md p-1.5 shrink-0 ${accentColor === "blue" ? "bg-blue-50 dark:bg-blue-950/40" : "bg-amber-50 dark:bg-amber-950/40"}`}>
-                        <Package className={`h-3 w-3 ${accentColor === "blue" ? "text-blue-600 dark:text-blue-400" : "text-amber-600 dark:text-amber-400"}`} />
-                      </div>
-                      <span className="text-sm font-medium" data-testid={`text-review-product-${li.id}`}>
-                        {product?.name ?? li.productId}
-                      </span>
-                    </div>
-                  </TableCell>
-                  <TableCell className="text-right text-sm text-muted-foreground" data-testid={`text-review-ordered-qty-${li.id}`}>
-                    {li.quantity}
-                  </TableCell>
-                  <TableCell className="text-right text-sm font-medium">
-                    {vendorQty}
-                  </TableCell>
-                  <TableCell className="text-sm text-muted-foreground">
-                    {getVendorNote(fulfillment) || "—"}
-                  </TableCell>
-                  <TableCell className="text-right text-sm text-muted-foreground">
-                    {formatCurrency(li.unitPriceAtTimeOfOrder)}
-                  </TableCell>
-                  <TableCell className="text-right">
-                    {readOnly ? (
-                      <span className="text-sm font-medium" data-testid={`text-received-qty-${li.id}`}>
-                        {liDraft.receivedQty !== "" ? liDraft.receivedQty : <span className="text-muted-foreground">—</span>}
-                      </span>
-                    ) : (
-                      <Input
-                        type="number"
-                        min={0}
-                        className="w-20 h-7 text-sm text-right ml-auto"
-                        placeholder="—"
-                        value={liDraft.receivedQty}
-                        onChange={e => setField(li.id, "receivedQty", e.target.value)}
-                        data-testid={`input-received-qty-${li.id}`}
-                      />
-                    )}
-                  </TableCell>
-                  <TableCell className="text-right text-sm font-semibold" data-testid={`text-review-line-total-${li.id}`}>
-                    <span className={hasDiscrepancy ? "text-red-600 dark:text-red-400" : ""}>
-                      {formatCurrency(String(lineTotal.toFixed(2)))}
-                    </span>
-                  </TableCell>
-                  <TableCell>
-                    {readOnly ? (
-                      <span className="text-sm text-muted-foreground" data-testid={`text-review-note-${li.id}`}>
-                        {liDraft.note || <span className="italic">—</span>}
-                      </span>
-                    ) : (
-                      <Input
-                        type="text"
-                        className="h-7 text-sm"
-                        placeholder="Add note…"
-                        maxLength={500}
-                        value={liDraft.note}
-                        onChange={e => setField(li.id, "note", e.target.value)}
-                        data-testid={`input-review-note-${li.id}`}
-                      />
-                    )}
-                  </TableCell>
+      <PaginatedSlice items={lineItems}>
+        {(pageLineItems) => (
+          <PortalTableScroll>
+            <Table unwrapped>
+              <TableHeader>
+                <TableRow className="hover:bg-transparent">
+                  <TableHead className="font-medium pl-10">Product</TableHead>
+                  <TableHead className="font-medium text-right w-16">Ordered</TableHead>
+                  <TableHead className="font-medium text-right w-16">Vendor</TableHead>
+                  <TableHead className="font-medium min-w-[100px]">Vendor Note</TableHead>
+                  <TableHead className="font-medium text-right w-20">Unit Price</TableHead>
+                  <TableHead className="font-medium text-right w-24">Received Qty</TableHead>
+                  <TableHead className="font-medium text-right w-20">Line Total</TableHead>
+                  <TableHead className="font-medium min-w-[140px]">Note</TableHead>
                 </TableRow>
-              );
-            })}
-          </TableBody>
-        </Table>
-      </div>
+              </TableHeader>
+              <TableBody>
+                {pageLineItems.map(li => {
+                  const product = productMap.get(li.productId);
+                  const fulfillment = fulfillmentMap.get(li.id);
+                  const vendorQty = getVendorAdjustedQty(fulfillment, li.quantity);
+                  const expectedQty = getEffectiveLineQty(fulfillment, li.quantity, order);
+                  const liDraft = draft[li.id] ?? { receivedQty: String(expectedQty), note: "" };
+                  const receivedQtyNum =
+                    liDraft.receivedQty !== "" ? parseInt(liDraft.receivedQty, 10) : expectedQty;
+                  const lineTotal = parseFloat(li.unitPriceAtTimeOfOrder) * receivedQtyNum;
+                  const hasDiscrepancy = receivedQtyNum !== expectedQty;
+                  return (
+                    <TableRow key={li.id} data-testid={`row-review-item-${li.id}`}>
+                      <TableCell className="pl-10">
+                        <div className="flex items-center gap-2">
+                          <div className={`rounded-md p-1.5 shrink-0 ${accentColor === "blue" ? "bg-blue-50 dark:bg-blue-950/40" : "bg-amber-50 dark:bg-amber-950/40"}`}>
+                            <Package className={`h-3 w-3 ${accentColor === "blue" ? "text-blue-600 dark:text-blue-400" : "text-amber-600 dark:text-amber-400"}`} />
+                          </div>
+                          <span className="text-sm font-medium" data-testid={`text-review-product-${li.id}`}>
+                            {product?.name ?? li.productId}
+                          </span>
+                        </div>
+                      </TableCell>
+                      <TableCell className="text-right text-sm text-muted-foreground" data-testid={`text-review-ordered-qty-${li.id}`}>
+                        {li.quantity}
+                      </TableCell>
+                      <TableCell className="text-right text-sm font-medium">
+                        {vendorQty}
+                      </TableCell>
+                      <TableCell className="text-sm text-muted-foreground">
+                        {getVendorNote(fulfillment) || "—"}
+                      </TableCell>
+                      <TableCell className="text-right text-sm text-muted-foreground">
+                        {formatCurrency(li.unitPriceAtTimeOfOrder)}
+                      </TableCell>
+                      <TableCell className="text-right">
+                        {readOnly ? (
+                          <span className="text-sm font-medium" data-testid={`text-received-qty-${li.id}`}>
+                            {liDraft.receivedQty !== "" ? liDraft.receivedQty : <span className="text-muted-foreground">—</span>}
+                          </span>
+                        ) : (
+                          <Input
+                            type="number"
+                            min={0}
+                            className="w-20 h-7 text-sm text-right ml-auto"
+                            placeholder="—"
+                            value={liDraft.receivedQty}
+                            onChange={e => setField(li.id, "receivedQty", e.target.value)}
+                            data-testid={`input-received-qty-${li.id}`}
+                          />
+                        )}
+                      </TableCell>
+                      <TableCell className="text-right text-sm font-semibold" data-testid={`text-review-line-total-${li.id}`}>
+                        <span className={hasDiscrepancy ? "text-red-600 dark:text-red-400" : ""}>
+                          {formatCurrency(String(lineTotal.toFixed(2)))}
+                        </span>
+                      </TableCell>
+                      <TableCell>
+                        {readOnly ? (
+                          <span className="text-sm text-muted-foreground" data-testid={`text-review-note-${li.id}`}>
+                            {liDraft.note || <span className="italic">—</span>}
+                          </span>
+                        ) : (
+                          <Input
+                            type="text"
+                            className="h-7 text-sm"
+                            placeholder="Add note…"
+                            maxLength={500}
+                            value={liDraft.note}
+                            onChange={e => setField(li.id, "note", e.target.value)}
+                            data-testid={`input-review-note-${li.id}`}
+                          />
+                        )}
+                      </TableCell>
+                    </TableRow>
+                  );
+                })}
+              </TableBody>
+            </Table>
+          </PortalTableScroll>
+        )}
+      </PaginatedSlice>
       <div className={`px-5 py-3 flex items-center justify-between border-t ${accentColor === "blue" ? "bg-blue-50/40 dark:bg-blue-950/10" : "bg-amber-50/40 dark:bg-amber-950/10"}`}>
         <div className="flex items-center gap-2">
           {readOnly && (
@@ -814,45 +822,51 @@ export default function RestaurantVendorDetail() {
                         </div>
                       ) : (
                         <>
-                          <Table>
-                            <TableHeader>
-                              <TableRow className="hover:bg-transparent">
-                                <TableHead className="font-medium">Product</TableHead>
-                                <TableHead className="font-medium text-right">Unit Price</TableHead>
-                                <TableHead className="font-medium text-right">Qty</TableHead>
-                                <TableHead className="font-medium text-right">Line Total</TableHead>
-                              </TableRow>
-                            </TableHeader>
-                            <TableBody>
-                              {existingLineItems.map(li => {
-                                const product = productMap.get(li.productId);
-                                const lineTotal = parseFloat(li.unitPriceAtTimeOfOrder) * li.quantity;
-                                return (
-                                  <TableRow key={li.id} data-testid={`row-draft-item-${li.productId}`}>
-                                    <TableCell>
-                                      <div className="flex items-center gap-2">
-                                        <div className="rounded-md bg-blue-50 dark:bg-blue-950/40 p-1.5">
-                                          <Package className="h-3 w-3 text-blue-600 dark:text-blue-400" />
-                                        </div>
-                                        <span className="text-sm font-medium" data-testid={`text-draft-item-name-${li.productId}`}>
-                                          {product?.name ?? li.productId}
-                                        </span>
-                                      </div>
-                                    </TableCell>
-                                    <TableCell className="text-right text-sm text-muted-foreground">
-                                      {formatCurrency(li.unitPriceAtTimeOfOrder)}
-                                    </TableCell>
-                                    <TableCell className="text-right text-sm font-medium" data-testid={`text-draft-item-qty-${li.productId}`}>
-                                      {li.quantity}
-                                    </TableCell>
-                                    <TableCell className="text-right text-sm font-semibold">
-                                      {formatCurrency(String(lineTotal.toFixed(2)))}
-                                    </TableCell>
-                                  </TableRow>
-                                );
-                              })}
-                            </TableBody>
-                          </Table>
+                          <PaginatedSlice items={existingLineItems}>
+                            {(pageLineItems) => (
+                              <PortalTableScroll>
+                                <Table unwrapped>
+                                  <TableHeader>
+                                    <TableRow className="hover:bg-transparent">
+                                      <TableHead className="font-medium">Product</TableHead>
+                                      <TableHead className="font-medium text-right">Unit Price</TableHead>
+                                      <TableHead className="font-medium text-right">Qty</TableHead>
+                                      <TableHead className="font-medium text-right">Line Total</TableHead>
+                                    </TableRow>
+                                  </TableHeader>
+                                  <TableBody>
+                                    {pageLineItems.map(li => {
+                                      const product = productMap.get(li.productId);
+                                      const lineTotal = parseFloat(li.unitPriceAtTimeOfOrder) * li.quantity;
+                                      return (
+                                        <TableRow key={li.id} data-testid={`row-draft-item-${li.productId}`}>
+                                          <TableCell>
+                                            <div className="flex items-center gap-2">
+                                              <div className="rounded-md bg-blue-50 dark:bg-blue-950/40 p-1.5">
+                                                <Package className="h-3 w-3 text-blue-600 dark:text-blue-400" />
+                                              </div>
+                                              <span className="text-sm font-medium" data-testid={`text-draft-item-name-${li.productId}`}>
+                                                {product?.name ?? li.productId}
+                                              </span>
+                                            </div>
+                                          </TableCell>
+                                          <TableCell className="text-right text-sm text-muted-foreground">
+                                            {formatCurrency(li.unitPriceAtTimeOfOrder)}
+                                          </TableCell>
+                                          <TableCell className="text-right text-sm font-medium" data-testid={`text-draft-item-qty-${li.productId}`}>
+                                            {li.quantity}
+                                          </TableCell>
+                                          <TableCell className="text-right text-sm font-semibold">
+                                            {formatCurrency(String(lineTotal.toFixed(2)))}
+                                          </TableCell>
+                                        </TableRow>
+                                      );
+                                    })}
+                                  </TableBody>
+                                </Table>
+                              </PortalTableScroll>
+                            )}
+                          </PaginatedSlice>
                           <div className="px-5 py-3 flex justify-end border-t bg-muted/10">
                             <div className="flex items-center gap-4">
                               <span className="text-xs text-muted-foreground">{existingLineItems.length} item{existingLineItems.length !== 1 ? "s" : ""}</span>
@@ -890,7 +904,9 @@ export default function RestaurantVendorDetail() {
                           {activeSubmittedOrders.length}
                         </Badge>
                       </div>
-                      {activeSubmittedExpanded && activeSubmittedOrders.map(({ order, lineItems }, idx) => {
+                      {activeSubmittedExpanded && (
+                        <PaginatedSlice items={activeSubmittedOrders}>
+                          {(pageSubmittedOrders) => pageSubmittedOrders.map(({ order, lineItems }, idx) => {
                         const isExpanded = expandedOrderIds[order.id] ?? false;
                         const orderTotal = lineItems.reduce(
                           (acc, li) => acc + parseFloat(li.unitPriceAtTimeOfOrder) * li.quantity, 0
@@ -903,7 +919,7 @@ export default function RestaurantVendorDetail() {
                             data-testid={`section-submitted-order-${order.id}`}
                           >
                             <div
-                              className="px-5 py-3 flex items-center justify-between cursor-pointer hover:bg-orange-50/60 dark:hover:bg-orange-950/20 transition-colors"
+                              className="px-5 py-3 flex flex-wrap items-center justify-between gap-2 cursor-pointer hover:bg-orange-50/60 dark:hover:bg-orange-950/20 transition-colors"
                               onClick={() => toggleOrderExpanded(order.id)}
                               data-testid={`button-toggle-order-${order.id}`}
                             >
@@ -933,45 +949,51 @@ export default function RestaurantVendorDetail() {
                                   <div className="py-6 text-center text-sm text-muted-foreground">No items in this order.</div>
                                 ) : (
                                   <>
-                                    <Table>
-                                      <TableHeader>
-                                        <TableRow className="hover:bg-transparent">
-                                          <TableHead className="font-medium pl-10">Product</TableHead>
-                                          <TableHead className="font-medium text-right">Unit Price</TableHead>
-                                          <TableHead className="font-medium text-right">Qty</TableHead>
-                                          <TableHead className="font-medium text-right">Line Total</TableHead>
-                                        </TableRow>
-                                      </TableHeader>
-                                      <TableBody>
-                                        {lineItems.map(li => {
-                                          const product = productMap.get(li.productId);
-                                          const lineTotal = parseFloat(li.unitPriceAtTimeOfOrder) * li.quantity;
-                                          return (
-                                            <TableRow key={li.id} data-testid={`row-submitted-item-${li.productId}-${order.id}`}>
-                                              <TableCell className="pl-10">
-                                                <div className="flex items-center gap-2">
-                                                  <div className="rounded-md bg-orange-50 dark:bg-orange-950/40 p-1.5">
-                                                    <Package className="h-3 w-3 text-orange-600 dark:text-orange-400" />
-                                                  </div>
-                                                  <span className="text-sm font-medium" data-testid={`text-submitted-item-name-${li.productId}`}>
-                                                    {product?.name ?? li.productId}
-                                                  </span>
-                                                </div>
-                                              </TableCell>
-                                              <TableCell className="text-right text-sm text-muted-foreground">
-                                                {formatCurrency(li.unitPriceAtTimeOfOrder)}
-                                              </TableCell>
-                                              <TableCell className="text-right text-sm font-medium" data-testid={`text-submitted-item-qty-${li.productId}`}>
-                                                {li.quantity}
-                                              </TableCell>
-                                              <TableCell className="text-right text-sm font-semibold">
-                                                {formatCurrency(String(lineTotal.toFixed(2)))}
-                                              </TableCell>
-                                            </TableRow>
-                                          );
-                                        })}
-                                      </TableBody>
-                                    </Table>
+                                    <PaginatedSlice items={lineItems}>
+                                      {(pageLineItems) => (
+                                        <PortalTableScroll>
+                                          <Table unwrapped>
+                                            <TableHeader>
+                                              <TableRow className="hover:bg-transparent">
+                                                <TableHead className="font-medium pl-10">Product</TableHead>
+                                                <TableHead className="font-medium text-right">Unit Price</TableHead>
+                                                <TableHead className="font-medium text-right">Qty</TableHead>
+                                                <TableHead className="font-medium text-right">Line Total</TableHead>
+                                              </TableRow>
+                                            </TableHeader>
+                                            <TableBody>
+                                              {pageLineItems.map(li => {
+                                                const product = productMap.get(li.productId);
+                                                const lineTotal = parseFloat(li.unitPriceAtTimeOfOrder) * li.quantity;
+                                                return (
+                                                  <TableRow key={li.id} data-testid={`row-submitted-item-${li.productId}-${order.id}`}>
+                                                    <TableCell className="pl-10">
+                                                      <div className="flex items-center gap-2">
+                                                        <div className="rounded-md bg-orange-50 dark:bg-orange-950/40 p-1.5">
+                                                          <Package className="h-3 w-3 text-orange-600 dark:text-orange-400" />
+                                                        </div>
+                                                        <span className="text-sm font-medium" data-testid={`text-submitted-item-name-${li.productId}`}>
+                                                          {product?.name ?? li.productId}
+                                                        </span>
+                                                      </div>
+                                                    </TableCell>
+                                                    <TableCell className="text-right text-sm text-muted-foreground">
+                                                      {formatCurrency(li.unitPriceAtTimeOfOrder)}
+                                                    </TableCell>
+                                                    <TableCell className="text-right text-sm font-medium" data-testid={`text-submitted-item-qty-${li.productId}`}>
+                                                      {li.quantity}
+                                                    </TableCell>
+                                                    <TableCell className="text-right text-sm font-semibold">
+                                                      {formatCurrency(String(lineTotal.toFixed(2)))}
+                                                    </TableCell>
+                                                  </TableRow>
+                                                );
+                                              })}
+                                            </TableBody>
+                                          </Table>
+                                        </PortalTableScroll>
+                                      )}
+                                    </PaginatedSlice>
                                     <div className="px-5 py-2.5 flex justify-end border-t bg-orange-50/30 dark:bg-orange-950/10">
                                       <div className="flex items-center gap-3">
                                         <Lock className="h-3 w-3 text-muted-foreground" />
@@ -988,6 +1010,8 @@ export default function RestaurantVendorDetail() {
                           </div>
                         );
                       })}
+                        </PaginatedSlice>
+                      )}
                     </div>
                   )}
 
@@ -1011,7 +1035,9 @@ export default function RestaurantVendorDetail() {
                           {needsReviewOrders.length}
                         </Badge>
                       </div>
-                      {needsReviewExpanded && needsReviewOrders.map(({ order, lineItems }, idx) => {
+                      {needsReviewExpanded && (
+                        <PaginatedSlice items={needsReviewOrders}>
+                          {(pageNeedsReviewOrders) => pageNeedsReviewOrders.map(({ order, lineItems }, idx) => {
                         const orderTotal = lineItems.reduce(
                           (acc, li) => acc + parseFloat(li.unitPriceAtTimeOfOrder) * li.quantity, 0
                         );
@@ -1050,6 +1076,8 @@ export default function RestaurantVendorDetail() {
                           </div>
                         );
                       })}
+                        </PaginatedSlice>
+                      )}
                     </div>
                   )}
 
@@ -1066,7 +1094,9 @@ export default function RestaurantVendorDetail() {
                           {waitingForApprovalOrders.length}
                         </Badge>
                       </div>
-                      {waitingForApprovalOrders.map(({ order, lineItems }, idx) => {
+                      {waitingForApprovalOrders.length > 0 && (
+                        <PaginatedSlice items={waitingForApprovalOrders}>
+                          {(pageWaitingOrders) => pageWaitingOrders.map(({ order, lineItems }, idx) => {
                         const isExpanded = expandedOrderIds[order.id] ?? false;
                         const orderNum = order.displayId;
                         return (
@@ -1076,7 +1106,7 @@ export default function RestaurantVendorDetail() {
                             data-testid={`section-waiting-order-${order.id}`}
                           >
                             <div
-                              className="px-5 py-3 flex items-center justify-between cursor-pointer hover:bg-blue-50/60 dark:hover:bg-blue-950/20 transition-colors"
+                              className="px-5 py-3 flex flex-wrap items-center justify-between gap-2 cursor-pointer hover:bg-blue-50/60 dark:hover:bg-blue-950/20 transition-colors"
                               onClick={() => toggleOrderExpanded(order.id)}
                               data-testid={`button-toggle-order-${order.id}`}
                             >
@@ -1109,6 +1139,8 @@ export default function RestaurantVendorDetail() {
                           </div>
                         );
                       })}
+                        </PaginatedSlice>
+                      )}
                     </div>
                   )}
 
@@ -1132,7 +1164,9 @@ export default function RestaurantVendorDetail() {
                           {disputedRpOrders.length}
                         </Badge>
                       </div>
-                      {disputedRpExpanded && disputedRpOrders.map(({ order, lineItems }, idx) => {
+                      {disputedRpExpanded && (
+                        <PaginatedSlice items={disputedRpOrders}>
+                          {(pageDisputedOrders) => pageDisputedOrders.map(({ order, lineItems }, idx) => {
                         const orderNum = order.displayId;
                         const total = lineItems.reduce((sum, li) => sum + parseFloat(li.unitPriceAtTimeOfOrder) * li.quantity, 0);
                         return (
@@ -1141,7 +1175,7 @@ export default function RestaurantVendorDetail() {
                             className={`${idx > 0 ? "border-t" : ""} bg-red-50/20 dark:bg-red-950/10`}
                             data-testid={`section-rp-disputed-order-${order.id}`}
                           >
-                            <div className="px-5 py-3 flex items-center justify-between">
+                            <div className="px-5 py-3 flex flex-wrap items-center justify-between gap-2">
                               <div className="flex items-center gap-3">
                                 <ShieldAlert className="h-3.5 w-3.5 text-red-600 shrink-0" />
                                 <span className="text-sm font-medium text-foreground" data-testid={`text-rp-disputed-order-num-${order.id}`}>Order #{orderNum}</span>
@@ -1177,6 +1211,8 @@ export default function RestaurantVendorDetail() {
                           </div>
                         );
                       })}
+                        </PaginatedSlice>
+                      )}
                     </div>
                   )}
 
@@ -1200,7 +1236,9 @@ export default function RestaurantVendorDetail() {
                           {invoicedOrders.length}
                         </Badge>
                       </div>
-                      {invoicedExpanded && invoicedOrders.map(({ order, invoice, lineItems, fulfillments }, idx) => {
+                      {invoicedExpanded && (
+                        <PaginatedSlice items={invoicedOrders}>
+                          {(pageInvoicedOrders) => pageInvoicedOrders.map(({ order, invoice, lineItems, fulfillments }, idx) => {
                         const isExpanded = expandedOrderIds[order.id] ?? false;
                         const { snapshotLines, orderTotal } = resolveInvoicedOrderDisplay({
                           invoice,
@@ -1216,7 +1254,7 @@ export default function RestaurantVendorDetail() {
                             data-testid={`section-invoiced-order-${order.id}`}
                           >
                             <div
-                              className="px-5 py-3 flex items-center justify-between cursor-pointer hover:bg-emerald-50/60 dark:hover:bg-emerald-950/20 transition-colors"
+                              className="px-5 py-3 flex flex-wrap items-center justify-between gap-2 cursor-pointer hover:bg-emerald-50/60 dark:hover:bg-emerald-950/20 transition-colors"
                               onClick={() => toggleOrderExpanded(order.id)}
                               data-testid={`button-toggle-invoiced-order-${order.id}`}
                             >
@@ -1248,46 +1286,52 @@ export default function RestaurantVendorDetail() {
                               </div>
                             </div>
                             {isExpanded && (
-                              <div className="px-5 pb-4 pt-1">
-                                <table className="w-full text-xs" data-testid={`table-invoiced-order-${order.id}`}>
-                                  <thead>
-                                    <tr className="text-muted-foreground border-b">
-                                      <th className="text-left font-medium pb-1.5 pr-2">Product</th>
-                                      <th className="text-left font-medium pb-1.5 pr-2">SKU</th>
-                                      <th className="text-right font-medium pb-1.5 pr-2">Approved Qty</th>
-                                      <th className="text-right font-medium pb-1.5">Unit Price</th>
-                                      <th className="text-right font-medium pb-1.5">Total</th>
-                                    </tr>
-                                  </thead>
-                                  <tbody>
-                                    {snapshotLines.length === 0 ? (
-                                      <tr>
-                                        <td colSpan={5} className="py-4 text-center text-muted-foreground">
-                                          No invoice line items found for this order.
-                                        </td>
-                                      </tr>
-                                    ) : (
-                                      snapshotLines.map((sl) => (
-                                        <tr key={sl.orderLineItemId} className="border-b border-border/40 last:border-0" data-testid={`row-invoiced-item-${sl.orderLineItemId}`}>
-                                          <td className="py-2 pr-2 text-foreground font-medium">{sl.productName}</td>
-                                          <td className="py-2 pr-2 text-muted-foreground font-mono">{sl.sku ?? "—"}</td>
-                                          <td className="py-2 pr-2 text-right text-muted-foreground">{sl.approvedQty}</td>
-                                          <td className="py-2 pr-2 text-right text-muted-foreground">{formatCurrency(sl.unitPrice)}</td>
-                                          <td className="py-2 text-right font-medium text-foreground">{formatCurrency(sl.lineTotal)}</td>
-                                        </tr>
-                                      ))
-                                    )}
-                                  </tbody>
-                                  <tfoot>
-                                    <tr>
-                                      <td colSpan={3} />
-                                      <td className="pt-2 text-right text-muted-foreground font-medium">Approved Total</td>
-                                      <td className="pt-2 text-right font-bold text-foreground" data-testid={`text-invoiced-footer-total-${order.id}`}>{formatCurrency(String(orderTotal.toFixed(2)))}</td>
-                                    </tr>
-                                  </tfoot>
-                                </table>
+                              <div className="pb-4 pt-1">
+                                <PaginatedSlice items={snapshotLines}>
+                                  {(pageSnapshotLines) => (
+                                    <PortalTableScroll>
+                                      <table className="w-full min-w-[36rem] text-xs" data-testid={`table-invoiced-order-${order.id}`}>
+                                        <thead>
+                                          <tr className="text-muted-foreground border-b">
+                                            <th className="text-left font-medium pb-1.5 px-5 pr-2">Product</th>
+                                            <th className="text-left font-medium pb-1.5 pr-2">SKU</th>
+                                            <th className="text-right font-medium pb-1.5 pr-2">Approved Qty</th>
+                                            <th className="text-right font-medium pb-1.5 pr-2">Unit Price</th>
+                                            <th className="text-right font-medium pb-1.5 pr-5">Total</th>
+                                          </tr>
+                                        </thead>
+                                        <tbody>
+                                          {pageSnapshotLines.length === 0 ? (
+                                            <tr>
+                                              <td colSpan={5} className="py-4 px-5 text-center text-muted-foreground">
+                                                No invoice line items found for this order.
+                                              </td>
+                                            </tr>
+                                          ) : (
+                                            pageSnapshotLines.map((sl) => (
+                                              <tr key={sl.orderLineItemId} className="border-b border-border/40 last:border-0" data-testid={`row-invoiced-item-${sl.orderLineItemId}`}>
+                                                <td className="py-2 px-5 pr-2 text-foreground font-medium">{sl.productName}</td>
+                                                <td className="py-2 pr-2 text-muted-foreground font-mono">{sl.sku ?? "—"}</td>
+                                                <td className="py-2 pr-2 text-right text-muted-foreground">{sl.approvedQty}</td>
+                                                <td className="py-2 pr-2 text-right text-muted-foreground">{formatCurrency(sl.unitPrice)}</td>
+                                                <td className="py-2 pr-5 text-right font-medium text-foreground">{formatCurrency(sl.lineTotal)}</td>
+                                              </tr>
+                                            ))
+                                          )}
+                                        </tbody>
+                                        <tfoot>
+                                          <tr>
+                                            <td colSpan={3} />
+                                            <td className="pt-2 pr-2 text-right text-muted-foreground font-medium">Approved Total</td>
+                                            <td className="pt-2 pr-5 text-right font-bold text-foreground" data-testid={`text-invoiced-footer-total-${order.id}`}>{formatCurrency(String(orderTotal.toFixed(2)))}</td>
+                                          </tr>
+                                        </tfoot>
+                                      </table>
+                                    </PortalTableScroll>
+                                  )}
+                                </PaginatedSlice>
                                 {order.driverResolutionNote ? (
-                                  <div className="mt-4 rounded-md border border-sky-200 bg-sky-50/50 px-3 py-2 dark:border-sky-800 dark:bg-sky-950/20">
+                                  <div className="mx-5 mt-4 rounded-md border border-sky-200 bg-sky-50/50 px-3 py-2 dark:border-sky-800 dark:bg-sky-950/20">
                                     <p className="text-xs font-semibold text-sky-700 dark:text-sky-300">
                                       Driver Resolution Note
                                     </p>
@@ -1299,6 +1343,8 @@ export default function RestaurantVendorDetail() {
                           </div>
                         );
                       })}
+                        </PaginatedSlice>
+                      )}
                     </div>
                   )}
 
@@ -1322,7 +1368,9 @@ export default function RestaurantVendorDetail() {
                           {historyOrders.length}
                         </Badge>
                       </div>
-                      {historyExpanded && historyOrders.map(({ order, lineItems, invoice, fulfillments }, idx) => {
+                      {historyExpanded && (
+                        <PaginatedSlice items={historyOrders}>
+                          {(pageHistoryOrders) => pageHistoryOrders.map(({ order, lineItems, invoice, fulfillments }, idx) => {
                         const isExpanded = expandedOrderIds[order.id] ?? false;
                         const { snapshotLines, orderTotal } = resolveInvoicedOrderDisplay({
                           invoice,
@@ -1331,6 +1379,7 @@ export default function RestaurantVendorDetail() {
                           productMap,
                         });
                         const hasSnapshot = snapshotLines.length > 0;
+                        const historyLineItems = hasSnapshot ? snapshotLines : lineItems;
                         const orderNum = order.displayId;
                         return (
                           <div
@@ -1339,7 +1388,7 @@ export default function RestaurantVendorDetail() {
                             data-testid={`section-history-order-${order.id}`}
                           >
                             <div
-                              className="px-5 py-3 flex items-center justify-between cursor-pointer hover:bg-muted/20 transition-colors"
+                              className="px-5 py-3 flex flex-wrap items-center justify-between gap-2 cursor-pointer hover:bg-muted/20 transition-colors"
                               onClick={() => toggleOrderExpanded(order.id)}
                               data-testid={`button-toggle-order-${order.id}`}
                             >
@@ -1376,85 +1425,91 @@ export default function RestaurantVendorDetail() {
                             </div>
                             {isExpanded && (
                               <div className="border-t bg-muted/5">
-                                {(hasSnapshot ? snapshotLines.length === 0 : lineItems.length === 0) ? (
+                                {historyLineItems.length === 0 ? (
                                   <div className="py-6 text-center text-sm text-muted-foreground">No items in this order.</div>
                                 ) : (
                                   <>
-                                    <Table>
-                                      <TableHeader>
-                                        <TableRow className="hover:bg-transparent">
-                                          <TableHead className="font-medium pl-10">Product</TableHead>
-                                          <TableHead className="font-medium text-right">Unit Price</TableHead>
-                                          <TableHead className="font-medium text-right">Ordered Qty</TableHead>
-                                          <TableHead className="font-medium text-right">Approved Qty</TableHead>
-                                          <TableHead className="font-medium text-right">Line Total</TableHead>
-                                        </TableRow>
-                                      </TableHeader>
-                                      <TableBody>
-                                        {hasSnapshot
-                                          ? snapshotLines.map(sl => (
-                                            <TableRow key={sl.orderLineItemId} data-testid={`row-submitted-item-${sl.productId}-${order.id}`}>
-                                              <TableCell className="pl-10">
-                                                <div className="flex items-center gap-2">
-                                                  <div className="rounded-md bg-emerald-50 dark:bg-emerald-950/40 p-1.5 shrink-0">
-                                                    <Package className="h-3 w-3 text-emerald-600 dark:text-emerald-400" />
-                                                  </div>
-                                                  <span className="text-sm font-medium" data-testid={`text-submitted-item-name-${sl.productId}`}>
-                                                    {sl.productName}
-                                                  </span>
-                                                </div>
-                                                {sl.restaurantNote && (
-                                                  <p className="text-xs text-muted-foreground italic mt-1 pl-8" data-testid={`text-history-item-note-${sl.orderLineItemId}`}>
-                                                    "{sl.restaurantNote}"
-                                                  </p>
-                                                )}
-                                              </TableCell>
-                                              <TableCell className="text-right text-sm text-muted-foreground">
-                                                {formatCurrency(sl.unitPrice)}
-                                              </TableCell>
-                                              <TableCell className="text-right text-sm text-muted-foreground" data-testid={`text-history-ordered-qty-${sl.orderLineItemId}`}>
-                                                {lineItems.find(li => li.id === sl.orderLineItemId)?.quantity ?? "—"}
-                                              </TableCell>
-                                              <TableCell className="text-right text-sm font-medium" data-testid={`text-history-approved-qty-${sl.orderLineItemId}`}>
-                                                {sl.approvedQty}
-                                              </TableCell>
-                                              <TableCell className="text-right text-sm font-semibold">
-                                                {formatCurrency(sl.lineTotal)}
-                                              </TableCell>
-                                            </TableRow>
-                                          ))
-                                          : lineItems.map(li => {
-                                            const product = productMap.get(li.productId);
-                                            const lineTotal = parseFloat(li.unitPriceAtTimeOfOrder) * li.quantity;
-                                            return (
-                                              <TableRow key={li.id} data-testid={`row-submitted-item-${li.productId}-${order.id}`}>
-                                                <TableCell className="pl-10">
-                                                  <div className="flex items-center gap-2">
-                                                    <div className="rounded-md bg-emerald-50 dark:bg-emerald-950/40 p-1.5">
-                                                      <Package className="h-3 w-3 text-emerald-600 dark:text-emerald-400" />
-                                                    </div>
-                                                    <span className="text-sm font-medium" data-testid={`text-submitted-item-name-${li.productId}`}>
-                                                      {product?.name ?? li.productId}
-                                                    </span>
-                                                  </div>
-                                                </TableCell>
-                                                <TableCell className="text-right text-sm text-muted-foreground">
-                                                  {formatCurrency(li.unitPriceAtTimeOfOrder)}
-                                                </TableCell>
-                                                <TableCell className="text-right text-sm text-muted-foreground">
-                                                  {li.quantity}
-                                                </TableCell>
-                                                <TableCell className="text-right text-sm font-medium">
-                                                  {li.quantity}
-                                                </TableCell>
-                                                <TableCell className="text-right text-sm font-semibold">
-                                                  {formatCurrency(String(lineTotal.toFixed(2)))}
-                                                </TableCell>
+                                    <PaginatedSlice items={historyLineItems}>
+                                      {(pageHistoryLineItems) => (
+                                        <PortalTableScroll>
+                                          <Table unwrapped>
+                                            <TableHeader>
+                                              <TableRow className="hover:bg-transparent">
+                                                <TableHead className="font-medium pl-10">Product</TableHead>
+                                                <TableHead className="font-medium text-right">Unit Price</TableHead>
+                                                <TableHead className="font-medium text-right">Ordered Qty</TableHead>
+                                                <TableHead className="font-medium text-right">Approved Qty</TableHead>
+                                                <TableHead className="font-medium text-right">Line Total</TableHead>
                                               </TableRow>
-                                            );
-                                          })}
-                                      </TableBody>
-                                    </Table>
+                                            </TableHeader>
+                                            <TableBody>
+                                              {hasSnapshot
+                                                ? (pageHistoryLineItems as typeof snapshotLines).map(sl => (
+                                                  <TableRow key={sl.orderLineItemId} data-testid={`row-submitted-item-${sl.productId}-${order.id}`}>
+                                                    <TableCell className="pl-10">
+                                                      <div className="flex items-center gap-2">
+                                                        <div className="rounded-md bg-emerald-50 dark:bg-emerald-950/40 p-1.5 shrink-0">
+                                                          <Package className="h-3 w-3 text-emerald-600 dark:text-emerald-400" />
+                                                        </div>
+                                                        <span className="text-sm font-medium" data-testid={`text-submitted-item-name-${sl.productId}`}>
+                                                          {sl.productName}
+                                                        </span>
+                                                      </div>
+                                                      {sl.restaurantNote && (
+                                                        <p className="text-xs text-muted-foreground italic mt-1 pl-8" data-testid={`text-history-item-note-${sl.orderLineItemId}`}>
+                                                          "{sl.restaurantNote}"
+                                                        </p>
+                                                      )}
+                                                    </TableCell>
+                                                    <TableCell className="text-right text-sm text-muted-foreground">
+                                                      {formatCurrency(sl.unitPrice)}
+                                                    </TableCell>
+                                                    <TableCell className="text-right text-sm text-muted-foreground" data-testid={`text-history-ordered-qty-${sl.orderLineItemId}`}>
+                                                      {lineItems.find(li => li.id === sl.orderLineItemId)?.quantity ?? "—"}
+                                                    </TableCell>
+                                                    <TableCell className="text-right text-sm font-medium" data-testid={`text-history-approved-qty-${sl.orderLineItemId}`}>
+                                                      {sl.approvedQty}
+                                                    </TableCell>
+                                                    <TableCell className="text-right text-sm font-semibold">
+                                                      {formatCurrency(sl.lineTotal)}
+                                                    </TableCell>
+                                                  </TableRow>
+                                                ))
+                                                : (pageHistoryLineItems as OrderLineItem[]).map(li => {
+                                                  const product = productMap.get(li.productId);
+                                                  const lineTotal = parseFloat(li.unitPriceAtTimeOfOrder) * li.quantity;
+                                                  return (
+                                                    <TableRow key={li.id} data-testid={`row-submitted-item-${li.productId}-${order.id}`}>
+                                                      <TableCell className="pl-10">
+                                                        <div className="flex items-center gap-2">
+                                                          <div className="rounded-md bg-emerald-50 dark:bg-emerald-950/40 p-1.5">
+                                                            <Package className="h-3 w-3 text-emerald-600 dark:text-emerald-400" />
+                                                          </div>
+                                                          <span className="text-sm font-medium" data-testid={`text-submitted-item-name-${li.productId}`}>
+                                                            {product?.name ?? li.productId}
+                                                          </span>
+                                                        </div>
+                                                      </TableCell>
+                                                      <TableCell className="text-right text-sm text-muted-foreground">
+                                                        {formatCurrency(li.unitPriceAtTimeOfOrder)}
+                                                      </TableCell>
+                                                      <TableCell className="text-right text-sm text-muted-foreground">
+                                                        {li.quantity}
+                                                      </TableCell>
+                                                      <TableCell className="text-right text-sm font-medium">
+                                                        {li.quantity}
+                                                      </TableCell>
+                                                      <TableCell className="text-right text-sm font-semibold">
+                                                        {formatCurrency(String(lineTotal.toFixed(2)))}
+                                                      </TableCell>
+                                                    </TableRow>
+                                                  );
+                                                })}
+                                            </TableBody>
+                                          </Table>
+                                        </PortalTableScroll>
+                                      )}
+                                    </PaginatedSlice>
                                     <div className="px-5 py-2.5 flex justify-end border-t bg-emerald-50/30 dark:bg-emerald-950/10">
                                       <div className="flex items-center gap-3">
                                         <Lock className="h-3 w-3 text-muted-foreground" />
@@ -1471,6 +1526,8 @@ export default function RestaurantVendorDetail() {
                           </div>
                         );
                       })}
+                        </PaginatedSlice>
+                      )}
                     </div>
                   )}
                 </>
@@ -1589,18 +1646,21 @@ export default function RestaurantVendorDetail() {
                         )}
                       </div>
                     )}
-                    <Table>
-                      <TableHeader>
-                        <TableRow className="hover:bg-transparent">
-                          {orderSheetEditMode && <TableHead className="w-10" />}
-                          {orderSheetEditMode && sortMode === "custom" && <TableHead className="w-8" />}
-                          <TableHead className="text-xs font-medium">Product</TableHead>
-                          <TableHead className="text-xs font-medium">Unit</TableHead>
-                          <TableHead className="text-xs font-medium text-right pr-4">Price</TableHead>
-                        </TableRow>
-                      </TableHeader>
-                      <TableBody>
-                        {sortedOrderSheetData.map((item) => {
+                    <PaginatedSlice items={sortedOrderSheetData}>
+                      {(pageOrderSheetItems) => (
+                        <PortalTableScroll>
+                          <Table unwrapped>
+                            <TableHeader>
+                              <TableRow className="hover:bg-transparent">
+                                {orderSheetEditMode && <TableHead className="w-10" />}
+                                {orderSheetEditMode && sortMode === "custom" && <TableHead className="w-8" />}
+                                <TableHead className="text-xs font-medium">Product</TableHead>
+                                <TableHead className="text-xs font-medium">Unit</TableHead>
+                                <TableHead className="text-xs font-medium text-right pr-4">Price</TableHead>
+                              </TableRow>
+                            </TableHeader>
+                            <TableBody>
+                              {pageOrderSheetItems.map((item) => {
                           const isChecked = orderSheetEditMode && selectedToRemove.has(item.productId);
                           const isDragging = draggedId === item.productId;
                           const isDragOver = dragOverId === item.productId && draggedId !== item.productId;
@@ -1666,10 +1726,13 @@ export default function RestaurantVendorDetail() {
                                 {formatCurrency(item.price)}
                               </TableCell>
                             </TableRow>
-                          );
-                        })}
-                      </TableBody>
-                    </Table>
+                              );
+                            })}
+                            </TableBody>
+                          </Table>
+                        </PortalTableScroll>
+                      )}
+                    </PaginatedSlice>
                   </div>
                 )}
 
@@ -1705,17 +1768,20 @@ export default function RestaurantVendorDetail() {
                         {selectedToAdd.size > 0 ? `Add (${selectedToAdd.size})` : "Add"}
                       </Button>
                     </div>
-                    <Table>
-                      <TableHeader>
-                        <TableRow className="hover:bg-transparent">
-                          <TableHead className="w-10" />
-                          <TableHead className="text-xs font-medium">Product</TableHead>
-                          <TableHead className="text-xs font-medium">Unit</TableHead>
-                          <TableHead className="text-xs font-medium text-right pr-4">Price</TableHead>
-                        </TableRow>
-                      </TableHeader>
-                      <TableBody>
-                        {addableProducts.map(p => {
+                    <PaginatedSlice items={addableProducts}>
+                      {(pageAddableProducts) => (
+                        <PortalTableScroll>
+                          <Table unwrapped>
+                            <TableHeader>
+                              <TableRow className="hover:bg-transparent">
+                                <TableHead className="w-10" />
+                                <TableHead className="text-xs font-medium">Product</TableHead>
+                                <TableHead className="text-xs font-medium">Unit</TableHead>
+                                <TableHead className="text-xs font-medium text-right pr-4">Price</TableHead>
+                              </TableRow>
+                            </TableHeader>
+                            <TableBody>
+                              {pageAddableProducts.map(p => {
                           const isChecked = selectedToAdd.has(p.id);
                           return (
                             <TableRow
@@ -1747,10 +1813,13 @@ export default function RestaurantVendorDetail() {
                                 {formatCurrency(p.price)}
                               </TableCell>
                             </TableRow>
-                          );
-                        })}
-                      </TableBody>
-                    </Table>
+                              );
+                            })}
+                            </TableBody>
+                          </Table>
+                        </PortalTableScroll>
+                      )}
+                    </PaginatedSlice>
                   </div>
                 )}
 
@@ -1846,58 +1915,64 @@ export default function RestaurantVendorDetail() {
                 </p>
               </div>
             ) : (
-              <Table>
-                <TableHeader>
-                  <TableRow className="hover:bg-transparent">
-                    <TableHead className="font-medium">Product</TableHead>
-                    <TableHead className="font-medium">SKU</TableHead>
-                    <TableHead className="font-medium">Storage</TableHead>
-                    <TableHead className="font-medium">Unit</TableHead>
-                    <TableHead className="font-medium">Price</TableHead>
-                    <TableHead className="font-medium">Availability</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {filteredProducts.length === 0 ? (
-                    <TableRow>
-                      <TableCell colSpan={6} className="text-center py-10 text-sm text-muted-foreground" data-testid="empty-state-filtered">
-                        No products match your search or filters.
-                      </TableCell>
-                    </TableRow>
-                  ) : filteredProducts.map(product => (
-                    <TableRow key={product.id} data-testid={`row-product-${product.id}`}>
-                      <TableCell>
-                        <div className="flex items-center gap-2">
-                          <div className="rounded-md p-1.5 bg-blue-50 dark:bg-blue-950/40">
-                            <Package className="h-3.5 w-3.5 text-blue-600 dark:text-blue-400" />
-                          </div>
-                          <span className="font-medium text-sm" data-testid={`text-product-name-${product.id}`}>
-                            {product.name}
-                          </span>
-                        </div>
-                      </TableCell>
-                      <TableCell className="text-sm text-muted-foreground">{product.sku || "—"}</TableCell>
-                      <TableCell className="text-sm text-muted-foreground">{product.stockType || "—"}</TableCell>
-                      <TableCell className="text-sm text-muted-foreground">
-                        {product.unitSize} / {product.unitType}
-                      </TableCell>
-                      <TableCell className="text-sm font-medium">{formatCurrency(product.price)}</TableCell>
-                      <TableCell>
-                        <Badge
-                          className={`text-xs ${
-                            product.status === "active"
-                              ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300"
-                              : "bg-amber-100 text-amber-700 dark:bg-amber-950 dark:text-amber-300"
-                          }`}
-                          data-testid={`text-product-status-${product.id}`}
-                        >
-                          {PRODUCT_STATUS_LABELS[product.status] ?? product.status}
-                        </Badge>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
+              <PaginatedSlice items={filteredProducts} resetKey={`${productSearch}:${statusFilter}`}>
+                {(pageProducts) => (
+                  <PortalTableScroll>
+                    <Table unwrapped>
+                      <TableHeader>
+                        <TableRow className="hover:bg-transparent">
+                          <TableHead className="font-medium">Product</TableHead>
+                          <TableHead className="font-medium">SKU</TableHead>
+                          <TableHead className="font-medium">Storage</TableHead>
+                          <TableHead className="font-medium">Unit</TableHead>
+                          <TableHead className="font-medium">Price</TableHead>
+                          <TableHead className="font-medium">Availability</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {pageProducts.length === 0 ? (
+                          <TableRow>
+                            <TableCell colSpan={6} className="text-center py-10 text-sm text-muted-foreground" data-testid="empty-state-filtered">
+                              No products match your search or filters.
+                            </TableCell>
+                          </TableRow>
+                        ) : pageProducts.map(product => (
+                          <TableRow key={product.id} data-testid={`row-product-${product.id}`}>
+                            <TableCell>
+                              <div className="flex items-center gap-2">
+                                <div className="rounded-md p-1.5 bg-blue-50 dark:bg-blue-950/40">
+                                  <Package className="h-3.5 w-3.5 text-blue-600 dark:text-blue-400" />
+                                </div>
+                                <span className="font-medium text-sm" data-testid={`text-product-name-${product.id}`}>
+                                  {product.name}
+                                </span>
+                              </div>
+                            </TableCell>
+                            <TableCell className="text-sm text-muted-foreground">{product.sku || "—"}</TableCell>
+                            <TableCell className="text-sm text-muted-foreground">{product.stockType || "—"}</TableCell>
+                            <TableCell className="text-sm text-muted-foreground">
+                              {product.unitSize} / {product.unitType}
+                            </TableCell>
+                            <TableCell className="text-sm font-medium">{formatCurrency(product.price)}</TableCell>
+                            <TableCell>
+                              <Badge
+                                className={`text-xs ${
+                                  product.status === "active"
+                                    ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300"
+                                    : "bg-amber-100 text-amber-700 dark:bg-amber-950 dark:text-amber-300"
+                                }`}
+                                data-testid={`text-product-status-${product.id}`}
+                              >
+                                {PRODUCT_STATUS_LABELS[product.status] ?? product.status}
+                              </Badge>
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </PortalTableScroll>
+                )}
+              </PaginatedSlice>
             )}
           </>)}
         </div>

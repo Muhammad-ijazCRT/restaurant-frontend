@@ -29,6 +29,7 @@ const EMPLOYEE_ALLOWED_ROUTE_PREFIXES = [
   "/restaurant/orders",
   "/restaurant/employees",
   "/restaurant/profile",
+  "/restaurant/settings",
   "/restaurant/vendor",
 ];
 
@@ -64,7 +65,11 @@ export function canManageRestaurantEmployees(role: string | null): boolean {
 }
 
 export function canAccessRestaurantSettings(role: string | null): boolean {
-  return isRestaurantOwner(role);
+  return (
+    role === "restaurant" ||
+    role === "restaurant_manager" ||
+    role === "restaurant_employee"
+  );
 }
 
 export function canReviewRestaurantOrders(role: string | null): boolean {
@@ -84,7 +89,6 @@ export function getRestaurantNavItems(role: string | null): RestaurantNavItem[] 
 
 export function isRestaurantRouteAllowed(role: string | null, path: string): boolean {
   if (isRestaurantOwner(role)) return true;
-  if (path.startsWith("/restaurant/settings")) return false;
   if (isRestaurantEmployee(role) && path.startsWith("/restaurant/employees")) return false;
   return EMPLOYEE_ALLOWED_ROUTE_PREFIXES.some(
     (prefix) => path === prefix || path.startsWith(`${prefix}/`),

@@ -1,10 +1,10 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { ChangePasswordSection } from "@/components/shared/change-password-section";
 import { Settings, Bell, Shield, Palette, Globe } from "lucide-react";
 
 export default function SettingsPage() {
   return (
     <div className="flex flex-col items-center justify-start min-h-full w-full">
-      {/* Page Header - Centered */}
       <div className="w-full max-w-2xl text-center mb-8">
         <div className="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-primary/10 mb-4">
           <Settings className="h-7 w-7 text-primary" />
@@ -15,10 +15,9 @@ export default function SettingsPage() {
         </p>
       </div>
 
-      {/* Settings Sections - All Centered */}
       <div className="w-full max-w-2xl space-y-4">
+        <ChangePasswordSection />
 
-        {/* General Preferences */}
         <Card className="border border-border/60 shadow-sm">
           <CardHeader className="pb-3">
             <CardTitle className="text-base flex items-center gap-2">
@@ -38,7 +37,6 @@ export default function SettingsPage() {
           </CardContent>
         </Card>
 
-        {/* Notifications */}
         <Card className="border border-border/60 shadow-sm">
           <CardHeader className="pb-3">
             <CardTitle className="text-base flex items-center gap-2">
@@ -58,7 +56,6 @@ export default function SettingsPage() {
           </CardContent>
         </Card>
 
-        {/* Appearance */}
         <Card className="border border-border/60 shadow-sm">
           <CardHeader className="pb-3">
             <CardTitle className="text-base flex items-center gap-2">
@@ -78,7 +75,6 @@ export default function SettingsPage() {
           </CardContent>
         </Card>
 
-        {/* Security */}
         <Card className="border border-border/60 shadow-sm">
           <CardHeader className="pb-3">
             <CardTitle className="text-base flex items-center gap-2">
@@ -88,7 +84,7 @@ export default function SettingsPage() {
               Security
             </CardTitle>
             <CardDescription className="text-xs">
-              Password, two-factor authentication, and session management.
+              Two-factor authentication and session management.
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -97,7 +93,6 @@ export default function SettingsPage() {
             </div>
           </CardContent>
         </Card>
-
       </div>
     </div>
   );

@@ -2,7 +2,6 @@ import { useEffect, useState, type FormEvent } from "react";
 import { profileKeys } from "@/api/shared/profile";
 import { Link, useLocation } from "@/lib/wouter-compat";
 import AuthLayout from "@/components/shared/auth-layout";
-import { RodexBrandLink } from "@/components/shared/rodex-brand";
 import { showAuthFlash } from "@/components/shared/auth-flash";
 import {
   getQueryParam,
@@ -72,6 +71,7 @@ export interface PortalLoginFormProps {
   registerHref?: string;
   registerLabel?: string;
   hideRegister?: boolean;
+  forgotPasswordHref?: string;
   onLoginSuccess?: (role: string, entityId: string | null) => void;
 }
 
@@ -86,6 +86,7 @@ export default function PortalLoginForm({
   registerHref,
   registerLabel,
   hideRegister = false,
+  forgotPasswordHref,
   onLoginSuccess,
 }: PortalLoginFormProps) {
   const [, navigate] = useLocation();
@@ -115,7 +116,7 @@ export default function PortalLoginForm({
 
       if (ok && data.status === "success" && data.token && data.user) {
         const role = data.user.role || expectedRoles[0];
-        setAuthSession(data.token, role, data.user);
+        setAuthSession(data.token, role, data.user, password);
         void queryClient.invalidateQueries({ queryKey: profileKeys.notifications() });
 
         const entityId = resolvePortalEntityId(data.user, role);
@@ -152,9 +153,6 @@ export default function PortalLoginForm({
 
   return (
     <AuthLayout>
-      <div className="mb-5 flex justify-center">
-        <RodexBrandLink href="/" />
-      </div>
       <h2>{heading}</h2>
       <p className="subtitle">{subtitle}</p>
 
@@ -174,7 +172,14 @@ export default function PortalLoginForm({
           />
         </div>
         <div className="form-group">
-          <label htmlFor="password">Password</label>
+          <div className="password-label-row">
+            <label htmlFor="password">Password</label>
+            {forgotPasswordHref ? (
+              <Link href={forgotPasswordHref} className="forgot-password-link">
+                Forgot password?
+              </Link>
+            ) : null}
+          </div>
           <div className="password-wrapper">
             <input
               type={showPassword ? "text" : "password"}

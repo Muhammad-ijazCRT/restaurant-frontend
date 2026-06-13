@@ -4,7 +4,7 @@ import SettingsPage from "@/views/shared/settings-page";
 import PortalAuthGuard from "@/components/shared/portal-auth-guard";
 import ShippingLayout from "@/components/shipping/layout";
 
-const ROLES = ["vendor_admin", "manager"];
+const ROLES = ["vendor_admin", "manager", "driver"];
 
 export default function Page() {
   return (

@@ -2,17 +2,8 @@ import { useEffect, useState, type FormEvent } from "react";
 import { Link, useLocation } from "@/lib/wouter-compat";
 import AuthLayout from "@/components/shared/auth-layout";
 import { showAuthFlash } from "@/components/shared/auth-flash";
-import { formatPhone, normalizePhoneDigits } from "@shared/schema";
-import {
-  getReactDashboardPath,
-  isAuthenticatedForRoles,
-  normalizeFlashMessage,
-  registerWithApi,
-  resolvePortalEntityId,
-  setAuthSession,
-  storePendingFlash,
-  type RegisterPayload,
-} from "@/lib/portal-auth";
+import { apiRequest } from "@/lib/queryClient";
+import { getQueryParam, normalizeFlashMessage, storePendingFlash } from "@/lib/portal-auth";
 
 const PasswordIconShow = () => (
   <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false" width="20" height="20">
@@ -58,109 +49,93 @@ const PasswordIconHide = () => (
   </svg>
 );
 
-export interface PortalRegisterFormProps {
+export interface PortalResetPasswordFormProps {
   title: string;
   heading: string;
   subtitle: string;
-  nameLabel: string;
-  namePlaceholder: string;
   apiEndpoint: string;
-  expectedRoles: string[];
-  defaultDashboardPath: string;
   loginHref: string;
-  loginLabel: string;
-  onRegisterSuccess?: (role: string, entityId: string | null) => void;
+  forgotPasswordHref: string;
 }
 
-export default function PortalRegisterForm({
+export default function PortalResetPasswordForm({
   title,
   heading,
   subtitle,
-  nameLabel,
-  namePlaceholder,
   apiEndpoint,
-  expectedRoles,
-  defaultDashboardPath,
   loginHref,
-  loginLabel,
-  onRegisterSuccess,
-}: PortalRegisterFormProps) {
+  forgotPasswordHref,
+}: PortalResetPasswordFormProps) {
   const [, navigate] = useLocation();
-  const [name, setName] = useState("");
-  const [contactName, setContactName] = useState("");
-  const [email, setEmail] = useState("");
-  const [phone, setPhone] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const token = getQueryParam("token");
 
   useEffect(() => {
     document.title = title;
   }, [title]);
 
-  useEffect(() => {
-    if (!isAuthenticatedForRoles(expectedRoles)) return;
-    navigate(defaultDashboardPath);
-  }, [expectedRoles, defaultDashboardPath, navigate]);
-
   async function handleSubmit(e: FormEvent) {
     e.preventDefault();
+
+    if (!token) {
+      showAuthFlash("This reset link is invalid. Please request a new one.", "error");
+      return;
+    }
+
+    if (password.length < 8) {
+      showAuthFlash("Password must be at least 8 characters.", "error");
+      return;
+    }
 
     if (password !== confirmPassword) {
       showAuthFlash("Passwords do not match.", "error");
       return;
     }
 
-    const phoneDigits = normalizePhoneDigits(phone);
-    if (phoneDigits.length !== 10) {
-      showAuthFlash("Phone must be exactly 10 digits.", "error");
-      return;
-    }
-
     setIsSubmitting(true);
 
-    const payload: RegisterPayload = {
-      name: name.trim(),
-      contactName: contactName.trim(),
-      email: email.trim(),
-      phone: phoneDigits,
-      password,
-    };
-
     try {
-      const { ok, data, status } = await registerWithApi(apiEndpoint, payload);
+      const res = await apiRequest("POST", apiEndpoint, {
+        token,
+        password,
+        confirmPassword,
+      });
+      const data = (await res.json()) as { status?: string; message?: string };
 
-      if (ok && data.status === "success" && data.token && data.user) {
-        const role = data.user.role || expectedRoles[0];
-        setAuthSession(data.token, role, data.user, password);
-
-        const entityId = resolvePortalEntityId(data.user, role);
-        onRegisterSuccess?.(role, entityId);
-
-        storePendingFlash(data.message || "Registration successful.", "success");
-        const redirectPath = getReactDashboardPath(role) || defaultDashboardPath;
-        setTimeout(() => navigate(redirectPath), 1000);
+      if (data.status === "success") {
+        storePendingFlash(data.message || "Your password has been updated.", "success");
+        setTimeout(() => navigate(loginHref), 800);
         return;
       }
 
-      if (status === 422 && data.errors) {
-        showAuthFlash(data.errors, "error", {
-          title: "Validation Errors",
-          duration: 5000,
-        });
-      } else {
-        showAuthFlash(
-          normalizeFlashMessage(data.message) || "Registration failed. Please try again.",
-          "error",
-        );
-      }
-    } catch {
-      showAuthFlash("Network error. Could not connect to the server.", "error");
+      showAuthFlash(normalizeFlashMessage(data.message) || "Could not reset your password.", "error");
+    } catch (error) {
+      showAuthFlash(
+        error instanceof Error ? error.message : "Network error. Could not connect to the server.",
+        "error",
+      );
     } finally {
       setIsSubmitting(false);
     }
+  }
+
+  if (!token) {
+    return (
+      <AuthLayout>
+        <h2>{heading}</h2>
+        <p className="subtitle">This password reset link is invalid or has expired.</p>
+        <Link href={forgotPasswordHref} className="custom-link">
+          Request a new reset link
+        </Link>
+        <Link href={loginHref} className="back-link">
+          ← Back to Login
+        </Link>
+      </AuthLayout>
+    );
   }
 
   return (
@@ -170,72 +145,17 @@ export default function PortalRegisterForm({
 
       <form onSubmit={handleSubmit}>
         <div className="form-group">
-          <label htmlFor="name">{nameLabel}</label>
-          <input
-            type="text"
-            id="name"
-            name="name"
-            className="form-control"
-            placeholder={namePlaceholder}
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            required
-          />
-        </div>
-        <div className="form-group">
-          <label htmlFor="contactName">Contact Name</label>
-          <input
-            type="text"
-            id="contactName"
-            name="contactName"
-            className="form-control"
-            placeholder="Jane Smith"
-            value={contactName}
-            onChange={(e) => setContactName(e.target.value)}
-            required
-          />
-        </div>
-        <div className="form-group">
-          <label htmlFor="email">Email Address</label>
-          <input
-            type="email"
-            id="email"
-            name="email"
-            className="form-control"
-            placeholder="you@example.com"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            required
-            autoComplete="email"
-          />
-        </div>
-        <div className="form-group">
-          <label htmlFor="phone">Phone</label>
-          <input
-            type="tel"
-            id="phone"
-            name="phone"
-            className="form-control"
-            placeholder="(555) 123-4567"
-            value={formatPhone(phone)}
-            onChange={(e) => setPhone(e.target.value.replace(/\D/g, "").slice(0, 10))}
-            required
-            autoComplete="tel"
-          />
-        </div>
-        <div className="form-group">
-          <label htmlFor="password">Password</label>
+          <label htmlFor="password">New Password</label>
           <div className="password-wrapper">
             <input
               type={showPassword ? "text" : "password"}
               id="password"
               name="password"
               className="form-control"
-              placeholder="At least 8 characters"
+              placeholder="Minimum 8 characters"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               required
-              minLength={8}
               autoComplete="new-password"
               style={{ paddingRight: 40 }}
             />
@@ -250,6 +170,7 @@ export default function PortalRegisterForm({
             </button>
           </div>
         </div>
+
         <div className="form-group">
           <label htmlFor="confirmPassword">Confirm Password</label>
           <div className="password-wrapper">
@@ -258,11 +179,10 @@ export default function PortalRegisterForm({
               id="confirmPassword"
               name="confirmPassword"
               className="form-control"
-              placeholder="Re-enter your password"
+              placeholder="Re-enter your new password"
               value={confirmPassword}
               onChange={(e) => setConfirmPassword(e.target.value)}
               required
-              minLength={8}
               autoComplete="new-password"
               style={{ paddingRight: 40 }}
             />
@@ -277,20 +197,21 @@ export default function PortalRegisterForm({
             </button>
           </div>
         </div>
+
         <button type="submit" className="btn-gradient mt-2" disabled={isSubmitting}>
           {isSubmitting ? (
             <>
               <span className="spinner" />
-              Creating account...
+              Updating...
             </>
           ) : (
-            "Create Account"
+            "Update Password"
           )}
         </button>
       </form>
 
       <Link href={loginHref} className="custom-link">
-        {loginLabel}
+        Back to Login
       </Link>
 
       <Link href="/" className="back-link">

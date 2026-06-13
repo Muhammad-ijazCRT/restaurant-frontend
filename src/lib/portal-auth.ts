@@ -31,6 +31,7 @@ const AUTH_TOKEN_KEY = "auth_token";
 const USER_ROLE_KEY = "user_role";
 const USER_DATA_KEY = "user_data";
 const FLASH_STORAGE_KEY = "app.flash.message";
+const SESSION_PASSWORD_KEY = "portal.session.password";
 
 import { apiUrl } from "@/api/client";
 import { authPaths } from "@/api/shared/auth";
@@ -60,12 +61,33 @@ export function getUserData(): AuthUser | null {
   }
 }
 
-export function setAuthSession(token: string, role: string, user: AuthUser): void {
+export function storeSessionPassword(password: string): void {
+  if (typeof sessionStorage === "undefined") return;
+  if (password) sessionStorage.setItem(SESSION_PASSWORD_KEY, password);
+}
+
+export function getSessionPassword(): string {
+  if (typeof sessionStorage === "undefined") return "";
+  return sessionStorage.getItem(SESSION_PASSWORD_KEY) ?? "";
+}
+
+export function clearSessionPassword(): void {
+  if (typeof sessionStorage === "undefined") return;
+  sessionStorage.removeItem(SESSION_PASSWORD_KEY);
+}
+
+export function setAuthSession(
+  token: string,
+  role: string,
+  user: AuthUser,
+  password?: string,
+): void {
   if (!canUseStorage()) return;
   const resolvedRole = resolveEffectiveRole(role, user);
   localStorage.setItem(AUTH_TOKEN_KEY, token);
   localStorage.setItem(USER_ROLE_KEY, resolvedRole);
   localStorage.setItem(USER_DATA_KEY, JSON.stringify({ ...user, role: resolvedRole }));
+  if (password) storeSessionPassword(password);
 }
 
 const SWITCHABLE_VENDOR_ROLES = new Set([
@@ -162,6 +184,7 @@ export function clearAuthSession(): void {
   localStorage.removeItem(AUTH_TOKEN_KEY);
   localStorage.removeItem(USER_ROLE_KEY);
   localStorage.removeItem(USER_DATA_KEY);
+  clearSessionPassword();
 }
 
 export function getQueryParam(name: string): string | null {

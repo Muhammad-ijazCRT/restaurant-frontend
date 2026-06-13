@@ -16,6 +16,7 @@ export default function VendorLogin() {
       defaultDashboardPath="/vendor/portal"
       registerHref="/vendor/register"
       registerLabel="Register as a vendor"
+      forgotPasswordHref="/vendor/forgot-password"
       onLoginSuccess={(_role, entityId) => {
         if (entityId) login(entityId);
       }}

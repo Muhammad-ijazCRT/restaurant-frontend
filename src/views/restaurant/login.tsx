@@ -16,6 +16,7 @@ export default function RestaurantLogin() {
       defaultDashboardPath="/restaurant/portal"
       registerHref="/restaurant/register"
       registerLabel="Register your restaurant"
+      forgotPasswordHref="/restaurant/forgot-password"
       onLoginSuccess={(_role, entityId) => {
         if (entityId) login(entityId);
       }}

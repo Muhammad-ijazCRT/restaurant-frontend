@@ -120,6 +120,10 @@ export const vendors = mysqlTable("vendors", {
   email: text("email").notNull(),
   loginPassword: text("login_password"),
   phone: text("phone").notNull(),
+  vendorType: text("vendor_type"),
+  address: text("address"),
+  aboutVendor: text("about_vendor"),
+  operatingHours: text("operating_hours"),
   status: text("status").notNull().default("active"),
   image: longtext("image"),
   createdAt: timestamp("created_at").defaultNow().notNull(),
@@ -133,6 +137,10 @@ export const insertVendorSchema = createInsertSchema(vendors).omit({
   contactName: z.string().min(1, "Contact name is required"),
   email: z.string().trim().min(1, "Email is required").email("Please enter a valid email address"),
   phone: phoneSchema,
+  vendorType: z.string().trim().optional().nullable(),
+  address: z.string().trim().optional().nullable(),
+  aboutVendor: z.string().trim().optional().nullable(),
+  operatingHours: z.string().trim().optional().nullable(),
   status: z.enum(["active", "inactive", "archived"]).default("active"),
 });
 
@@ -205,6 +213,10 @@ export const restaurantOrganizations = mysqlTable("restaurant_organizations", {
   email: text("email").notNull(),
   loginPassword: text("login_password"),
   phone: text("phone").notNull(),
+  restaurantType: text("restaurant_type"),
+  address: text("address"),
+  aboutRestaurant: text("about_restaurant"),
+  openingHours: text("opening_hours"),
   status: text("status").notNull().default("active"),
   image: longtext("image"),
   createdAt: timestamp("created_at").defaultNow().notNull(),
@@ -218,6 +230,10 @@ export const insertRestaurantOrgSchema = createInsertSchema(restaurantOrganizati
   contactName: z.string().min(1, "Contact name is required"),
   email: z.string().trim().min(1, "Email is required").email("Please enter a valid email address"),
   phone: phoneSchema,
+  restaurantType: z.string().trim().optional().nullable(),
+  address: z.string().trim().optional().nullable(),
+  aboutRestaurant: z.string().trim().optional().nullable(),
+  openingHours: z.string().trim().optional().nullable(),
   status: z.enum(["active", "inactive", "archived"]).default("active"),
 });
 
